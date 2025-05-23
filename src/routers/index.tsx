@@ -17,9 +17,9 @@ export default function AppRoutes() {
         <Routes>
             <Route element={<Layout />}>
                 <Route path="/" element={<Home />} />
-                <Route path="/gioi-thieu" element={<About />} />
-                <Route path="/tin-tuc" element={<News />} />
-                <Route path="/lien-he" element={<Contact />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/news" element={<News />} />
+                <Route path="/contact" element={<Contact />} />
             </Route>
             <Route path="/login" element={<Login />} />
             <Route
