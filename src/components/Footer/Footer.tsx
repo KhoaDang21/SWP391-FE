@@ -65,8 +65,7 @@ const Footer = () => {
               <div className="flex items-start space-x-3 text-blue-100">
                 <EnvironmentOutlined className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span className="text-sm">
-                  123 Đường ABC, Quận XYZ<br />
-                  TP. Hồ Chí Minh, Việt Nam
+                  Lô E2a-7, Đường D1 Khu Công nghệ cao, P. Long Thạnh Mỹ, TP. Thủ Đức, TP. Hồ Chí Minh
                 </span>
               </div>
             </div>

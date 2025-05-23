@@ -52,8 +52,8 @@ const Home = () => {
   const schoolInfo = [
     {
       icon: <BookOutlined className="w-6 h-6" />,
-      title: "Trường THPT ABC",
-      description: "Trường trung học phổ thông hàng đầu với 30 năm kinh nghiệm giáo dục"
+      title: "Trường Tiểu học FPT",
+      description: "Trường tiểu học hàng đầu với 30 năm kinh nghiệm giáo dục"
     },
     {
       icon: <UserOutlined className="w-6 h-6" />,
@@ -80,7 +80,7 @@ const Home = () => {
                   <span className="block text-yellow-300">Y tế học đường</span>
                 </h1>
                 <p className="text-xl text-blue-100 leading-relaxed">
-                  Hệ thống nội bộ trường THPT ABC hỗ trợ quản lý sức khỏe học sinh
+                  Hệ thống nội bộ trường tiểu học FPT hỗ trợ quản lý sức khỏe học sinh
                   một cách khoa học, chuyên nghiệp và hiệu quả.
                 </p>
               </div>
@@ -145,15 +145,18 @@ const Home = () => {
               Về trường học của chúng tôi
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Trường THPT ABC - Nơi ươm mầm tri thức và chăm sóc sức khỏe toàn diện cho học sinh
+              Trường Tiểu học - Nơi ươm mầm tri thức và chăm sóc sức khỏe toàn diện cho học sinh
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {schoolInfo.map((info, index) => (
-              <div key={index} className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-lg transition-shadow">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <div className="text-blue-600">{info.icon}</div>
+              <div
+                key={index}
+                className="flex flex-col items-center justify-center text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-lg transition-shadow h-full"
+              >
+                <div className="flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
+                  <span className="text-blue-600 text-3xl flex items-center justify-center">{info.icon}</span>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">{info.title}</h3>
                 <p className="text-gray-600">{info.description}</p>
@@ -168,15 +171,15 @@ const Home = () => {
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <EnvironmentOutlined className="w-5 h-5" />
-                    <span>123 Đường Giáo Dục, Quận 1, TP.HCM</span>
+                    <span>Lô E2a-7, Đường D1 Khu Công nghệ cao, P. Long Thạnh Mỹ, TP. Thủ Đức, TP. Hồ Chí Minh</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <PhoneOutlined className="w-5 h-5" />
-                    <span>Điện thoại: (028) 1234-5678</span>
+                    <span>Điện thoại: (028) 7300 5588</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <MailOutlined className="w-5 h-5" />
-                    <span>Email: info@thptabc.edu.vn</span>
+                    <span>Email: tieuhoc.hcm@fpt.edu.vn</span>
                   </div>
                 </div>
               </div>
@@ -184,10 +187,10 @@ const Home = () => {
                 <div className="text-4xl font-bold mb-2">30+</div>
                 <div className="text-blue-100">Năm kinh nghiệm</div>
                 <Rate
-                  defaultValue={5}          // số sao được fill
+                  defaultValue={5}
                   disabled
-                  character={<StarFilled />} // icon dùng thay cho mặc định
-                  style={{ fontSize: 20 }}   // kích cỡ ngôi sao
+                  character={<StarFilled />}
+                  style={{ fontSize: 20 }}
                 />
               </div>
             </div>
@@ -230,7 +233,7 @@ const Home = () => {
               Thống kê hoạt động trường học
             </h2>
             <p className="text-xl text-gray-600">
-              Tổng quan về tình hình sức khỏe và hoạt động y tế tại trường THPT ABC
+              Tổng quan về tình hình sức khỏe và hoạt động y tế tại trường Tiểu học FPT
             </p>
           </div>
 
