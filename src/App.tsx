@@ -1,11 +1,10 @@
-import { BrowserRouter as Router } from "react-router-dom";
-import AppRoutes from "./routers";
+import './App.css';
 
 function App() {
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
+    <>
+      <h1 className='text-3xl font-bold underline bg-red-50 text-blue-700'>Hello world!</h1>
+    </>
   );
 }
 
