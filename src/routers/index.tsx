@@ -3,6 +3,7 @@ import Home from "../pages/Home/Home";
 import Layout from "../components/Layout/Layout";
 import About from "../pages/Home/About";
 import News from "../pages/Home/News";
+import NewsDetail from "../pages/Home/NewsDetail";
 import Contact from "../pages/Home/Contact";
 import Login from "../pages/Login/Login";
 import Admin from "../pages/Admin/Admin";
@@ -19,6 +20,7 @@ export default function AppRoutes() {
                 <Route path="/" element={<Home />} />
                 <Route path="/gioi-thieu" element={<About />} />
                 <Route path="/tin-tuc" element={<News />} />
+                <Route path="/tintuc/:slug" element={<NewsDetail />} />
                 <Route path="/lien-he" element={<Contact />} />
             </Route>
             <Route path="/login" element={<Login />} />
