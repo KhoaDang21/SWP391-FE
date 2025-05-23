@@ -79,16 +79,8 @@ const SchoolMedicalSystem = () => {
               Hệ thống Quản lý Y tế Học đường
             </h1>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Giải pháp toàn diện cho việc quản lý sức khỏe học sinh, hỗ trợ phụ huynh và nâng cao chất lượng chăm sóc y tế trong môi trường giáo dục
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <button className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-all duration-300 shadow-lg">
-                Khám phá ngay
-              </button>
-              <button className="px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-300">
-                Tìm hiểu thêm
-              </button>
-            </div>
+              Hệ thống nội bộ trường tiểu học FPT hỗ trợ quản lý sức khỏe học sinh một cách khoa học, chuyên nghiệp và hiệu quả.
+            </p>          
           </div>
         </div>
       </div>
@@ -180,44 +172,7 @@ const SchoolMedicalSystem = () => {
           </div>
         </div>
       </div>
-
-      {/* CTA Section */}
-      <div className="py-20 px-6 bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
-            Sẵn sàng bắt đầu với hệ thống của chúng tôi?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Tham gia cùng hàng trăm trường học đã tin tưởng sử dụng hệ thống quản lý y tế của chúng tôi
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-all duration-300 shadow-lg">
-              Đăng ký dùng thử
-            </button>
-            <button className="px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-300">
-              Liên hệ tư vấn
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="py-12 px-6 bg-gray-800 text-white">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex justify-center mb-6">
-            <Activity className="w-8 h-8 text-cyan-400" />
-          </div>
-          <h3 className="text-2xl font-bold mb-4">School Medical Management System</h3>
-          <p className="text-gray-400 mb-6">
-            Giải pháp quản lý y tế học đường toàn diện và chuyên nghiệp
-          </p>
-          <div className="border-t border-gray-700 pt-6">
-            <p className="text-gray-500 text-sm">
-              © 2024 School Medical Management System. Tất cả quyền được bảo lưu.
-            </p>
-          </div>
-        </div>
-      </div>
+   
     </div>
   );
 };
