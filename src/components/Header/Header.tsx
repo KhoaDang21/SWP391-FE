@@ -1,31 +1,56 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const Header = () => {
+  // Class chung cho tất cả link
+  const baseClass = "font-medium px-2 py-1 transition";
+  // Class khi active (xanh) và khi không active (xám)
+  const activeClass = "text-blue-600";
+  const inactiveClass = "text-gray-700 hover:text-blue-600";
+
   return (
     <header className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-      
         <div className="flex items-center space-x-2">
-          <img src="/src/assets/images/medical-book.png" alt="Logo" className="w-10 h-10 object-cover" />
+          <img
+            src="/src/assets/images/medical-book.png"
+            alt="Logo"
+            className="w-10 h-10 object-cover"
+          />
           <span className="text-xl font-bold text-blue-600">EduHealth</span>
         </div>
 
-       
         <nav className="hidden md:flex space-x-6">
-          <Link to="/" className="text-gray-700 hover:text-blue-600 font-medium">Trang chủ</Link>
-          <Link to="/gioi-thieu" className="text-gray-700 hover:text-blue-600 font-medium">Giới thiệu</Link>
-          <Link to="/tin-tuc" className="text-gray-700 hover:text-blue-600 font-medium">Tin tức</Link>
-          <Link to="/lien-he" className="text-gray-700 hover:text-blue-600 font-medium">Liên hệ</Link>
+          {[
+            { to: "/", label: "Trang chủ" },
+            { to: "/gioi-thieu", label: "Giới thiệu" },
+            { to: "/tin-tuc", label: "Tin tức" },
+            { to: "/lien-he", label: "Liên hệ" },
+          ].map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"} // để "/" chỉ active đúng trang chủ
+              className={({ isActive }) =>
+                `${baseClass} ${isActive ? activeClass : inactiveClass}`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
         </nav>
 
-       
         <div>
-          <Link
+          <NavLink
             to="/login"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            className={({ isActive }) =>
+              `px-4 py-2 rounded transition ${isActive
+                ? "bg-blue-700 text-white"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+              }`
+            }
           >
             Đăng nhập
-          </Link>
+          </NavLink>
         </div>
       </div>
     </header>
