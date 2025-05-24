@@ -60,7 +60,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3 text-blue-100">
                 <MailOutlined className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm">support@eduhealth.vn</span>
+                <span className="text-sm">tieuhoc@eduhealth.vn</span>
               </div>
               <div className="flex items-start space-x-3 text-blue-100">
                 <EnvironmentOutlined className="w-4 h-4 flex-shrink-0 mt-0.5" />
