@@ -59,11 +59,17 @@ const Login = () => {
             const payload = { username, password };
             const res = await login(payload);
 
-            const { accessToken, role } = res;
-
-            localStorage.setItem("user", accessToken);
+            // Lưu thông tin user vào localStorage
+            const userData = {
+                username: res.user.username,
+                role: res.user.role.charAt(0).toUpperCase() + res.user.role.slice(1), // Chuyển "admin" thành "Admin"
+            };
+            localStorage.setItem("user", JSON.stringify(userData));
+            localStorage.setItem("accessToken", res.accessToken);
+            localStorage.setItem("refreshToken", res.refreshToken);
 
             // Chuyển hướng theo role
+            const role = userData.role;
             navigate(getRedirectPath(role), { replace: true });
         } catch (err: any) {
             setSubmitError(err.response?.data?.message || err.message || "Đã có lỗi xảy ra");
