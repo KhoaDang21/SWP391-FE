@@ -6,8 +6,11 @@ export interface LoginPayload {
 export interface LoginResponse {
     accessToken: string;
     refreshToken: string;
-    role: "Admin" | "Manager" | "Nurse" | "Parent" | "Student";
-    username: string;
+    user: {
+        id: number;
+        username: string;
+        role: string;
+    };
 }
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
