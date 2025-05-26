@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart, Shield, Users, ClipboardList, BarChart3, UserCheck, FileText, Activity } from 'lucide-react';
 
-const SchoolMedicalSystem = () => {
+const about= () => {
   const features = [
     {
       icon: <Heart className="w-8 h-8" />,
@@ -11,12 +11,12 @@ const SchoolMedicalSystem = () => {
     {
       icon: <Shield className="w-8 h-8" />,
       title: "Chức năng Phòng ngừa",
-      description: "Hỗ trợ sức khỏe của học sinh, phòng bệnh mãn tính, tiêm chủng và điều trị tích cực"
+      description: "Hỗ trợ sức khỏe của học sinh, phòng bệnh mãn tính, tiêm chủng và các dịch vụ y tế khác"
     },
     {
       icon: <ClipboardList className="w-8 h-8" />,
       title: "Hỗ trợ Phu huynh",
-      description: "Phần mềm giút Phu huynh gửi thước cho trường để nhận viện y tế cho học sinh vững"
+      description: "Phần mềm giúp Phu huynh gửi thước cho trường để nhận viện y tế cho học sinh uống thuốc"
     },
     {
       icon: <Users className="w-8 h-8" />,
@@ -31,7 +31,7 @@ const SchoolMedicalSystem = () => {
     {
       icon: <FileText className="w-8 h-8" />,
       title: "Quản lý Hồ sơ",
-      description: "Quản lý hồ sơ sức khỏe học sinh với hệ thống lưu trữ an toàn và truy xuất nhanh chóng"
+      description: "Lưu trữ quản lý hồ sơ sức khỏe học sinh an toàn và truy xuất nhanh chóng"
     }
   ];
 
@@ -177,4 +177,4 @@ const SchoolMedicalSystem = () => {
   );
 };
 
-export default SchoolMedicalSystem;
+export default about;
