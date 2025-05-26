@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Layout, Menu } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -10,15 +10,22 @@ import {
     FormOutlined,
     UserOutlined,
     FileTextOutlined,
-    LogoutOutlined
+    LogoutOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import logo from '../../assets/images/medical-book.png';
 
 const { Sider } = Layout;
 type MenuItem = Required<MenuProps>['items'][number];
 
-const AdminSidebar: React.FC = () => {
-    const [collapsed, setCollapsed] = useState(false);
+interface AdminSidebarProps {
+    collapsed: boolean;
+    onCollapse: (collapsed: boolean) => void;
+}
+
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) => {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -115,7 +122,7 @@ const AdminSidebar: React.FC = () => {
         <Sider
             collapsible
             collapsed={collapsed}
-            onCollapse={(value) => setCollapsed(value)}
+            onCollapse={onCollapse}
             style={{
                 overflow: 'auto',
                 height: '100vh',
@@ -123,29 +130,68 @@ const AdminSidebar: React.FC = () => {
                 left: 0,
                 top: 0,
                 bottom: 0,
+                backgroundColor: '#fff',
+                borderRight: '1px solid #f0f0f0',
+                zIndex: 999
             }}
+            theme="light"
+            width={260}
+            collapsedWidth={80}
+            trigger={null}
         >
-            <div className="logo p-4">
-                <h1 className="text-white text-center text-lg font-bold">
-                    {collapsed ? 'EH' : 'EduHealth'}
-                </h1>
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-cyan-500">
+                <div className="flex items-center">
+                    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                        <img
+                            src={logo}
+                            alt="EduHealth Logo"
+                            className="w-6 h-6 object-contain"
+                        />
+                    </div>
+                    {!collapsed && (
+                        <div className="ml-3 flex items-center">
+                            <span className="text-xl font-bold text-white">EduHealth</span>
+                        </div>
+                    )}
+                </div>
+                <div
+                    onClick={() => onCollapse(!collapsed)}
+                    className="cursor-pointer p-1 hover:bg-white/20 rounded-lg text-white"
+                >
+                    {collapsed ? (
+                        <MenuUnfoldOutlined className="text-lg" />
+                    ) : (
+                        <MenuFoldOutlined className="text-lg" />
+                    )}
+                </div>
             </div>
-            <Menu
-                theme="dark"
-                defaultSelectedKeys={['dashboard']}
-                mode="inline"
-                items={[
-                    ...items,
-                    {
-                        key: 'logout',
-                        icon: <LogoutOutlined />,
-                        label: 'Đăng xuất',
-                        onClick: handleLogout,
-                        className: 'mt-auto'
-                    }
-                ]}
-                selectedKeys={[location.pathname.split('/')[2] || 'dashboard']}
-            />
+
+            <div className="flex flex-col h-[calc(100vh-64px)]">
+                <Menu
+                    mode="inline"
+                    defaultSelectedKeys={['dashboard']}
+                    selectedKeys={[location.pathname.split('/')[2] || 'dashboard']}
+                    items={items}
+                    className="border-r-0 flex-1"
+                />
+
+                <div className="border-t border-gray-100">
+                    <Menu
+                        mode="inline"
+                        className="border-r-0"
+                        items={[
+                            {
+                                key: 'logout',
+                                icon: <LogoutOutlined />,
+                                label: 'Đăng xuất',
+                                onClick: handleLogout,
+                                danger: true,
+                                style: { paddingLeft: '24px' }
+                            }
+                        ]}
+                    />
+                </div>
+            </div>
         </Sider>
     );
 };
