@@ -81,19 +81,19 @@ const Contact: React.FC = () => {
           {/* Highlight */}
           <div className="bg-white rounded-xl shadow-lg p-8 h-full border border-green-100 hover:shadow-2xl transition duration-300 flex flex-col justify-between">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Điểm Nổi Bật</h2>
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <Users className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-blue-50 rounded-lg flex flex-col items-center justify-center text-center p-6 h-[160px]">
+                <Users className="w-8 h-8 text-blue-600 mb-2" />
                 <div className="text-2xl font-bold text-blue-600">2500+</div>
                 <div className="text-sm text-gray-600">Học sinh</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <Award className="w-8 h-8 text-green-600 mx-auto mb-2" />
+              <div className="bg-green-50 rounded-lg flex flex-col items-center justify-center text-center p-6 h-[160px]">
+                <Award className="w-8 h-8 text-green-600 mb-2" />
                 <div className="text-2xl font-bold text-green-600">30+</div>
                 <div className="text-sm text-gray-600">Năm kinh nghiệm</div>
               </div>
-              <div className="col-span-2 text-center p-4 bg-yellow-50 rounded-lg">
-                <BadgeCheck className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
+              <div className="bg-yellow-50 rounded-lg flex flex-col items-center justify-center text-center p-6 h-[160px] md:col-span-2">
+                <BadgeCheck className="w-8 h-8 text-yellow-600 mb-2" />
                 <div className="text-base font-bold text-yellow-700">
                   Chất lượng giáo dục và y tế đạt chuẩn quốc gia
                 </div>
