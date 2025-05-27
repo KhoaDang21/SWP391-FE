@@ -4,6 +4,9 @@ import Lottie from "lottie-react";
 import animationData from "../../assets/files/BgLogin.json";
 import { login } from "../../services/AuthServices";
 import logo from "../../assets/images/medical-book.png";
+import { useDispatch } from 'react-redux';
+import { toggleLoading } from '../../app/redux/loading.slice';
+import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 
 const getRedirectPath = (role: string) => {
     switch (role) {
@@ -33,9 +36,12 @@ export interface LoginResponse {
 const Login = () => {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+    const [showPassword, setShowPassword] = useState<boolean>(false);
     const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
     const [submitError, setSubmitError] = useState<string>("");
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
 
     const validate = () => {
         const newErrors: typeof errors = {};
@@ -56,13 +62,16 @@ const Login = () => {
         if (!validate()) return;
 
         try {
+            dispatch(toggleLoading(true));
             const payload = { username, password };
             const res = await login(payload);
+
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
             // Lưu thông tin user vào localStorage
             const userData = {
                 username: res.user.username,
-                role: res.user.role.charAt(0).toUpperCase() + res.user.role.slice(1), // Chuyển "admin" thành "Admin"
+                role: res.user.role.charAt(0).toUpperCase() + res.user.role.slice(1),
             };
             localStorage.setItem("user", JSON.stringify(userData));
             localStorage.setItem("accessToken", res.accessToken);
@@ -73,6 +82,8 @@ const Login = () => {
             navigate(getRedirectPath(role), { replace: true });
         } catch (err: any) {
             setSubmitError(err.response?.data?.message || err.message || "Đã có lỗi xảy ra");
+        } finally {
+            dispatch(toggleLoading(false));
         }
     };
 
@@ -123,20 +134,33 @@ const Login = () => {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
-                            <input
-                                type="password"
-                                placeholder="Nhập mật khẩu"
-                                value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value);
-                                    if (errors.password) setErrors({ ...errors, password: undefined });
-                                }}
-                                onBlur={validate}
-                                className={`mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.password
-                                    ? "border-red-500 focus:ring-red-500"
-                                    : "border-gray-300 focus:ring-blue-500"
-                                    }`}
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Nhập mật khẩu"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (errors.password) setErrors({ ...errors, password: undefined });
+                                    }}
+                                    onBlur={validate}
+                                    className={`mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.password
+                                            ? "border-red-500 focus:ring-red-500"
+                                            : "border-gray-300 focus:ring-blue-500"
+                                        }`}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                >
+                                    {showPassword ? (
+                                        <EyeOutlined className="text-lg" />
+                                    ) : (
+                                        <EyeInvisibleOutlined className="text-lg" />
+                                    )}
+                                </button>
+                            </div>
                             {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                         </div>
 
