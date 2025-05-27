@@ -11,9 +11,17 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@ant-design/icons": "^5.6.1",
+    "@reduxjs/toolkit": "^2.8.2",
     "@tailwindcss/vite": "^4.1.4",
+    "antd": "^5.25.2",
+    "axios": "^1.9.0",
+    "lottie-react": "^2.4.1",
+    "lucide-react": "^0.511.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react-dom": "^19.1.0",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.6.0",
     "tailwindcss": "^4.1.4"
   },
   "devDependencies": {
