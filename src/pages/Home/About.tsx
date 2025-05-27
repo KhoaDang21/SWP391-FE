@@ -42,7 +42,7 @@ const SchoolMedicalSystem = () => {
       color: "bg-blue-500"
     },
     {
-      role: "Parent", 
+      role: "Parent",
       description: "Phụ huynh theo dõi tình trạng sức khỏe con em và tương tác với nhà trường",
       color: "bg-green-500"
     },
@@ -67,7 +67,7 @@ const SchoolMedicalSystem = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50">
       {/* Header Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 opacity-90"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 opacity-90"></div>
         <div className="relative px-6 py-20 text-center">
           <div className="max-w-4xl mx-auto">
             <div className="flex justify-center mb-8">
@@ -80,7 +80,7 @@ const SchoolMedicalSystem = () => {
             </h1>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto leading-relaxed">
               Hệ thống nội bộ trường tiểu học FPT hỗ trợ quản lý sức khỏe học sinh một cách khoa học, chuyên nghiệp và hiệu quả.
-            </p>          
+            </p>
           </div>
         </div>
       </div>
@@ -94,7 +94,7 @@ const SchoolMedicalSystem = () => {
               Hệ thống được thiết kế để đáp ứng mọi nhu cầu quản lý y tế trong trường học
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="group">
@@ -120,7 +120,7 @@ const SchoolMedicalSystem = () => {
               Hệ thống hỗ trợ đa vai trò với giao diện và chức năng phù hợp cho từng đối tượng sử dụng
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userRoles.map((user, index) => (
               <div key={index} className="group cursor-pointer">
@@ -172,7 +172,7 @@ const SchoolMedicalSystem = () => {
           </div>
         </div>
       </div>
-   
+
     </div>
   );
 };

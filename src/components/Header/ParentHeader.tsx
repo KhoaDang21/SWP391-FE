@@ -1,0 +1,81 @@
+import { UserOutlined } from "@ant-design/icons";
+import { Avatar, Dropdown, Menu } from "antd";
+import { NavLink } from "react-router-dom";
+import Noti from "../../pages/Noti/Noti";
+
+const Header = () => {
+  // Class chung cho tất cả link
+  const baseClass = "font-medium px-2 py-1 transition";
+  // Class khi active (xanh) và khi không active (xám)
+  const activeClass = "text-blue-600";
+  const inactiveClass = "text-gray-700 hover:text-blue-600";
+  const userInfo = localStorage.getItem("user");
+
+  const menu = (
+    <Menu>
+      <Menu.Item key="profile">
+        <button className="w-full text-left">Hồ sơ</button>
+      </Menu.Item>
+      <Menu.Item key="logout">
+        <button className="w-full text-left">Đăng xuất</button>
+      </Menu.Item>
+    </Menu>
+  );
+
+  return (
+    <header className="bg-white shadow-md">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="-ml-20 flex items-center space-x-2">
+          <img
+            src="/src/assets/images/medical-book.png"
+            alt="Logo"
+            className="w-10 h-10 object-cover"
+          />
+          <span className="text-xl font-bold text-blue-600">EduHealth</span>
+        </div>
+
+        <nav className="hidden md:flex space-x-6 ml-20">
+          {[
+            { to: "/parent", label: "Trang chủ" },
+            { to: "/parent/children", label: "Hồ sơ con" },
+            { to: "/parent/medications", label: "Gửi thuốc" },
+            { to: "/parent/vaccines", label: "Tiêm chủng" },
+            { to: "/parent/checkups", label: "Khám sức khỏe" },
+            // { to: "/parent/notifications", label: "Thông báo" },
+          ].map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"}
+              className={({ isActive }) =>
+                `${baseClass} ${isActive ? activeClass : inactiveClass}`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="flex items-center space-x-4 -mr-20">
+          <div className="ml-4">
+            <Noti />
+          </div>
+
+          <Dropdown overlay={menu} trigger={['hover']} arrow placement="bottomRight">
+            <div className="flex items-center space-x-2 cursor-pointer">
+              <div className="text-left">
+                <p className="font-bold">
+                  {userInfo ? JSON.parse(userInfo).username : 'Người dùng'}
+                </p>
+                <p className="text-sm">parent@gmail.com</p>
+              </div>
+              <Avatar style={{ backgroundColor: '#155dfc', width: 40, height: 40 }} icon={<UserOutlined />} />
+            </div>
+          </Dropdown>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;

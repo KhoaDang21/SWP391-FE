@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "../pages/Home/Home";
 import Layout from "../components/Layout/Layout";
+import ParentLayout from "../components/Layout/ParentLayout";
 import About from "../pages/Home/About";
 import News from "../pages/Home/News";
 import NewsDetail from "../pages/Home/NewsDetail";
@@ -12,6 +13,10 @@ import Nurse from "../pages/Nurse/Nurse";
 import Parent from "../pages/Parent/Parent";
 import Student from "../pages/Student/Student";
 import ProtectedRoute from "../roles/ProtectedRoute";
+import Children from "../pages/Parent/Children";
+import SendMedication from "../pages/Parent/SendMedication";
+import Vaccine from "../pages/Parent/Vaccine";
+import Checkup from "../pages/Parent/Checkup";
 
 export default function AppRoutes() {
     return (
@@ -52,10 +57,16 @@ export default function AppRoutes() {
                 path="/parent"
                 element={
                     <ProtectedRoute allowedRoles={["Parent"]}>
-                        <Parent />
+                        <ParentLayout />
                     </ProtectedRoute>
                 }
-            />
+            >
+                <Route index element={<Parent />} />
+                <Route path="children" element={<Children />} />
+                <Route path="medications" element={<SendMedication />} />
+                <Route path="vaccines" element={<Vaccine />} />
+                <Route path="checkups" element={<Checkup />} />
+            </Route>
             <Route
                 path="/student"
                 element={
