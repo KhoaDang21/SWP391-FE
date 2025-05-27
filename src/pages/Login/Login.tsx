@@ -125,8 +125,8 @@ const Login = () => {
                                 }}
                                 onBlur={validate}
                                 className={`mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.username
-                                        ? "border-red-500 focus:ring-red-500"
-                                        : "border-gray-300 focus:ring-blue-500"
+                                    ? "border-red-500 focus:ring-red-500"
+                                    : "border-gray-300 focus:ring-blue-500"
                                     }`}
                             />
                             {errors.username && <p className="mt-1 text-sm text-red-600">{errors.username}</p>}
@@ -144,11 +144,10 @@ const Login = () => {
                                         if (errors.password) setErrors({ ...errors, password: undefined });
                                     }}
                                     onBlur={validate}
-                                    className={`mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                        errors.password
+                                    className={`mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.password
                                             ? "border-red-500 focus:ring-red-500"
                                             : "border-gray-300 focus:ring-blue-500"
-                                    }`}
+                                        }`}
                                 />
                                 <button
                                     type="button"
@@ -171,8 +170,14 @@ const Login = () => {
                             type="submit"
                             className="w-full bg-[#2283dd] text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition duration-300"
                         >
-                            Đăng Nhập
+                            <div className=" text-white">Đăng Nhập</div>
                         </button>
+                        <p className="text-sm text-gray-600 text-center pt-4">
+
+                            <a href="/" className="text-blue-500 hover:underline text-sm">
+                                Quay lại trang chủ
+                            </a>
+                        </p>
                     </form>
                 </div>
             </div>
