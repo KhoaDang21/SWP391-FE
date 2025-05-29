@@ -30,6 +30,11 @@ import SendMedication from "../pages/Parent/SendMedication";
 import Vaccine from "../pages/Parent/Vaccine";
 import Checkup from "../pages/Parent/Checkup";
 
+//Student 
+import StudentLayout from "../components/Layout/StudentLayout";
+import HealthRecord from "../pages/Student/HealthRecord";
+import HealthCheckup from "../pages/Student/HealthCheckup";
+
 export default function AppRoutes() {
     return (
         <Routes>
@@ -94,14 +99,21 @@ export default function AppRoutes() {
                 <Route path="vaccines" element={<Vaccine />} />
                 <Route path="checkups" element={<Checkup />} />
             </Route>
+            {/* Student Routes */}
             <Route
                 path="/student"
                 element={
                     <ProtectedRoute allowedRoles={["Student"]}>
-                        <Student />
+                        <StudentLayout />
                     </ProtectedRoute>
                 }
-            />
+            >
+                <Route index element={<Student />} />
+                <Route path="healthrecord" element={<HealthRecord />} />
+                <Route path="healthcheckup" element={<HealthCheckup />} />
+            </Route>
+
+            {/* Catch-all */}
             <Route path="*" element={<Login />} />
         </Routes>
     );
