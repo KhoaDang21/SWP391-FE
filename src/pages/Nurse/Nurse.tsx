@@ -73,7 +73,7 @@ function Nurse() {
             {!isCollapsed && (
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-white" />
+                  <img src={medicalLogo} alt="Medical Logo" className="w-5 h-5 object-contain" />
                 </div>
                 <span className="ml-3 text-lg font-semibold">EduHealth</span>
               </div>
