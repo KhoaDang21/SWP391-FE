@@ -17,6 +17,7 @@ import ManageMedical from './Manage_medical';
 import ManageHealthcheck from './Manage_healthcheck';
 import MedicalEventManagement from './Manage_medical_events';
 import ManageVaccine from './Manage_vaccine';
+import medicalLogo from '../../assets/images/medical-book.png';
 
 function Nurse() {
   const [isCollapsed, setIsCollapsed] = useState(false);
