@@ -34,10 +34,10 @@ export interface LoginResponse {
 
 
 const Login = () => {
-    const [username, setUsername] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [showPassword, setShowPassword] = useState<boolean>(false);
-    const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
+    const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
     const [submitError, setSubmitError] = useState<string>("");
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -45,8 +45,8 @@ const Login = () => {
 
     const validate = () => {
         const newErrors: typeof errors = {};
-        if (!username.trim()) {
-            newErrors.username = "Vui lòng nhập tên đăng nhập.";
+        if (!email.trim()) {
+            newErrors.email = "Vui lòng nhập tên đăng nhập.";
         }
         if (!password) {
             newErrors.password = "Vui lòng nhập mật khẩu.";
@@ -63,7 +63,7 @@ const Login = () => {
 
         try {
             dispatch(toggleLoading(true));
-            const payload = { username, password };
+            const payload = { email, password };
             const res = await login(payload);
 
             await new Promise(resolve => setTimeout(resolve, 1500));
@@ -118,18 +118,18 @@ const Login = () => {
                             <input
                                 type="text"
                                 placeholder="Nhập tên đăng nhập"
-                                value={username}
+                                value={email}
                                 onChange={(e) => {
-                                    setUsername(e.target.value);
-                                    if (errors.username) setErrors({ ...errors, username: undefined });
+                                    setEmail(e.target.value);
+                                    if (errors.email) setErrors({ ...errors, email: undefined });
                                 }}
                                 onBlur={validate}
-                                className={`mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.username
+                                className={`mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.email
                                     ? "border-red-500 focus:ring-red-500"
                                     : "border-gray-300 focus:ring-blue-500"
                                     }`}
                             />
-                            {errors.username && <p className="mt-1 text-sm text-red-600">{errors.username}</p>}
+                            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                         </div>
 
                         <div>
@@ -145,8 +145,8 @@ const Login = () => {
                                     }}
                                     onBlur={validate}
                                     className={`mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.password
-                                            ? "border-red-500 focus:ring-red-500"
-                                            : "border-gray-300 focus:ring-blue-500"
+                                        ? "border-red-500 focus:ring-red-500"
+                                        : "border-gray-300 focus:ring-blue-500"
                                         }`}
                                 />
                                 <button
