@@ -13,6 +13,11 @@ import {
   ChevronRight,
   Home
 } from 'lucide-react';
+import ManageMedical from './Manage_medical';
+import ManageHealthcheck from './Manage_healthcheck';
+import MedicalEventManagement from './Manage_medical_events';
+import ManageVaccine from './Manage_vaccine';
+import medicalLogo from '../../assets/images/medical-book.png';
 
 function Nurse() {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -53,13 +58,6 @@ function Nurse() {
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
       hoverColor: 'hover:bg-purple-100'
-    },
-    {
-      title: 'Quản lý kho thuốc',
-      icon: Package,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      hoverColor: 'hover:bg-orange-100'
     }
   ];
 
@@ -76,7 +74,7 @@ function Nurse() {
             {!isCollapsed && (
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-white" />
+                  <img src={medicalLogo} alt="Medical Logo" className="w-5 h-5 object-contain" />
                 </div>
                 <span className="ml-3 text-lg font-semibold">EduHealth</span>
               </div>
@@ -174,14 +172,24 @@ function Nurse() {
         </header>
 
         <main className="p-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {menuItems[activeItem]?.title || 'Dashboard'}
-            </h2>
-            <p className="text-gray-600">
-              Nội dung cho phần {menuItems[activeItem]?.title?.toLowerCase() || 'dashboard'} sẽ được hiển thị ở đây.
-            </p>
-          </div>
+          {activeItem === 1 ? (
+            <ManageMedical />
+          ) : activeItem === 2 ? (
+            <ManageHealthcheck />
+          ) : activeItem === 3 ? (
+            <ManageVaccine />
+          ) : activeItem === 4 ? (
+            <MedicalEventManagement />
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                {menuItems[activeItem]?.title || 'Dashboard'}
+              </h2>
+              <p className="text-gray-600">
+                Nội dung cho phần {menuItems[activeItem]?.title?.toLowerCase() || 'dashboard'} sẽ được hiển thị ở đây.
+              </p>
+            </div>
+          )}
         </main>
       </div>
     </div>
