@@ -12,6 +12,7 @@ import {
     DownOutlined
 } from '@ant-design/icons';
 import logo from '../../assets/images/medical-book.png';
+import { logout } from '../../services/AuthServices';
 
 const menuConfig = [
     {
@@ -28,10 +29,8 @@ const menuConfig = [
         icon: <BarChartOutlined className="text-lg" />,
         label: 'Báo cáo & Thống kê',
         children: [
-            { key: 'health-events', label: 'Báo cáo sự kiện y tế', path: '/admin/reports/health-events' },
-            { key: 'medicine-reports', label: 'Báo cáo số lượng thuốc', path: '/admin/reports/medicine' },
+            { key: 'health-events', label: 'Sự kiện y tế', path: '/admin/reports/health-events' },
             { key: 'vaccination-reports', label: 'Báo cáo kiểm tra & tiêm chủng', path: '/admin/reports/vaccination' },
-            { key: 'health-analysis', label: 'Phân tích sức khỏe học đường', path: '/admin/reports/analysis' },
         ]
     },
     {
@@ -48,7 +47,6 @@ const menuConfig = [
         label: 'Biểu mẫu xác nhận',
         children: [
             { key: 'create-form', label: 'Tạo form xác nhận', path: '/admin/forms/create' },
-            { key: 'send-form', label: 'Gửi form xác nhận', path: '/admin/forms/send' },
         ]
     },
     {
@@ -81,7 +79,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
 
     const isActive = (path: string) => location.pathname.startsWith(path);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } catch (e) {
+        }
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         navigate('/login');
     };
 
@@ -132,7 +136,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
                 <div className="flex-1 overflow-y-auto px-2 py-2">
                     {menuConfig.map((group) => (
                         <div key={group.key} className="mb-2">
-                            {/* Chỉ hiển thị icon khi collapsed */}
                             {collapsed ? (
                                 <button
                                     type="button"
@@ -157,7 +160,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
                                             style={{ transform: openGroups.includes(group.key) ? 'rotate(0deg)' : 'rotate(-90deg)' }}
                                         />
                                     </button>
-                                    {/* Chỉ hiển thị submenu khi không collapsed */}
                                     {openGroups.includes(group.key) && !collapsed && (
                                         <div className="flex flex-col space-y-1">
                                             {group.children.map((item) => (
@@ -180,7 +182,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
                         </div>
                     ))}
                 </div>
-                {/* Logout - Chỉ hiển thị icon khi collapsed */}
+                {/* Logout */}
                 <div className="border-t border-white/20 bg-transparent p-2">
                     <button
                         onClick={handleLogout}
