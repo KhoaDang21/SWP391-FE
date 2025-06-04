@@ -7,11 +7,11 @@ import News from "../pages/Home/News";
 import NewsDetail from "../pages/Home/NewsDetail";
 import Contact from "../pages/Home/Contact";
 import Login from "../pages/Login/Login";
-import Nurse from "../pages/Nurse/Nurse";
+import Nurse from "../components/Sidebar/Nurse";
 import Parent from "../pages/Parent/Parent";
 import Student from "../pages/Student/Student";
 import ProtectedRoute from "../roles/ProtectedRoute";
-import AdminLayout from "../components/Admin/AdminLayout";
+import AdminLayout from "../components/Layout/AdminLayout";
 // Admin pages
 import HealthOverview from "../pages/Admin/Dashboard/HealthOverview";
 import ExportExcel from "../pages/Admin/Dashboard/ExportExcel";

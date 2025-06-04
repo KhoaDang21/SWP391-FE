@@ -84,6 +84,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
             await logout();
         } catch (e) {
         }
+        localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         navigate('/login');

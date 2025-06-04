@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Heart, 
-  Activity, 
-  Package, 
-  Menu, 
+import {
+  Heart,
+  Activity,
+  Package,
+  Menu,
   X,
   UserCircle,
   Bell,
@@ -13,10 +13,10 @@ import {
   ChevronRight,
   Home
 } from 'lucide-react';
-import ManageMedical from './Manage_medical';
-import ManageHealthcheck from './Manage_healthcheck';
-import MedicalEventManagement from './Manage_medical_events';
-import ManageVaccine from './Manage_vaccine';
+import Manage_medical from '../../pages/Nurse/Manage_medical';
+import Manage_healthcheck from '../../pages/Nurse/Manage_healthcheck';
+import MedicalEventManagement from '../../pages/Nurse/Manage_medical_events';
+import Manage_vaccine from '../../pages/Nurse/Manage_vaccine';
 import medicalLogo from '../../assets/images/medical-book.png';
 
 function Nurse() {
@@ -110,11 +110,10 @@ function Nurse() {
               <button
                 key={index}
                 onClick={() => setActiveItem(index)}
-                className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
-                  isActive 
-                    ? 'bg-white/20 backdrop-blur-sm text-white shadow-lg border border-white/30' 
+                className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${isActive
+                    ? 'bg-white/20 backdrop-blur-sm text-white shadow-lg border border-white/30'
                     : 'text-white/80 hover:bg-white/10 hover:text-white'
-                }`}
+                  }`}
               >
                 <Icon className={`${isCollapsed ? 'w-5 h-5' : 'w-4 h-4'} ${isActive ? 'text-white' : 'text-white/70 group-hover:text-white'}`} />
                 {!isCollapsed && (
@@ -173,11 +172,11 @@ function Nurse() {
 
         <main className="p-6">
           {activeItem === 1 ? (
-            <ManageMedical />
+            <Manage_medical />
           ) : activeItem === 2 ? (
-            <ManageHealthcheck />
+            <Manage_healthcheck />
           ) : activeItem === 3 ? (
-            <ManageVaccine />
+            <Manage_vaccine />
           ) : activeItem === 4 ? (
             <MedicalEventManagement />
           ) : (

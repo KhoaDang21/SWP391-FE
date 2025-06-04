@@ -64,13 +64,12 @@ const Manage_healthcheck: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Quản lý khám sức khỏe</h1>
-        <button 
+        <button
           onClick={handleEditSave}
-          className={`px-6 py-2.5 rounded-lg transition-all duration-200 shadow-lg ${
-            isEditing 
-              ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:shadow-green-500/30' 
+          className={`px-6 py-2.5 rounded-lg transition-all duration-200 shadow-lg ${isEditing
+              ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:shadow-green-500/30'
               : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-blue-500/30'
-          } text-white`}
+            } text-white`}
         >
           {isEditing ? 'Lưu' : 'Chỉnh sửa'}
         </button>
@@ -80,12 +79,12 @@ const Manage_healthcheck: React.FC = () => {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             <label className="font-medium text-gray-700">Năm học:</label>
-            <select 
+            <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
               className="min-w-[150px] border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             >
-              {schoolYears.map(year => ( 
+              {schoolYears.map(year => (
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
@@ -93,21 +92,19 @@ const Manage_healthcheck: React.FC = () => {
 
           <div className="flex rounded-lg overflow-hidden border border-gray-300 shadow-sm">
             <button
-              className={`px-6 py-2.5 font-medium transition-all duration-200 ${
-                activePhase === 1 
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
+              className={`px-6 py-2.5 font-medium transition-all duration-200 ${activePhase === 1
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+                }`}
               onClick={() => setActivePhase(1)}
             >
               Đợt 1
             </button>
             <button
-              className={`px-6 py-2.5 font-medium transition-all duration-200 ${
-                activePhase === 2 
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
+              className={`px-6 py-2.5 font-medium transition-all duration-200 ${activePhase === 2
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+                }`}
               onClick={() => setActivePhase(2)}
             >
               Đợt 2
@@ -186,7 +183,7 @@ const Manage_healthcheck: React.FC = () => {
                 </td>
                 <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
                   {isEditing ? (
-                    <select 
+                    <select
                       defaultValue={record.dental}
                       className="w-28 border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                     >
@@ -197,7 +194,7 @@ const Manage_healthcheck: React.FC = () => {
                 </td>
                 <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
                   {isEditing ? (
-                    <select 
+                    <select
                       defaultValue={record.ent}
                       className="border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
@@ -208,7 +205,7 @@ const Manage_healthcheck: React.FC = () => {
                 </td>
                 <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
                   {isEditing ? (
-                    <select 
+                    <select
                       defaultValue={record.skin}
                       className="border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     >
@@ -218,11 +215,10 @@ const Manage_healthcheck: React.FC = () => {
                   ) : record.skin}
                 </td>
                 <td className="px-3 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    record.status === 'Đã khám' 
-                      ? 'bg-green-100 text-green-800' 
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${record.status === 'Đã khám'
+                      ? 'bg-green-100 text-green-800'
                       : 'bg-yellow-100 text-yellow-800'
-                  }`}>
+                    }`}>
                     {record.status}
                   </span>
                 </td>
@@ -249,14 +245,14 @@ const Manage_healthcheck: React.FC = () => {
           <div className="bg-white rounded-xl p-8 w-full max-w-2xl mx-4 shadow-2xl transform transition-all">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-gray-900">Kết luận khám sức khỏe</h3>
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
                 ✕
               </button>
             </div>
-            
+
             <div className="mb-6">
               <div className="mb-4">
                 <span className="font-medium text-gray-700">Học sinh: </span>
