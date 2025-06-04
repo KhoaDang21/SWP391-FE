@@ -24,28 +24,40 @@ export async function getBlogById(id: number): Promise<Blog> {
   return data.data;
 }
 
-export async function createBlog(blog: Omit<Blog, 'id' | 'createdAt' | 'updatedAt'>, token: string): Promise<Blog> {
+export async function createBlog(
+  blog: Omit<Blog, 'id' | 'createdAt' | 'updatedAt'>,
+  token: string,
+  imageFile?: File
+): Promise<Blog> {
+  const formData = new FormData();
+  formData.append('title', blog.title);
+  formData.append('content', blog.content);
+  formData.append('author', blog.author);
+  if (imageFile) formData.append('image', imageFile);
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify(blog)
+    body: formData
   });
   if (!res.ok) throw new Error('Lỗi tạo blog');
   const data = await res.json();
   return data.data;
 }
 
-export async function updateBlog(id: number, blog: Partial<Blog>, token: string): Promise<Blog> {
+export async function updateBlog(id: number, blog: Partial<Blog>, token: string, imageFile?: File): Promise<Blog> {
+  const formData = new FormData();
+  if (blog.title) formData.append('title', blog.title);
+  if (blog.content) formData.append('content', blog.content);
+  if (blog.author) formData.append('author', blog.author);
+  if (imageFile) formData.append('image', imageFile);
   const res = await fetch(`${API_URL}/${id}`, {
     method: 'PUT',
     headers: {
-      'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify(blog)
+    body: formData
   });
   if (!res.ok) throw new Error('Lỗi cập nhật blog');
   const data = await res.json();

@@ -12,8 +12,7 @@ const ContentManagement: React.FC = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
     const [form] = Form.useForm();
-    const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
-    const [uploading, setUploading] = useState(false);
+    const [imageFile, setImageFile] = useState<File | undefined>(undefined);
     const [submitting, setSubmitting] = useState(false);
     const [submitAttempted, setSubmitAttempted] = useState(false);
 
@@ -35,14 +34,14 @@ const ContentManagement: React.FC = () => {
 
     const handleCreate = () => {
         setEditingBlog(null);
-        setImageUrl(undefined);
+        setImageFile(undefined);
         setSubmitAttempted(false);
         setModalOpen(true);
     };
 
     const handleEdit = (blog: Blog) => {
         setEditingBlog(blog);
-        setImageUrl(blog.image || undefined);
+        setImageFile(undefined);
         setSubmitAttempted(false);
         setModalOpen(true);
     };
@@ -68,35 +67,28 @@ const ContentManagement: React.FC = () => {
 
     const handleModalOk = async () => {
         setSubmitAttempted(true);
-
         try {
             const values = await form.validateFields();
-
-            if (!imageUrl) {
+            if (!imageFile && !editingBlog) {
                 message.error('Vui lòng upload ảnh');
                 return;
             }
-
             const token = localStorage.getItem('accessToken');
             if (!token) {
                 message.error('Bạn cần đăng nhập để thực hiện thao tác này');
                 return;
             }
-
             setSubmitting(true);
-            const payload = { ...values, image: imageUrl };
-
             if (editingBlog) {
-                await updateBlog(editingBlog.id!, payload, token);
+                await updateBlog(editingBlog.id!, { ...values }, token, imageFile);
                 message.success('Đã cập nhật blog');
             } else {
-                await createBlog(payload, token);
+                await createBlog({ ...values }, token, imageFile);
                 message.success('Đã tạo blog');
             }
-
             setModalOpen(false);
             form.resetFields();
-            setImageUrl(undefined);
+            setImageFile(undefined);
             fetchBlogs();
         } catch (err: any) {
             console.error('Error:', err);
@@ -195,7 +187,7 @@ const ContentManagement: React.FC = () => {
                 onOk={handleModalOk}
                 onCancel={() => {
                     setModalOpen(false);
-                    setImageUrl(undefined);
+                    setImageFile(undefined);
                 }}
                 okText={editingBlog ? 'Cập nhật' : 'Tạo mới'}
                 cancelText="Hủy"
@@ -255,8 +247,8 @@ const ContentManagement: React.FC = () => {
                     <Form.Item
                         label="Ảnh minh họa"
                         required
-                        validateStatus={submitAttempted && !imageUrl ? 'error' : ''}
-                        help={submitAttempted && !imageUrl ? 'Vui lòng upload ảnh minh họa' : ''}
+                        validateStatus={submitAttempted && !imageFile && !editingBlog ? 'error' : ''}
+                        help={submitAttempted && !imageFile && !editingBlog ? 'Vui lòng upload ảnh minh họa' : ''}
                     >
                         <div
                             style={{
@@ -271,40 +263,37 @@ const ContentManagement: React.FC = () => {
                         >
                             <input
                                 type="file"
-                                accept="image/*"  // Chấp nhận tất cả loại ảnh
+                                accept="image/*"
                                 style={{ display: 'none' }}
                                 id="upload-input"
-                                onChange={async (e) => {
+                                onChange={(e) => {
                                     const file = e.target.files && e.target.files[0];
                                     if (!file) return;
-
-                                    // Bỏ kiểm tra loại file và kích thước
-                                    setUploading(true);
-                                    const formData = new FormData();
-                                    formData.append('image', file);
-                                    try {
-                                        const res = await fetch('http://localhost:3333/api/v1/upload', {
-                                            method: 'POST',
-                                            body: formData,
-                                        });
-                                        if (!res.ok) throw new Error('Upload ảnh thất bại');
-                                        const data = await res.json();
-                                        setImageUrl(data.url);
-                                        message.success('Upload ảnh thành công');
-                                    } catch (err: any) {
-                                        message.error(err.message || 'Lỗi upload ảnh');
-                                    } finally {
-                                        setUploading(false);
-                                    }
+                                    setImageFile(file);
                                 }}
-                                disabled={uploading}
                             />
-
                             <label htmlFor="upload-input" style={{ cursor: 'pointer' }}>
-                                {imageUrl ? (
+                                {imageFile ? (
                                     <div>
                                         <img
-                                            src={imageUrl}
+                                            src={URL.createObjectURL(imageFile)}
+                                            alt="blog cover"
+                                            style={{
+                                                width: '100%',
+                                                maxHeight: '300px',
+                                                objectFit: 'contain',
+                                                marginBottom: '16px',
+                                                borderRadius: '4px'
+                                            }}
+                                        />
+                                        <Button type="primary" onClick={() => document.getElementById('upload-input')?.click()}>
+                                            Thay đổi ảnh
+                                        </Button>
+                                    </div>
+                                ) : editingBlog && editingBlog.image ? (
+                                    <div>
+                                        <img
+                                            src={editingBlog.image}
                                             alt="blog cover"
                                             style={{
                                                 width: '100%',
@@ -322,16 +311,10 @@ const ContentManagement: React.FC = () => {
                                     <div>
                                         <PlusOutlined style={{ fontSize: '24px', color: '#1890ff', marginBottom: '8px' }} />
                                         <div style={{ marginTop: '8px' }}>
-                                            {uploading ? (
-                                                <span>Đang tải lên...</span>
-                                            ) : (
-                                                <>
-                                                    <div>Nhấn để tải ảnh lên</div>
-                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                        Hỗ trợ tất cả định dạng ảnh
-                                                    </Text>
-                                                </>
-                                            )}
+                                            <div>Nhấn để tải ảnh lên</div>
+                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                Hỗ trợ tất cả định dạng ảnh
+                                            </Text>
                                         </div>
                                     </div>
                                 )}
