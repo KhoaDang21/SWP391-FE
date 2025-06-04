@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Input, Space, message, Tooltip } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
+import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { User, getAllUsers, getRoleName } from '../../../services/AccountService';
 
 const UserManagement: React.FC = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
@@ -121,23 +123,25 @@ const UserManagement: React.FC = () => {
             },
         },
         {
-            title: 'Hành động',
-            key: 'action',
+            title: 'Thao tác',
+            key: 'actions',
             width: 120,
-            render: () => (
-                <Space size="middle">
-                    <Tooltip title="Chỉnh sửa">
-                        <Button 
-                            type="text" 
-                            icon={<EditOutlined />} 
+            render: (_, record) => (
+                <Space>
+                    <Tooltip title="Xem chi tiết">
+                        <Button
+                            type="text"
+                            icon={<EyeOutlined />}
+                            onClick={() => navigate(`/admin/management/users/${record.id}`)}
                             className="text-blue-500 hover:text-blue-600"
                         />
                     </Tooltip>
                     <Tooltip title="Xóa">
-                        <Button 
-                            type="text" 
-                            icon={<DeleteOutlined />} 
+                        <Button
+                            type="text"
+                            icon={<DeleteOutlined />}
                             className="text-red-500 hover:text-red-600"
+                            onClick={() => message.info('Tính năng đang được phát triển')}
                         />
                     </Tooltip>
                 </Space>

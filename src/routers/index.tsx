@@ -20,6 +20,7 @@ import VaccinationReports from "../pages/Admin/Reports/VaccinationReports";
 import StudentHealthRecords from "../pages/Admin/Students/HealthRecords";
 import CreateForm from "../pages/Admin/Forms/CreateForm";
 import UserManagement from "../pages/Admin/Management/UserManagement";
+import UserDetail from "../pages/Admin/Management/UserDetail";
 import ContentManagement from "../pages/Admin/Management/ContentManagement";
 import Children from "../pages/Parent/Children";
 import SendMedication from "../pages/Parent/SendMedication";
@@ -66,6 +67,7 @@ export default function AppRoutes() {
                 </Route>
                 <Route path="management">
                     <Route path="users" element={<UserManagement />} />
+                    <Route path="users/:id" element={<UserDetail />} />
                     <Route path="content" element={<ContentManagement />} />
                 </Route>
             </Route>
