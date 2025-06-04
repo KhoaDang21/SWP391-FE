@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Button, Input, Space, message, Tooltip } from 'antd';
+import { Card, Table, Tag, Button, Input, Space, message, Tooltip, Popconfirm } from 'antd';
 import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { User, getAllUsers, getRoleName } from '../../../services/AccountService';
+import { User, getAllUsers, getRoleName, deleteUser } from '../../../services/AccountService';
 
 const UserManagement: React.FC = () => {
     const navigate = useNavigate();
@@ -36,13 +36,30 @@ const UserManagement: React.FC = () => {
 
     const handleSearch = (value: string) => {
         setSearchText(value);
-        const filtered = users.filter(user => 
+        const filtered = users.filter(user =>
             user.username.toLowerCase().includes(value.toLowerCase()) ||
             user.fullname.toLowerCase().includes(value.toLowerCase()) ||
             user.email.toLowerCase().includes(value.toLowerCase()) ||
             user.phoneNumber.includes(value)
         );
         setFilteredUsers(filtered);
+    };
+
+    const handleDelete = async (userId: number) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                message.error('Vui lòng đăng nhập để tiếp tục');
+                return;
+            }
+
+            await deleteUser(userId, token);
+            message.success('Xóa người dùng thành công');
+
+            fetchUsers();
+        } catch (error: any) {
+            message.error(error.message || 'Lỗi khi xóa người dùng');
+        }
     };
 
     const getRoleColor = (roleId: number): string => {
@@ -54,7 +71,7 @@ const UserManagement: React.FC = () => {
             case 3:
                 return 'blue';
             case 4:
-                return 'purple'     
+                return 'purple'
             default:
                 return 'default';
         }
@@ -113,8 +130,8 @@ const UserManagement: React.FC = () => {
                 } as React.CSSProperties;
 
                 return (
-                    <Tag 
-                        color={getRoleColor(roleId)} 
+                    <Tag
+                        color={getRoleColor(roleId)}
                         style={roleStyles}
                     >
                         {getRoleName(roleId)}
@@ -131,22 +148,29 @@ const UserManagement: React.FC = () => {
                     <Tooltip title="Xem chi tiết">
                         <Button
                             type="text"
-                            icon={<EyeOutlined />}
+                            icon={<EyeOutlined className="text-blue-500 hover:text-blue-600" />}
                             onClick={() => navigate(`/admin/management/users/${record.id}`)}
-                            className="text-blue-500 hover:text-blue-600"
                         />
                     </Tooltip>
-                    <Tooltip title="Xóa">
-                        <Button
-                            type="text"
-                            icon={<DeleteOutlined />}
-                            className="text-red-500 hover:text-red-600"
-                            onClick={() => message.info('Tính năng đang được phát triển')}
-                        />
-                    </Tooltip>
+
+                    <Popconfirm
+                        title="Bạn chắc chắn muốn xóa người dùng này?"
+                        onConfirm={() => handleDelete(record.id)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                        placement="topRight"
+                    >
+                        <Tooltip title="Xóa">
+                            <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                            />
+                        </Tooltip>
+                    </Popconfirm>
                 </Space>
             ),
-        },
+        }
     ];
 
     return (
