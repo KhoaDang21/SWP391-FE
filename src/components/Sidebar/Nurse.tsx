@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Heart,
   Activity,
-  Package,
   Menu,
-  X,
   UserCircle,
   Bell,
   Settings,
