@@ -1,8 +1,9 @@
 import { UserOutlined } from "@ant-design/icons";
-import { Avatar, Dropdown, Menu, message } from "antd";
+import { Avatar, Dropdown, Menu } from "antd";
 import { NavLink, useNavigate } from "react-router-dom";
 import Noti from "../../pages/Noti/Noti";
 import { logout } from "../../services/AuthServices"; 
+import { notificationService } from '../../services/NotificationService';
 
 const Header = () => {
   const baseClass = "font-medium px-2 py-1 transition";
@@ -17,11 +18,11 @@ const Header = () => {
       localStorage.removeItem("user");
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
-      message.success("Đăng xuất thành công");
-      navigate("/login");
-    } catch (error: any) {
-      message.error(error.message || "Có lỗi khi đăng xuất");
-    }
+       notificationService.success('Đăng xuất thành công');
+                  navigate('/login');
+              } catch (error: any) {
+                  notificationService.error(error.message || 'Có lỗi xảy ra khi đăng xuất');
+              }
   };
 
   const menu = (
