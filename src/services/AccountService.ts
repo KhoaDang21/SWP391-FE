@@ -17,6 +17,14 @@ export interface UpdateUserDto {
     phoneNumber: string;
 }
 
+export interface RegisterUserDto {
+    fullname: string;
+    username: string;
+    email: string;
+    password: string;
+    phoneNumber: string;
+}
+
 const API_URL = 'http://localhost:3333/api/v1';
 
 export async function getAllUsers(token: string): Promise<User[]> {
@@ -101,4 +109,23 @@ export async function deleteUser(id: number, token: string): Promise<void> {
         const error = await res.json();
         throw new Error(error.message || 'Lỗi khi xóa người dùng');
     }
+}
+
+export async function registerUser(registerData: RegisterUserDto, token: string): Promise<User> {
+    const res = await fetch(`${API_URL}/users/register`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(registerData)
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Lỗi khi đăng ký người dùng');
+    }
+
+    const data = await res.json();
+    return data;
 }
