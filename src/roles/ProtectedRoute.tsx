@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 
-type Role = "Admin" | "Manager" | "Nurse" | "Parent" | "Student";
+type Role = "Admin" | "Manager" | "Nurse" | "Guardian" | "Student";
 
 interface User {
     username: string;

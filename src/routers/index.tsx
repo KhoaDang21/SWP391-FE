@@ -29,6 +29,7 @@ import Children from "../pages/Parent/Children";
 import SendMedication from "../pages/Parent/SendMedication";
 import Vaccine from "../pages/Parent/Vaccine";
 import Checkup from "../pages/Parent/Checkup";
+import Event from "../pages/Parent/Event";
 
 //Student 
 import StudentLayout from "../components/Layout/StudentLayout";
@@ -86,9 +87,9 @@ export default function AppRoutes() {
                 }
             />
             <Route
-                path="/parent"
+                path="/guardian"
                 element={
-                    <ProtectedRoute allowedRoles={["Parent"]}>
+                    <ProtectedRoute allowedRoles={["Guardian"]}>
                         <ParentLayout />
                     </ProtectedRoute>
                 }
@@ -98,6 +99,7 @@ export default function AppRoutes() {
                 <Route path="medications" element={<SendMedication />} />
                 <Route path="vaccines" element={<Vaccine />} />
                 <Route path="checkups" element={<Checkup />} />
+                <Route path="events" element={<Event />} />
             </Route>
             {/* Student Routes */}
             <Route
