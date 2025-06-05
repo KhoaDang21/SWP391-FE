@@ -17,8 +17,8 @@ const getRedirectPath = (role: string) => {
             return "/manager";
         case "Nurse":
             return "/nurse";
-        case "Parent":
-            return "/parent";
+        case "Guardian":
+            return "/guardian";
         case "Student":
             return "/student";
         default:
