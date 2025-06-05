@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Button, message, Skeleton, Tag, Modal, Form, Input } from 'antd';
+import { Card, Descriptions, Button, Skeleton, Tag, Modal, Form, Input } from 'antd';
 import { ArrowLeftOutlined, EditOutlined, UserOutlined, PhoneOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
 import { User, getUserById, getRoleName, updateUser, UpdateUserDto } from '../../../services/AccountService';
+import { notificationService } from '../../../services/NotificationService';
 
 const UserDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -17,7 +18,7 @@ const UserDetail: React.FC = () => {
         try {
             const token = localStorage.getItem('accessToken');
             if (!token) {
-                message.error('Vui lòng đăng nhập để tiếp tục');
+                notificationService.error('Vui lòng đăng nhập để tiếp tục');
                 return;
             }
             if (!id) return;
@@ -31,7 +32,7 @@ const UserDetail: React.FC = () => {
                 phoneNumber: data.phoneNumber,
             });
         } catch (error: any) {
-            message.error(error.message || 'Có lỗi xảy ra khi tải thông tin người dùng');
+            notificationService.error(error.message || 'Có lỗi xảy ra khi tải thông tin người dùng');
         } finally {
             setLoading(false);
         }
@@ -63,18 +64,18 @@ const UserDetail: React.FC = () => {
             setUpdateLoading(true);
             const token = localStorage.getItem('accessToken');
             if (!token) {
-                message.error('Vui lòng đăng nhập để tiếp tục');
+                notificationService.error('Vui lòng đăng nhập để tiếp tục');
                 return;
             }
             if (!id) return;
 
             await updateUser(parseInt(id), values, token);
-            message.success('Cập nhật thông tin thành công');
+            notificationService.success('Cập nhật người dùng thành công');
             setIsEditModalVisible(false);
             // Refresh data after successful update
             await fetchUserDetail();
         } catch (error: any) {
-            message.error(error.message || 'Có lỗi xảy ra khi cập nhật thông tin');
+            notificationService.error(error.message || 'Có lỗi xảy ra khi cập nhật thông tin');
         } finally {
             setUpdateLoading(false);
         }

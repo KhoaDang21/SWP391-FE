@@ -3,6 +3,8 @@ import { BrowserRouter as Router } from "react-router-dom";
 import AppRoutes from "./routers";
 import { useSelector } from 'react-redux';
 import Loading from './app/redux/loading/loading';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Định nghĩa RootState bên ngoài component
 interface RootState {
@@ -21,6 +23,19 @@ function App() {
       <Router>
         <AppRoutes />
       </Router>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </>
   );
 }

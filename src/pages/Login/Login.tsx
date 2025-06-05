@@ -7,6 +7,7 @@ import logo from "../../assets/images/medical-book.png";
 import { useDispatch } from 'react-redux';
 import { toggleLoading } from '../../app/redux/loading.slice';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import { notificationService } from "../../services/NotificationService";
 
 const getRedirectPath = (role: string) => {
     switch (role) {
@@ -77,11 +78,27 @@ const Login = () => {
             localStorage.setItem("accessToken", res.accessToken);
             localStorage.setItem("refreshToken", res.refreshToken);
 
-            // Chuyển hướng theo role
+            // Hiển thị thông báo thành công dựa trên role
             const role = userData.role;
+            notificationService.success(`Đăng nhập thành công `);
+
+            // Chuyển hướng theo role
             navigate(getRedirectPath(role), { replace: true });
         } catch (err: any) {
-            setSubmitError(err.response?.data?.message || err.message || "Đã có lỗi xảy ra");
+            const errorMessage = err.response?.data?.message || err.message;
+            
+            // Xử lý các loại lỗi cụ thể
+            if (errorMessage.includes('credentials')) {
+                notificationService.error('Tên đăng nhập hoặc mật khẩu không chính xác');
+            } else if (errorMessage.includes('locked')) {
+                notificationService.error('Tài khoản của bạn đã bị khóa');
+            } else if (errorMessage.includes('not found')) {
+                notificationService.error('Tài khoản không tồn tại');
+            } else {
+                notificationService.error(errorMessage || 'Đã có lỗi xảy ra khi đăng nhập');
+            }
+            
+            setSubmitError(errorMessage || "Đã có lỗi xảy ra");
         } finally {
             dispatch(toggleLoading(false));
         }

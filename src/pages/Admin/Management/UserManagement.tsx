@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Button, Input, Space, message, Tooltip, Popconfirm, Modal, Form } from 'antd';
-import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Button, Input, Space, Tooltip, Popconfirm, Modal, Form } from 'antd';
+import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined, IdcardOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto } from '../../../services/AccountService';
+import { notificationService } from '../../../services/NotificationService';
 
 const UserManagement: React.FC = () => {
     const navigate = useNavigate();
@@ -20,14 +21,14 @@ const UserManagement: React.FC = () => {
         try {
             const token = localStorage.getItem('accessToken');
             if (!token) {
-                message.error('Vui lòng đăng nhập để tiếp tục');
+                notificationService.error('Vui lòng đăng nhập để tiếp tục');
                 return;
             }
             const data = await getAllUsers(token);
             setUsers(data);
             setFilteredUsers(data);
         } catch (error: any) {
-            message.error(error.message || 'Có lỗi xảy ra khi tải danh sách người dùng');
+            notificationService.error(error.message || 'Có lỗi xảy ra khi tải danh sách người dùng');
         } finally {
             setLoading(false);
         }
@@ -52,16 +53,15 @@ const UserManagement: React.FC = () => {
         try {
             const token = localStorage.getItem('accessToken');
             if (!token) {
-                message.error('Vui lòng đăng nhập để tiếp tục');
+                notificationService.error('Vui lòng đăng nhập để tiếp tục');
                 return;
             }
 
             await deleteUser(userId, token);
-            message.success('Xóa người dùng thành công');
-
+            notificationService.success('Xóa người dùng thành công');
             fetchUsers();
         } catch (error: any) {
-            message.error(error.message || 'Lỗi khi xóa người dùng');
+            notificationService.error(error.message || 'Có lỗi xảy ra khi xóa người dùng');
         }
     };
 
@@ -181,17 +181,17 @@ const UserManagement: React.FC = () => {
             setRegisterLoading(true);
             const token = localStorage.getItem('accessToken');
             if (!token) {
-                message.error('Vui lòng đăng nhập để tiếp tục');
+                notificationService.error('Vui lòng đăng nhập để tiếp tục');
                 return;
             }
 
             await registerUser(values, token);
-            message.success('Đăng ký người dùng thành công');
+            notificationService.success('Đăng ký người dùng thành công');
             setIsRegisterModalVisible(false);
             registerForm.resetFields();
             fetchUsers();
         } catch (error: any) {
-            message.error(error.message || 'Có lỗi xảy ra khi đăng ký người dùng');
+            notificationService.error(error.message || 'Có lỗi xảy ra khi đăng ký người dùng');
         } finally {
             setRegisterLoading(false);
         }
@@ -258,7 +258,7 @@ const UserManagement: React.FC = () => {
                             { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' }
                         ]}
                     >
-                        <Input prefix={<UserOutlined />} />
+                        <Input prefix={<IdcardOutlined />} />
                     </Form.Item>
 
                     <Form.Item
