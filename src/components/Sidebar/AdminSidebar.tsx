@@ -13,6 +13,8 @@ import {
 } from '@ant-design/icons';
 import logo from '../../assets/images/medical-book.png';
 import { logout } from '../../services/AuthServices';
+import { notificationService } from '../../services/NotificationService';
+
 
 const menuConfig = [
     {
@@ -82,12 +84,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
     const handleLogout = async () => {
         try {
             await logout();
-        } catch (e) {
+            localStorage.removeItem('user');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            notificationService.success('Đăng xuất thành công');
+            navigate('/login');
+        } catch (error: any) {
+            notificationService.error(error.message || 'Có lỗi xảy ra khi đăng xuất');
         }
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        navigate('/login');
     };
 
     const handleToggleGroup = (key: string) => {
