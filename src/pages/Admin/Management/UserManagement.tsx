@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Button, Input, Space, message, Tooltip, Popconfirm } from 'antd';
-import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Button, Input, Space, message, Tooltip, Popconfirm, Modal, Form } from 'antd';
+import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { User, getAllUsers, getRoleName, deleteUser } from '../../../services/AccountService';
+import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto } from '../../../services/AccountService';
 
 const UserManagement: React.FC = () => {
     const navigate = useNavigate();
@@ -11,6 +11,9 @@ const UserManagement: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+    const [isRegisterModalVisible, setIsRegisterModalVisible] = useState(false);
+    const [registerForm] = Form.useForm();
+    const [registerLoading, setRegisterLoading] = useState(false);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -173,6 +176,27 @@ const UserManagement: React.FC = () => {
         }
     ];
 
+    const handleRegister = async (values: RegisterUserDto) => {
+        try {
+            setRegisterLoading(true);
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                message.error('Vui lòng đăng nhập để tiếp tục');
+                return;
+            }
+
+            await registerUser(values, token);
+            message.success('Đăng ký người dùng thành công');
+            setIsRegisterModalVisible(false);
+            registerForm.resetFields();
+            fetchUsers();
+        } catch (error: any) {
+            message.error(error.message || 'Có lỗi xảy ra khi đăng ký người dùng');
+        } finally {
+            setRegisterLoading(false);
+        }
+    };
+
     return (
         <Card className="shadow-md">
             <div className="mb-6 flex justify-between items-center">
@@ -189,7 +213,11 @@ const UserManagement: React.FC = () => {
                         onChange={(e) => handleSearch(e.target.value)}
                         allowClear
                     />
-                    <Button type="primary" className="bg-blue-500">
+                    <Button 
+                        type="primary" 
+                        onClick={() => setIsRegisterModalVisible(true)}
+                        style={{ backgroundColor: '#1890ff' }}
+                    >
                         Thêm người dùng
                     </Button>
                 </Space>
@@ -207,6 +235,101 @@ const UserManagement: React.FC = () => {
                 }}
                 className="border border-gray-200 rounded-lg"
             />
+
+            <Modal
+                title="Thêm người dùng mới"
+                open={isRegisterModalVisible}
+                onCancel={() => {
+                    setIsRegisterModalVisible(false);
+                    registerForm.resetFields();
+                }}
+                footer={null}
+            >
+                <Form
+                    form={registerForm}
+                    layout="vertical"
+                    onFinish={handleRegister}
+                >
+                    <Form.Item
+                        name="username"
+                        label="Tên đăng nhập"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập tên đăng nhập' },
+                            { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' }
+                        ]}
+                    >
+                        <Input prefix={<UserOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="fullname"
+                        label="Họ và tên"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập họ và tên' },
+                            { min: 3, message: 'Họ và tên phải có ít nhất 3 ký tự' }
+                        ]}
+                    >
+                        <Input prefix={<UserOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="email"
+                        label="Email"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập email' },
+                            { type: 'email', message: 'Email không hợp lệ' }
+                        ]}
+                    >
+                        <Input prefix={<MailOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="password"
+                        label="Mật khẩu"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập mật khẩu' },
+                            { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
+                            {
+                                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
+                                message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt'
+                            }
+                        ]}
+                    >
+                        <Input.Password prefix={<LockOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="phoneNumber"
+                        label="Số điện thoại"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập số điện thoại' },
+                            { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ' }
+                        ]}
+                    >
+                        <Input prefix={<PhoneOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item className="mb-0 text-right">
+                        <Button 
+                            onClick={() => {
+                                setIsRegisterModalVisible(false);
+                                registerForm.resetFields();
+                            }} 
+                            style={{ marginRight: 8 }}
+                        >
+                            Hủy
+                        </Button>
+                        <Button 
+                            type="primary" 
+                            htmlType="submit" 
+                            loading={registerLoading}
+                            style={{ backgroundColor: '#1890ff' }}
+                        >
+                            Thêm người dùng
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </Modal>
         </Card>
     );
 };
