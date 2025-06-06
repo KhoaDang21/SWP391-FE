@@ -200,8 +200,7 @@ const UserManagement: React.FC = () => {
     return (
         <Card className="shadow-md">
             <div className="mb-6 flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <UserOutlined />
+                <h1 className="text-3xl font-bold text-blue-600 mb-6">
                     Quản lý người dùng
                 </h1>
                 <Space>
@@ -213,8 +212,8 @@ const UserManagement: React.FC = () => {
                         onChange={(e) => handleSearch(e.target.value)}
                         allowClear
                     />
-                    <Button 
-                        type="primary" 
+                    <Button
+                        type="primary"
                         onClick={() => setIsRegisterModalVisible(true)}
                         style={{ backgroundColor: '#1890ff' }}
                     >
@@ -310,18 +309,18 @@ const UserManagement: React.FC = () => {
                     </Form.Item>
 
                     <Form.Item className="mb-0 text-right">
-                        <Button 
+                        <Button
                             onClick={() => {
                                 setIsRegisterModalVisible(false);
                                 registerForm.resetFields();
-                            }} 
+                            }}
                             style={{ marginRight: 8 }}
                         >
                             Hủy
                         </Button>
-                        <Button 
-                            type="primary" 
-                            htmlType="submit" 
+                        <Button
+                            type="primary"
+                            htmlType="submit"
                             loading={registerLoading}
                             style={{ backgroundColor: '#1890ff' }}
                         >
