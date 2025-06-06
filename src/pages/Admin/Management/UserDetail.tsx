@@ -123,9 +123,7 @@ const UserDetail: React.FC = () => {
                         >
                             Quay lại
                         </Button>
-                        <h1 className="text-2xl font-bold text-gray-800 m-0">
-                            Chi tiết người dùng
-                        </h1>
+                        <h1 className="text-2xl font-bold text-blue-600 mb-6">Chi tiết người dùng</h1>
                     </div>
                     <div className="flex gap-2">
                         <Button

@@ -162,7 +162,9 @@ const ContentManagement: React.FC = () => {
             styles={{ body: { padding: 24 } }}
         >
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-                <Title level={3} style={{ margin: 0 }}>Quản lý Blog</Title>
+                <h1 className="text-3xl font-bold text-blue-600 mb-6">
+                    Quản lý Blog
+                </h1>
                 <Button
                     type="primary"
                     icon={<PlusOutlined />}
