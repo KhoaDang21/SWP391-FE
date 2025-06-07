@@ -33,6 +33,11 @@ import StudentLayout from "../components/Layout/StudentLayout";
 import HealthRecord from "../pages/Student/HealthRecord";
 import HealthCheckup from "../pages/Student/HealthCheckup";
 
+import Manage_medical from '../pages/Nurse/Manage_medical';
+import Manage_healthcheck from '../pages/Nurse/Manage_healthcheck';
+import Manage_vaccine from '../pages/Nurse/Manage_vaccine';
+import Manage_medical_events from '../pages/Nurse/Manage_medical_events';
+
 export default function AppRoutes() {
     return (
         <Routes>
@@ -79,7 +84,12 @@ export default function AppRoutes() {
                         <Nurse />
                     </ProtectedRoute>
                 }
-            />
+            >
+                <Route path="medical" element={<Manage_medical />} />
+                <Route path="healthcheck" element={<Manage_healthcheck />} />
+                <Route path="vaccine" element={<Manage_vaccine />} />
+                <Route path="medical-events" element={<Manage_medical_events />} />
+            </Route>
             <Route
                 path="/guardian"
                 element={
