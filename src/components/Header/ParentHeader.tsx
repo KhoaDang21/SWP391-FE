@@ -36,17 +36,18 @@ const Header = () => {
 
         <nav className="hidden md:flex space-x-6 ml-20">
           {[
-            { to: "/parent", label: "Trang chủ" },
-            { to: "/parent/children", label: "Hồ sơ con" },
-            { to: "/parent/medications", label: "Gửi thuốc" },
-            { to: "/parent/vaccines", label: "Tiêm chủng" },
-            { to: "/parent/checkups", label: "Khám sức khỏe" },
-            // { to: "/parent/notifications", label: "Thông báo" },
+            { to: "/guardian", label: "Trang chủ" },
+            { to: "/guardian/children", label: "Hồ sơ con" },
+            { to: "/guardian/medications", label: "Gửi thuốc" },
+            { to: "/guardian/vaccines", label: "Tiêm chủng" },
+            { to: "/guardian/checkups", label: "Khám sức khỏe" },
+            { to: "/guardian/events", label: "Sự kiện" },
+            // { to: "/guardian/notifications", label: "Thông báo" },
           ].map(({ to, label }) => (
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
+              end={to === "/guardian"}
               className={({ isActive }) =>
                 `${baseClass} ${isActive ? activeClass : inactiveClass}`
               }

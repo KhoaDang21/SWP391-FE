@@ -1,6 +1,7 @@
-import React from 'react';
-import { Card } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Card, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { getCategoryById, Category } from '../../services/CategoryService';
 
 interface NewsCardProps {
   title: string;
@@ -9,10 +10,35 @@ interface NewsCardProps {
   date: string;
   author: string;
   slug: string;
+  Category_id: number;
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({ title, description, image, date, author, slug }) => {
+const NewsCard: React.FC<NewsCardProps> = ({ 
+  title, 
+  description, 
+  image, 
+  date, 
+  author, 
+  slug,
+  Category_id 
+}) => {
   const navigate = useNavigate();
+  const [category, setCategory] = useState<Category | null>(null);
+
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const data = await getCategoryById(Category_id);
+        setCategory(data);
+      } catch (err) {
+        console.error('Error fetching category:', err);
+      }
+    };
+
+    if (Category_id) {
+      fetchCategory();
+    }
+  }, [Category_id]);
 
   const handleCardClick = () => {
     navigate(`/tintuc/${slug}`);
@@ -49,7 +75,14 @@ const NewsCard: React.FC<NewsCardProps> = ({ title, description, image, date, au
       }
     >
       <div className="p-4">
-        <h3 className="text-xl font-semibold mb-2 line-clamp-2">{title}</h3>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-xl font-semibold line-clamp-2 flex-1 mr-2">{title}</h3>
+          {category && (
+            <Tag color="blue" className="whitespace-nowrap">
+              {category.Name}
+            </Tag>
+          )}
+        </div>
         <p className="text-gray-600 mb-4 line-clamp-3">{description}</p>
         <div className="flex justify-between items-center text-sm text-gray-500">
           <span>{date}</span>
