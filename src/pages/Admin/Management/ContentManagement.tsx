@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Table, Button, Modal, Form, Input, message, Popconfirm, Space, Card, Row, Col } from 'antd';
+import { Typography, Table, Button, Modal, Form, Input, message, Popconfirm, Space, Card, Row, Col, Tabs, Select } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { getAllBlogs, createBlog, updateBlog, deleteBlog, Blog } from '../../../services/BlogService';
+import { getAllCategories, createCategory, updateCategory, deleteCategory, Category } from '../../../services/CategoryService';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
 const ContentManagement: React.FC = () => {
@@ -15,6 +16,13 @@ const ContentManagement: React.FC = () => {
     const [imageFile, setImageFile] = useState<File | undefined>(undefined);
     const [submitting, setSubmitting] = useState(false);
     const [submitAttempted, setSubmitAttempted] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [catLoading, setCatLoading] = useState(false);
+    const [catModalOpen, setCatModalOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [catForm] = Form.useForm();
+    const [catSubmitting, setCatSubmitting] = useState(false);
+    const [catSubmitAttempted, setCatSubmitAttempted] = useState(false);
 
     const fetchBlogs = async () => {
         setLoading(true);
@@ -28,8 +36,21 @@ const ContentManagement: React.FC = () => {
         }
     };
 
+    const fetchCategories = async () => {
+        setCatLoading(true);
+        try {
+            const data = await getAllCategories();
+            setCategories(data);
+        } catch (err: any) {
+            message.error(err.message || 'Lỗi tải category');
+        } finally {
+            setCatLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchBlogs();
+        fetchCategories();
     }, []);
 
     const handleCreate = () => {
@@ -73,6 +94,7 @@ const ContentManagement: React.FC = () => {
                 message.error('Vui lòng upload ảnh');
                 return;
             }
+            console.log('Submitting values:', values);
             const token = localStorage.getItem('accessToken');
             if (!token) {
                 message.error('Bạn cần đăng nhập để thực hiện thao tác này');
@@ -109,7 +131,8 @@ const ContentManagement: React.FC = () => {
             form.setFieldsValue({
                 title: editingBlog.title,
                 content: editingBlog.content,
-                author: editingBlog.author
+                author: editingBlog.author,
+                Category_id: editingBlog.Category_id
             });
         }
     }, [modalOpen, editingBlog, form]);
@@ -138,7 +161,7 @@ const ContentManagement: React.FC = () => {
         {
             title: 'Hành động',
             key: 'action',
-            render: (_: any, record: Blog) => (
+            render: (_: unknown, record: Blog) => (
                 <Space>
                     <Button type="link" onClick={() => handleEdit(record)}>Sửa</Button>
                     <Popconfirm
@@ -155,12 +178,114 @@ const ContentManagement: React.FC = () => {
         },
     ];
 
-    return (
-        <Card
-            variant="borderless"
-            style={{ maxWidth: 1200, margin: '0 auto' }}
-            styles={{ body: { padding: 24 } }}
-        >
+    const handleCatCreate = () => {
+        setEditingCategory(null);
+        setCatSubmitAttempted(false);
+        setCatModalOpen(true);
+    };
+
+    const handleCatEdit = (cat: Category) => {
+        setEditingCategory(cat);
+        setCatSubmitAttempted(false);
+        setCatModalOpen(true);
+    };
+
+    const handleCatDelete = async (id: number) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                message.error('Bạn cần đăng nhập để thực hiện thao tác này');
+                return;
+            }
+            setCatLoading(true);
+            await deleteCategory(id, token);
+            message.success('Đã xóa category');
+            fetchCategories();
+        } catch (err: any) {
+            message.error(err.message || 'Lỗi xóa category');
+        } finally {
+            setCatLoading(false);
+        }
+    };
+
+    const handleCatModalOk = async () => {
+        setCatSubmitAttempted(true);
+        try {
+            const values = await catForm.validateFields();
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                message.error('Bạn cần đăng nhập để thực hiện thao tác này');
+                return;
+            }
+            setCatSubmitting(true);
+            const User_ID = Number(localStorage.getItem('userId')) || 1;
+            if (editingCategory) {
+                await updateCategory(editingCategory.Category_id!, { ...values, User_ID }, token);
+                message.success('Đã cập nhật category');
+            } else {
+                await createCategory({ ...values, User_ID }, token);
+                message.success('Đã tạo category');
+            }
+            setCatModalOpen(false);
+            catForm.resetFields();
+            fetchCategories();
+        } catch (err: any) {
+            if (!err.errorFields) {
+                message.error(err.message || 'Lỗi xử lý');
+            }
+        } finally {
+            setCatSubmitting(false);
+        }
+    };
+
+    React.useEffect(() => {
+        if (catModalOpen && !editingCategory) {
+            catForm.resetFields();
+        }
+        if (catModalOpen && editingCategory) {
+            catForm.setFieldsValue({
+                Name: editingCategory.Name
+            });
+        }
+    }, [catModalOpen, editingCategory, catForm]);
+
+    const catColumns = [
+        {
+            title: 'Tên category',
+            dataIndex: 'Name',
+            key: 'Name',
+            render: (text: string) => <Text strong>{text || '--'}</Text>
+        },
+        {
+            title: 'Ngày tạo',
+            dataIndex: 'Created_at',
+            key: 'Created_at',
+            render: (v: string) => (
+                <Text type="secondary">{v ? new Date(v).toLocaleDateString() : '--'}</Text>
+            )
+        },
+        {
+            title: 'Hành động',
+            key: 'action',
+            render: (_: unknown, record: Category) => (
+                <Space>
+                    <Button type="link" onClick={() => handleCatEdit(record)}>Sửa</Button>
+                    <Popconfirm
+                        title="Bạn chắc chắn muốn xóa category này?"
+                        onConfirm={() => handleCatDelete(record.Category_id!)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                        placement="topRight"
+                    >
+                        <Button type="link" danger>Xóa</Button>
+                    </Popconfirm>
+                </Space>
+            ),
+        },
+    ];
+
+    const blogTab = (
+        <>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
                 <h1 className="text-3xl font-bold text-blue-600 mb-6">
                     Quản lý Blog
@@ -173,7 +298,6 @@ const ContentManagement: React.FC = () => {
                     Tạo bài viết mới
                 </Button>
             </div>
-
             <Table
                 columns={columns}
                 dataSource={blogs}
@@ -182,7 +306,6 @@ const ContentManagement: React.FC = () => {
                 bordered
                 pagination={{ pageSize: 6 }}
             />
-
             <Modal
                 title={<Text strong>{editingBlog ? 'Cập nhật Blog' : 'Tạo Blog mới'}</Text>}
                 open={modalOpen}
@@ -200,7 +323,7 @@ const ContentManagement: React.FC = () => {
                 <Form
                     form={form}
                     layout="vertical"
-                    initialValues={{ title: '', content: '', author: '' }}
+                    initialValues={{ title: '', content: '', author: '', Category_id: undefined }}
                 >
                     <Row gutter={16}>
                         <Col span={24}>
@@ -215,6 +338,22 @@ const ContentManagement: React.FC = () => {
                                 help={submitAttempted && form.getFieldError('title')[0]}
                             >
                                 <Input placeholder="Nhập tiêu đề blog" maxLength={200} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={24}>
+                            <Form.Item
+                                name="Category_id"
+                                label="Danh mục"
+                                rules={[{ required: true, message: 'Chọn danh mục' }]}
+                                validateStatus={submitAttempted && form.getFieldError('Category_id').length ? 'error' : ''}
+                                help={submitAttempted && form.getFieldError('Category_id')[0]}
+                            >
+                                <Select
+                                    placeholder="Chọn danh mục"
+                                    options={categories.map(cat => ({ value: cat.Category_id, label: cat.Name }))}
+                                    showSearch
+                                    optionFilterProp="label"
+                                />
                             </Form.Item>
                         </Col>
                         <Col span={24}>
@@ -325,6 +464,77 @@ const ContentManagement: React.FC = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+        </>
+    );
+
+    const categoryTab = (
+        <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+                <h1 className="text-3xl font-bold text-blue-600 mb-6">
+                    Quản lý Category
+                </h1>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleCatCreate}
+                >
+                    Tạo category mới
+                </Button>
+            </div>
+            <Table
+                columns={catColumns}
+                dataSource={categories}
+                rowKey="Category_id"
+                loading={catLoading}
+                bordered
+                pagination={{ pageSize: 6 }}
+            />
+            <Modal
+                title={<Text strong>{editingCategory ? 'Cập nhật Category' : 'Tạo Category mới'}</Text>}
+                open={catModalOpen}
+                onOk={handleCatModalOk}
+                onCancel={() => setCatModalOpen(false)}
+                okText={editingCategory ? 'Cập nhật' : 'Tạo mới'}
+                cancelText="Hủy"
+                confirmLoading={catSubmitting}
+                width={500}
+                destroyOnHidden
+            >
+                <Form
+                    form={catForm}
+                    layout="vertical"
+                    initialValues={{ Name: '' }}
+                >
+                    <Form.Item
+                        name="Name"
+                        label="Tên category"
+                        rules={[
+                            { required: true, message: 'Nhập tên category' },
+                            { max: 100, message: 'Tên tối đa 100 ký tự' }
+                        ]}
+                        validateStatus={catSubmitAttempted && catForm.getFieldError('Name').length ? 'error' : ''}
+                        help={catSubmitAttempted && catForm.getFieldError('Name')[0]}
+                    >
+                        <Input placeholder="Nhập tên category" maxLength={100} />
+                    </Form.Item>
+                </Form>
+            </Modal>
+        </>
+    );
+
+    return (
+        <Card
+            variant="borderless"
+            style={{ maxWidth: 1200, margin: '0 auto' }}
+            styles={{ body: { padding: 24 } }}
+        >
+            <Tabs
+                defaultActiveKey="blog"
+                items={[
+                    { key: 'blog', label: 'Quản lý Blog', children: blogTab },
+                    { key: 'category', label: 'Quản lý Category', children: categoryTab },
+                ]}
+            />
         </Card>
     );
 };
