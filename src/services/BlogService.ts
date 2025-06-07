@@ -6,6 +6,7 @@ export interface Blog {
   image?: string;
   createdAt?: string;
   updatedAt?: string;
+  Category_id: number;
 }
 
 const API_URL = 'http://localhost:3333/api/v1/blogs';
@@ -33,6 +34,7 @@ export async function createBlog(
   formData.append('title', blog.title);
   formData.append('content', blog.content);
   formData.append('author', blog.author);
+  formData.append('Category_id', String(blog.Category_id));
   if (imageFile) formData.append('image', imageFile);
   const res = await fetch(API_URL, {
     method: 'POST',
