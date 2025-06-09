@@ -37,6 +37,7 @@ import Manage_medical from '../pages/Nurse/Manage_medical';
 import Manage_healthcheck from '../pages/Nurse/Manage_healthcheck';
 import Manage_vaccine from '../pages/Nurse/Manage_vaccine';
 import Manage_medical_events from '../pages/Nurse/Manage_medical_events';
+import Detail_medical_event from '../pages/Nurse/Detail_medical_event';
 
 export default function AppRoutes() {
     return (
@@ -88,7 +89,8 @@ export default function AppRoutes() {
                 <Route path="medical" element={<Manage_medical />} />
                 <Route path="healthcheck" element={<Manage_healthcheck />} />
                 <Route path="vaccine" element={<Manage_vaccine />} />
-                <Route path="medical-events" element={<Manage_medical_events />} />
+                <Route path="medical-events" element={<Manage_medical_events />} />  
+                <Route path="medical-events/detail/:id" element={<Detail_medical_event />} />
             </Route>
             <Route
                 path="/guardian"
