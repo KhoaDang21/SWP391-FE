@@ -32,6 +32,14 @@ const NewsDetail: React.FC = () => {
     fetchBlog();
   }, [slug]);
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -61,7 +69,7 @@ const NewsDetail: React.FC = () => {
           <div className="flex items-center text-gray-600 space-x-6">
             <div className="flex items-center">
               <CalendarOutlined className="mr-2" />
-              <time>{blog.createdAt}</time>
+              <time>{blog.createdAt ? formatDate(blog.createdAt) : ''}</time>
             </div>
             <div className="flex items-center">
               <UserOutlined className="mr-2" />
@@ -73,21 +81,18 @@ const NewsDetail: React.FC = () => {
         {/* Featured Image */}
         {blog.image && (
           <figure className="mb-10">
-            <div className="w-full h-[400px] overflow-hidden rounded-lg shadow-lg">
+            <div className="w-full max-h-[600px] overflow-hidden rounded-lg shadow-lg">
               <img
                 src={blog.image}
                 alt={blog.title}
-                className="w-full h-full"
+                className="w-full h-auto object-contain"
                 style={{
-                  objectFit: 'cover',
-                  objectPosition: 'center',
-                  backgroundColor: '#f0f0f0'
+                  maxHeight: '600px',
+                  margin: '0 auto',
+                  display: 'block'
                 }}
               />
             </div>
-            <figcaption className="mt-2 text-sm text-gray-600 text-center">
-              Hình ảnh minh họa cho bài viết
-            </figcaption>
           </figure>
         )}
 

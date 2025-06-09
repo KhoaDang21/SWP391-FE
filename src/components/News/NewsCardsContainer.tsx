@@ -22,7 +22,13 @@ const NewsCardsContainer: React.FC<NewsCardsContainerProps> = ({
       setLoading(true);
       try {
         const data = await getAllBlogs();
-        setBlogs(data);
+        // Sort blogs by creation date in descending order (newest first)
+        const sortedBlogs = data.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
+        setBlogs(sortedBlogs);
       } catch (err: any) {
         message.error(err.message || 'Lỗi tải danh sách tin tức');
       } finally {

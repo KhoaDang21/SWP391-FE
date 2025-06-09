@@ -61,7 +61,10 @@ const UserManagement: React.FC = () => {
             notificationService.success('Xóa người dùng thành công');
             fetchUsers();
         } catch (error: any) {
-            notificationService.error(error.message || 'Có lỗi xảy ra khi xóa người dùng');
+            const message = error.message === 'Cannot delete admin user'
+                ? 'Không thể xóa người dùng có vai trò admin'
+                : error.message || 'Có lỗi xảy ra khi xóa người dùng';
+            notificationService.error(message);
         }
     };
 

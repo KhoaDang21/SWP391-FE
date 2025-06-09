@@ -1,4 +1,3 @@
-import React from 'react';
 import { Heart, Shield, Users, ClipboardList, BarChart3, UserCheck, FileText, Activity } from 'lucide-react';
 
 const about= () => {

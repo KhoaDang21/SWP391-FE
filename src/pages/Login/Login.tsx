@@ -39,10 +39,8 @@ const Login = () => {
     const [password, setPassword] = useState<string>("");
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-    const [submitError, setSubmitError] = useState<string>("");
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
 
     const validate = () => {
         const newErrors: typeof errors = {};
@@ -59,7 +57,7 @@ const Login = () => {
     };
 
     const handleLogin = async () => {
-        setSubmitError("");
+
         if (!validate()) return;
 
         try {
@@ -86,7 +84,7 @@ const Login = () => {
             navigate(getRedirectPath(role), { replace: true });
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || err.message;
-            
+
             // Xử lý các loại lỗi cụ thể
             if (errorMessage.includes('credentials')) {
                 notificationService.error('Tên đăng nhập hoặc mật khẩu không chính xác');
@@ -97,8 +95,8 @@ const Login = () => {
             } else {
                 notificationService.error(errorMessage || 'Đã có lỗi xảy ra khi đăng nhập');
             }
-            
-            setSubmitError(errorMessage || "Đã có lỗi xảy ra");
+
+
         } finally {
             dispatch(toggleLoading(false));
         }
@@ -181,7 +179,7 @@ const Login = () => {
                             {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                         </div>
 
-                        {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+
 
                         <button
                             type="submit"

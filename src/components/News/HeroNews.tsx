@@ -1,7 +1,4 @@
 import React from 'react';
-import { Typography } from 'antd';
-
-const { Title } = Typography;
 
 const HeroNews: React.FC = () => {
   return (
@@ -17,7 +14,6 @@ const HeroNews: React.FC = () => {
       </div>
     </div>
   );
-
 };
 
 export default HeroNews; 
