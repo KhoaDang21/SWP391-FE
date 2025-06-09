@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import NewsSearch from './NewsSearch';
 import NewsFilter from './NewsFilter';
 
@@ -11,10 +11,7 @@ const NewsSearchContainer: React.FC<NewsSearchContainerProps> = ({
   onSearch,
   onCategoryChange
 }) => {
-  const [searchValue, setSearchValue] = useState('');
-
   const handleSearch = (value: string) => {
-    setSearchValue(value);
     onSearch(value);
   };
 
