@@ -115,28 +115,31 @@ const UserDetail: React.FC = () => {
     return (
         <>
             <Card className="shadow-md">
-                <div className="mb-6 flex justify-between items-center">
-                    <div className="flex items-center gap-4">
+                <div className="mb-6 flex justify-between items-center h-14">
+                    <div className="flex items-center gap-4 h-full">
                         <Button
                             icon={<ArrowLeftOutlined />}
                             onClick={() => navigate('/admin/management/users')}
+                            className="flex items-center h-full"
                         >
                             Quay lại
                         </Button>
-                        <h1 className="text-2xl font-bold text-blue-600 mb-6">Chi tiết người dùng</h1>
+                        <h1 className="text-2xl font-bold text-blue-600 m-0 leading-none flex items-center h-full">
+                            Chi tiết người dùng
+                        </h1>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2 h-full">
                         <Button
                             type="primary"
                             icon={<EditOutlined />}
-                            className="bg-blue-500"
+                            className="bg-blue-500 h-full flex items-center"
                             onClick={handleEdit}
                         >
                             Chỉnh sửa
                         </Button>
-
                     </div>
                 </div>
+
 
                 <div className="bg-white rounded-lg p-6 border border-gray-200">
                     <div className="flex items-center justify-center mb-8">
