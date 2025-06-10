@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Button, Input, Space, Tooltip, Popconfirm, Modal, Form } from 'antd';
-import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined, IdcardOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Button, Input, Space, Tooltip, Popconfirm, Modal, Form, Switch } from 'antd';
+import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined, IdcardOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto } from '../../../services/AccountService';
+import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto, createGuardianWithStudents, deleteGuardianByObId, Guardian, getAllGuardians } from '../../../services/AccountService';
 import { notificationService } from '../../../services/NotificationService';
 
 const UserManagement: React.FC = () => {
@@ -15,6 +15,9 @@ const UserManagement: React.FC = () => {
     const [isRegisterModalVisible, setIsRegisterModalVisible] = useState(false);
     const [registerForm] = Form.useForm();
     const [registerLoading, setRegisterLoading] = useState(false);
+    const [isGuardianRegisterModalVisible, setIsGuardianRegisterModalVisible] = useState(false);
+    const [guardianRegisterForm] = Form.useForm();
+    const [guardianRegisterLoading, setGuardianRegisterLoading] = useState(false);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -57,8 +60,34 @@ const UserManagement: React.FC = () => {
                 return;
             }
 
-            await deleteUser(userId, token);
-            notificationService.success('Xóa người dùng thành công');
+            // Find the user to get their roleId
+            const userToDelete = users.find(user => user.id === userId);
+
+            if (!userToDelete) {
+                notificationService.error('Không tìm thấy người dùng để xóa.');
+                return;
+            }
+
+            if (userToDelete.roleId === 4) { // If it's a Guardian
+                try {
+                    const allGuardians: Guardian[] = await getAllGuardians(token);
+                    const guardian = allGuardians.find(g => g.userId === userId);
+                    if (guardian) {
+                        await deleteGuardianByObId(guardian.obId, token);
+                        notificationService.success('Xóa người dùng thành công');
+                    } else {
+                        notificationService.error('Không tìm thấy thông tin phụ huynh để xóa.');
+                    }
+                } catch (guardianError: any) {
+                    const message = guardianError.message === 'Cannot delete admin user'
+                        ? 'Không thể xóa người dùng có vai trò admin'
+                        : guardianError.message || 'Có lỗi xảy ra khi xóa người dùng';
+                    notificationService.error(message);
+                }
+            } else {
+                await deleteUser(userId, token);
+                notificationService.success('Xóa người dùng thành công');
+            }
             fetchUsers();
         } catch (error: any) {
             const message = error.message === 'Cannot delete admin user'
@@ -200,6 +229,27 @@ const UserManagement: React.FC = () => {
         }
     };
 
+    const handleRegisterGuardian = async (values: any) => {
+        try {
+            setGuardianRegisterLoading(true);
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                notificationService.error('Vui lòng đăng nhập để tiếp tục');
+                return;
+            }
+
+            await createGuardianWithStudents(values, token);
+            notificationService.success('Đăng ký phụ huynh và học sinh thành công');
+            setIsGuardianRegisterModalVisible(false);
+            guardianRegisterForm.resetFields();
+            fetchUsers();
+        } catch (error: any) {
+            notificationService.error(error.message || 'Có lỗi xảy ra khi đăng ký phụ huynh và học sinh');
+        } finally {
+            setGuardianRegisterLoading(false);
+        }
+    };
+
     return (
         <Card className="shadow-md">
             <div className="mb-6 flex justify-between items-center">
@@ -218,9 +268,16 @@ const UserManagement: React.FC = () => {
                     <Button
                         type="primary"
                         onClick={() => setIsRegisterModalVisible(true)}
+                        style={{ backgroundColor: '#28a745' }}
+                    >
+                        Thêm quản lý
+                    </Button>
+                    <Button
+                        type="primary"
+                        onClick={() => setIsGuardianRegisterModalVisible(true)}
                         style={{ backgroundColor: '#1890ff' }}
                     >
-                        Thêm người dùng
+                        Thêm phụ huynh
                     </Button>
                 </Space>
             </div>
@@ -239,7 +296,7 @@ const UserManagement: React.FC = () => {
             />
 
             <Modal
-                title="Thêm người dùng mới"
+                title="Thêm quản lý mới"
                 open={isRegisterModalVisible}
                 onCancel={() => {
                     setIsRegisterModalVisible(false);
@@ -327,7 +384,157 @@ const UserManagement: React.FC = () => {
                             loading={registerLoading}
                             style={{ backgroundColor: '#1890ff' }}
                         >
-                            Thêm người dùng
+                            Thêm quản lý
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            <Modal
+                title="Thêm phụ huynh và học sinh mới"
+                open={isGuardianRegisterModalVisible}
+                onCancel={() => {
+                    setIsGuardianRegisterModalVisible(false);
+                    guardianRegisterForm.resetFields();
+                }}
+                footer={null}
+            >
+                <Form
+                    form={guardianRegisterForm}
+                    layout="vertical"
+                    onFinish={handleRegisterGuardian}
+                >
+                    <Form.Item
+                        name="fullname"
+                        label="Họ và tên phụ huynh"
+                        rules={[{ required: true, message: 'Vui lòng nhập họ và tên phụ huynh' }, { min: 3, message: 'Họ và tên phải có ít nhất 3 ký tự' }]}
+                    >
+                        <Input prefix={<UserOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="username"
+                        label="Tên đăng nhập phụ huynh"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập phụ huynh' }, { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' }]}
+                    >
+                        <Input prefix={<IdcardOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="email"
+                        label="Email phụ huynh"
+                        rules={[{ required: true, message: 'Vui lòng nhập email phụ huynh' }, { type: 'email', message: 'Email không hợp lệ' }]}
+                    >
+                        <Input prefix={<MailOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="password"
+                        label="Mật khẩu phụ huynh"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập mật khẩu phụ huynh' },
+                            { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
+                            { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt' }
+                        ]}
+                    >
+                        <Input.Password prefix={<LockOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="phoneNumber"
+                        label="Số điện thoại phụ huynh"
+                        rules={[{ required: true, message: 'Vui lòng nhập số điện thoại phụ huynh' }, { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ' }]}
+                    >
+                        <Input prefix={<PhoneOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="roleInFamily"
+                        label="Vai trò trong gia đình"
+                        rules={[{ required: true, message: 'Vui lòng nhập vai trò trong gia đình' }]}
+                    >
+                        <Input />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="isCallFirst"
+                        label="Ưu tiên gọi đầu tiên"
+                        valuePropName="checked"
+                    >
+                        <Switch />
+                    </Form.Item>
+
+                    <Form.List name="students">
+                        {(fields, { add, remove }) => (
+                            <>
+                                {fields.map(({ key, name, ...restField }) => (
+                                    <Card
+                                        key={key}
+                                        size="small"
+                                        title={`Học sinh ${name + 1}`}
+                                        extra={<Button type="text" danger onClick={() => remove(name)}>Xóa</Button>}
+                                        style={{ marginBottom: 16 }}
+                                    >
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'fullname']}
+                                            label="Họ và tên học sinh"
+                                            rules={[{ required: true, message: 'Vui lòng nhập họ và tên học sinh' }]}
+                                        >
+                                            <Input prefix={<UserOutlined />} />
+                                        </Form.Item>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'username']}
+                                            label="Tên đăng nhập học sinh"
+                                            rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập học sinh' }]}
+                                        >
+                                            <Input prefix={<IdcardOutlined />} />
+                                        </Form.Item>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'email']}
+                                            label="Email học sinh"
+                                            rules={[{ required: true, message: 'Vui lòng nhập email học sinh' }, { type: 'email', message: 'Email không hợp lệ' }]}
+                                        >
+                                            <Input prefix={<MailOutlined />} />
+                                        </Form.Item>
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name, 'password']}
+                                            label="Mật khẩu học sinh"
+                                            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu học sinh' }]}
+                                        >
+                                            <Input.Password prefix={<LockOutlined />} />
+                                        </Form.Item>
+                                    </Card>
+                                ))}
+                                <Form.Item>
+                                    <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                                        Thêm học sinh
+                                    </Button>
+                                </Form.Item>
+                            </>
+                        )}
+                    </Form.List>
+
+                    <Form.Item className="mb-0 text-right">
+                        <Button
+                            onClick={() => {
+                                setIsGuardianRegisterModalVisible(false);
+                                guardianRegisterForm.resetFields();
+                            }}
+                            style={{ marginRight: 8 }}
+                        >
+                            Hủy
+                        </Button>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={guardianRegisterLoading}
+                            style={{ backgroundColor: '#28a745' }}
+                        >
+                            Thêm phụ huynh và học sinh
                         </Button>
                     </Form.Item>
                 </Form>
