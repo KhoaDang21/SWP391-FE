@@ -8,6 +8,16 @@ export interface User {
   Role?: {
     name: string;
   };
+  students?: Student[];
+}
+
+export interface Student {
+  id: number;
+  fullname: string;
+  username: string;
+  email: string;
+  password?: string;
+  roleId: number;
 }
 
 export interface UpdateUserDto {
@@ -53,7 +63,7 @@ export interface Guardian {
   isCallFirst: boolean;
   userId: number;
   fullname: string;
-  students: any[]; // Adjust this type if you have a specific Student interface
+  students: Student[];
 }
 
 const API_URL = 'http://localhost:3333/api/v1';

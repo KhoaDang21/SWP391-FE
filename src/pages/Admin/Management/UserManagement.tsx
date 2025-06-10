@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Input, Space, Tooltip, Popconfirm, Modal, Form, Switch } from 'antd';
-import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined, IdcardOutlined, PlusOutlined } from '@ant-design/icons';
+import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined, IdcardOutlined, PlusOutlined, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto, createGuardianWithStudents, deleteGuardianByObId, Guardian, getAllGuardians } from '../../../services/AccountService';
+import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto, createGuardianWithStudents, deleteGuardianByObId, Guardian, getAllGuardians, Student } from '../../../services/AccountService';
 import { notificationService } from '../../../services/NotificationService';
 
 const UserManagement: React.FC = () => {
@@ -18,6 +18,10 @@ const UserManagement: React.FC = () => {
     const [isGuardianRegisterModalVisible, setIsGuardianRegisterModalVisible] = useState(false);
     const [guardianRegisterForm] = Form.useForm();
     const [guardianRegisterLoading, setGuardianRegisterLoading] = useState(false);
+    const [isAddStudentModalVisible, setIsAddStudentModalVisible] = useState(false);
+    const [addStudentForm] = Form.useForm();
+    const [addStudentLoading, setAddStudentLoading] = useState(false);
+    const [currentGuardianId, setCurrentGuardianId] = useState<number | null>(null);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -27,9 +31,24 @@ const UserManagement: React.FC = () => {
                 notificationService.error('Vui lòng đăng nhập để tiếp tục');
                 return;
             }
-            const data = await getAllUsers(token);
-            setUsers(data);
-            setFilteredUsers(data);
+            const [usersData, guardiansData] = await Promise.all([
+                getAllUsers(token),
+                getAllGuardians(token)
+            ]);
+
+            const combinedUsers: User[] = usersData.map(user => {
+                if (user.roleId === 4) {
+                    const guardian = guardiansData.find(g => g.userId === user.id);
+                    return {
+                        ...user,
+                        students: guardian ? guardian.students : [] // Add students to guardian user
+                    };
+                }
+                return user;
+            }).filter(user => user.roleId !== 3);
+
+            setUsers(combinedUsers);
+            setFilteredUsers(combinedUsers);
         } catch (error: any) {
             notificationService.error(error.message || 'Có lỗi xảy ra khi tải danh sách người dùng');
         } finally {
@@ -47,7 +66,11 @@ const UserManagement: React.FC = () => {
             user.username.toLowerCase().includes(value.toLowerCase()) ||
             user.fullname.toLowerCase().includes(value.toLowerCase()) ||
             user.email.toLowerCase().includes(value.toLowerCase()) ||
-            user.phoneNumber.includes(value)
+            user.phoneNumber.includes(value) ||
+            (user.roleId === 4 && user.students && user.students.some(student =>
+                student.fullname.toLowerCase().includes(value.toLowerCase()) ||
+                student.username.toLowerCase().includes(value.toLowerCase())
+            ))
         );
         setFilteredUsers(filtered);
     };
@@ -60,7 +83,6 @@ const UserManagement: React.FC = () => {
                 return;
             }
 
-            // Find the user to get their roleId
             const userToDelete = users.find(user => user.id === userId);
 
             if (!userToDelete) {
@@ -68,7 +90,7 @@ const UserManagement: React.FC = () => {
                 return;
             }
 
-            if (userToDelete.roleId === 4) { // If it's a Guardian
+            if (userToDelete.roleId === 4) {
                 try {
                     const allGuardians: Guardian[] = await getAllGuardians(token);
                     const guardian = allGuardians.find(g => g.userId === userId);
@@ -250,6 +272,136 @@ const UserManagement: React.FC = () => {
         }
     };
 
+    const expandedRowRender = (record: User) => {
+        if (record.roleId === 4 && record.students && record.students.length > 0) {
+            const studentColumns: ColumnsType<Student> = [
+                {
+                    title: 'Họ và tên học sinh',
+                    dataIndex: 'fullname',
+                    key: 'fullname',
+                    render: (text: string, studentRecord) => (
+                        <div className="flex items-center gap-2">
+                            <UserOutlined className="text-purple-500" />
+                            <span className="font-medium text-gray-800">{text}</span>
+                            <span className="text-sm text-gray-500">(@{studentRecord.username})</span>
+                        </div>
+                    ),
+                },
+                {
+                    title: 'Vai trò',
+                    dataIndex: 'roleId',
+                    key: 'roleId',
+                    width: 100,
+                    render: (roleId: number) => {
+                        const displayRole = 'Student';
+                        const roleColor = getRoleColor(3);
+
+                        const roleStyles = {
+                            minWidth: '80px',
+                            textAlign: 'center',
+                            padding: '4px 10px',
+                            fontWeight: 500,
+                            textTransform: 'uppercase',
+                            fontSize: '11px'
+                        } as React.CSSProperties;
+                        return (
+                            <Tag
+                                color={roleColor}
+                                style={roleStyles}
+                            >
+                                {displayRole}
+                            </Tag>
+                        );
+                    },
+                },
+                {
+                    title: 'Thao tác',
+                    key: 'actions',
+                    width: 120,
+                    render: (_, record) => (
+                        <Space>
+                            <Tooltip title="Xem chi tiết">
+                                <Button
+                                    type="text"
+                                    icon={<EyeOutlined className="text-blue-500 hover:text-blue-600" />}
+                                    onClick={() => navigate(`/admin/management/users/${record.id}`)}
+                                />
+                            </Tooltip>
+
+                            {/* <Popconfirm
+                                title="Bạn chắc chắn muốn xóa học sinh này?"
+                                onConfirm={() => handleDelete(record.id)}
+                                okText="Xóa"
+                                cancelText="Hủy"
+                                placement="topRight"
+                            >
+                                <Tooltip title="Xóa">
+                                    <Button
+                                        type="text"
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                    />
+                                </Tooltip>
+                            </Popconfirm> */}
+                        </Space>
+                    ),
+                }
+            ];
+
+            return (
+                <div className="p-4 bg-gray-50 rounded-lg shadow-inner">
+                    <h3 className="text-xl font-semibold text-blue-700 mb-4">Danh sách học sinh</h3>
+                    <Table
+                        columns={studentColumns}
+                        dataSource={record.students}
+                        rowKey="id"
+                        pagination={false}
+                        size="small"
+                        className="border border-gray-200 rounded-md"
+                    />
+                    <Button
+                        type="dashed"
+                        onClick={() => {
+                            setCurrentGuardianId(record.id);
+                            setIsAddStudentModalVisible(true);
+                        }}
+                        block
+                        icon={<PlusOutlined />}
+                        className="mt-4"
+                    >
+                        Thêm học sinh mới
+                    </Button>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    const handleAddStudentToGuardian = async (values: any) => {
+        if (!currentGuardianId) {
+            notificationService.error('Không tìm thấy phụ huynh để thêm học sinh.');
+            return;
+        }
+
+        setAddStudentLoading(true);
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                notificationService.error('Vui lòng đăng nhập để tiếp tục');
+                return;
+            }
+            notificationService.success('Đã gửi yêu cầu thêm học sinh. Cần API backend để hoàn tất.');
+            setIsAddStudentModalVisible(false);
+            addStudentForm.resetFields();
+            await fetchUsers();
+
+        } catch (error: any) {
+            notificationService.error(error.message || 'Có lỗi xảy ra khi thêm học sinh.');
+        } finally {
+            setAddStudentLoading(false);
+        }
+    };
+
     return (
         <Card className="shadow-md">
             <div className="mb-6 flex justify-between items-center">
@@ -292,8 +444,46 @@ const UserManagement: React.FC = () => {
                     showSizeChanger: false,
                     showTotal: (total) => `Tổng số ${total} người dùng`,
                 }}
+                expandable={{
+                    expandedRowRender: expandedRowRender,
+                    rowExpandable: (record: User): boolean =>
+                        record.roleId === 4 && Array.isArray(record.students) && record.students.length > 0,
+                    expandIcon: ({ expanded, onExpand, record }) => {
+                        const isGuardianWithStudents =
+                            record.roleId === 4 && record.students && record.students.length > 0;
+                        if (!isGuardianWithStudents) return null;
+
+                        return expanded ? (
+                            <Tooltip title="Thu gọn">
+                                <MinusCircleOutlined
+                                    onClick={e => onExpand(record, e)}
+                                    style={{
+                                        color: '#2563eb',
+                                        fontSize: 20,
+                                        marginLeft: 8,
+                                        cursor: 'pointer',
+                                    }}
+                                />
+                            </Tooltip>
+                        ) : (
+                            <Tooltip title="Mở rộng">
+                                <PlusCircleOutlined
+                                    onClick={e => onExpand(record, e)}
+                                    style={{
+                                        color: '#2563eb',
+                                        fontSize: 20,
+                                        marginLeft: 8,
+                                        cursor: 'pointer',
+                                    }}
+                                />
+                            </Tooltip>
+                        );
+                    },
+                }}
                 className="border border-gray-200 rounded-lg"
             />
+
+
 
             <Modal
                 title="Thêm quản lý mới"
@@ -535,6 +725,74 @@ const UserManagement: React.FC = () => {
                             style={{ backgroundColor: '#28a745' }}
                         >
                             Thêm phụ huynh và học sinh
+                        </Button>
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            <Modal
+                title="Thêm học sinh mới"
+                open={isAddStudentModalVisible}
+                onCancel={() => {
+                    setIsAddStudentModalVisible(false);
+                    addStudentForm.resetFields();
+                }}
+                footer={null}
+            >
+                <Form
+                    form={addStudentForm}
+                    layout="vertical"
+                    onFinish={handleAddStudentToGuardian}
+                >
+                    <Form.Item
+                        name="fullname"
+                        label="Họ và tên học sinh"
+                        rules={[{ required: true, message: 'Vui lòng nhập họ và tên học sinh' }]}
+                    >
+                        <Input prefix={<UserOutlined />} />
+                    </Form.Item>
+                    <Form.Item
+                        name="username"
+                        label="Tên đăng nhập học sinh"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập học sinh' }]}
+                    >
+                        <Input prefix={<IdcardOutlined />} />
+                    </Form.Item>
+                    <Form.Item
+                        name="email"
+                        label="Email học sinh"
+                        rules={[{ required: true, message: 'Vui lòng nhập email học sinh' }, { type: 'email', message: 'Email không hợp lệ' }]}
+                    >
+                        <Input prefix={<MailOutlined />} />
+                    </Form.Item>
+                    <Form.Item
+                        name="password"
+                        label="Mật khẩu học sinh"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập mật khẩu học sinh' },
+                            { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
+                            { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt' }
+                        ]}
+                    >
+                        <Input.Password prefix={<LockOutlined />} />
+                    </Form.Item>
+                    <Form.Item className="mb-0 text-right">
+                        <Button
+                            onClick={() => {
+                                setIsAddStudentModalVisible(false);
+                                addStudentForm.resetFields();
+                            }}
+                            style={{ marginRight: 8 }}
+                        >
+                            Hủy
+                        </Button>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={addStudentLoading}
+                            style={{ backgroundColor: '#28a745' }}
+                        >
+                            Thêm học sinh
                         </Button>
                     </Form.Item>
                 </Form>

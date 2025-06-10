@@ -140,7 +140,6 @@ const UserDetail: React.FC = () => {
                     </div>
                 </div>
 
-
                 <div className="bg-white rounded-lg p-6 border border-gray-200">
                     <div className="flex items-center justify-center mb-8">
                         <div className="text-center">
@@ -182,16 +181,18 @@ const UserDetail: React.FC = () => {
                             {user.email}
                         </Descriptions.Item>
 
-                        <Descriptions.Item
-                            label={
-                                <span className="flex items-center gap-2">
-                                    <PhoneOutlined />
-                                    Số điện thoại
-                                </span>
-                            }
-                        >
-                            {user.phoneNumber}
-                        </Descriptions.Item>
+                        {user.roleId !== 3 && (
+                            <Descriptions.Item
+                                label={
+                                    <span className="flex items-center gap-2">
+                                        <PhoneOutlined />
+                                        Số điện thoại
+                                    </span>
+                                }
+                            >
+                                {user.phoneNumber}
+                            </Descriptions.Item>
+                        )}
                     </Descriptions>
                 </div>
             </Card>
@@ -261,7 +262,7 @@ const UserDetail: React.FC = () => {
                         <Button onClick={handleCancel} style={{ marginRight: 8 }}>
                             Hủy
                         </Button>
-                        <Button type="primary" htmlType="submit" loading={updateLoading} className="bg-blue-500">
+                        <Button type="primary" htmlType="submit" loading={updateLoading}>
                             Cập nhật
                         </Button>
                     </Form.Item>
