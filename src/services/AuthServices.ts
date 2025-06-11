@@ -10,6 +10,8 @@ export interface LoginResponse {
     id: number;
     username: string;
     role: string;
+    email: string;
+    phone: string;
   };
 }
 
@@ -28,7 +30,7 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
     try {
       const errorData = await response.json();
       if (errorData?.message) errorMsg = errorData.message;
-    } catch {}
+    } catch { }
     throw new Error(errorMsg);
   }
 

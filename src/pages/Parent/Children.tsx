@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Card,
     Form,
@@ -29,13 +29,14 @@ import {
     HeartOutlined,
     SafetyOutlined
 } from '@ant-design/icons';
-
+import { getGuardiansByUserId } from '../../services/GuardianService';
 const { Option } = Select;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
 
 const Children = () => {
+
     const [children, setChildren] = useState([
         {
             id: 1,
@@ -43,6 +44,8 @@ const Children = () => {
             dateOfBirth: '2018-05-15',
             gender: 'Nam',
             bloodType: 'O+',
+            height: 120,
+            weight: 30,
             vaccines: [
                 { name: 'BCG', date: '2018-06-01', status: 'Đã tiêm' },
                 { name: 'Viêm gan B', date: '2018-07-15', status: 'Đã tiêm' },
@@ -63,6 +66,8 @@ const Children = () => {
         dateOfBirth: string;
         gender: string;
         bloodType: string;
+        height: number;
+        weight: number;
         vaccines: { name: string; date: string; status: string }[];
         chronicDiseases: string[];
         allergies: string[];
@@ -74,11 +79,37 @@ const Children = () => {
     const [editingChild, setEditingChild] = useState<Child | null>(null);
     const [form] = Form.useForm();
 
-    const childrenList = [
-        { id: '1', name: 'Nguyễn Văn A' },
-        { id: '2', name: 'Trần Thị B' },
-        { id: '3', name: 'Lê Văn C' }
-    ];
+    useEffect(() => {
+        const fetchChildren = async () => {
+            try {
+                const user = localStorage.getItem('user');
+                const token = localStorage.getItem('accessToken');
+                const userIdStr = user ? JSON.parse(user).id : null;
+
+                if (!userIdStr || !token) {
+                    console.error('Không tìm thấy userId hoặc token');
+                    return;
+                }
+
+                const userId = parseInt(userIdStr, 10);
+                const data = await getGuardiansByUserId(userId, token);
+
+                const studentList = data.students.map((student: any) => ({
+                    id: student.id,
+                    name: student.fullname
+                }));
+                setChildrenList(studentList);
+            } catch (error) {
+                console.error('Lỗi lấy danh sách học sinh:', error);
+            }
+        };
+
+        fetchChildren();
+    }, []);
+
+
+    const [childrenList, setChildrenList] = useState<{ id: number; name: string }[]>([]);
+
 
     const vaccineOptions = [
         'BCG', 'Viêm gan B', 'DPT', 'Bại liệt', 'Sởi', 'Rubella',
@@ -95,7 +126,6 @@ const Children = () => {
         'Phấn hoa', 'Bụi nhà', 'Lông động vật', 'Tôm cua', 'Sữa',
         'Trứng', 'Đậu phộng', 'Kháng sinh Penicillin', 'Aspirin'
     ];
-
     const showModal = (child: Child | null = null) => {
         setEditingChild(child);
         setIsModalVisible(true);
@@ -153,30 +183,6 @@ const Children = () => {
         }
         return age;
     };
-
-    const vaccineColumns = [
-        {
-            title: 'Vaccine',
-            dataIndex: 'name',
-            key: 'name',
-        },
-        {
-            title: 'Ngày tiêm',
-            dataIndex: 'date',
-            key: 'date',
-        },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status: string) => (
-                <Tag color={status === 'Đã tiêm' ? 'green' : 'orange'}>
-                    {status}
-                </Tag>
-            ),
-        },
-    ];
-
 
     return (
         <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
@@ -241,7 +247,9 @@ const Children = () => {
                                                         {calculateAge(child.dateOfBirth)} tuổi • {child.gender}
                                                     </Text>
                                                     <br />
-                                                    <Text type="secondary">Nhóm máu: {child.bloodType || 'Chưa xác định'}</Text>
+                                                    {/* <Text type="secondary">Nhóm máu: {child.bloodType || 'Chưa xác định'}</Text> */}
+                                                    <Text type="secondary">Chiều cao: {child.height || 'Chưa xác định'} cm  • Cân nặng: {child.weight || 'Chưa xác định'} kg</Text>
+                                                    {/* <Text type="secondary">Cân nặng: {child.weight || 'Chưa xác định'} kg</Text> */}
                                                 </div>
                                             </Space>
                                         </div>
@@ -344,6 +352,14 @@ const Children = () => {
                                     </Select.Option>
                                 ))}
                             </Select>
+                        </Form.Item>
+
+                        <Form.Item name="height" label="Chiều cao (cm)">
+                            <Input type="number" placeholder="Nhập chiều cao" />
+                        </Form.Item>
+
+                        <Form.Item name="weight" label="Cân nặng (kg)">
+                            <Input type="number" placeholder="Nhập cân nặng" />
                         </Form.Item>
 
 

@@ -66,11 +66,14 @@ const Login = () => {
             dispatch(toggleLoading(true));
             const payload = { email, password };
             const res = await login(payload);
-
+            console.log("Login response:", res.user);
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             // Lưu thông tin user vào localStorage
             const userData = {
+                email: res.user.email,
+                phone: res.user.phone,
+                id: res.user.id,
                 username: res.user.username,
                 role: res.user.role.charAt(0).toUpperCase() + res.user.role.slice(1),
             };
@@ -86,7 +89,7 @@ const Login = () => {
             navigate(getRedirectPath(role), { replace: true });
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || err.message;
-            
+
             // Xử lý các loại lỗi cụ thể
             if (errorMessage.includes('credentials')) {
                 notificationService.error('Tên đăng nhập hoặc mật khẩu không chính xác');
@@ -97,7 +100,7 @@ const Login = () => {
             } else {
                 notificationService.error(errorMessage || 'Đã có lỗi xảy ra khi đăng nhập');
             }
-            
+
             setSubmitError(errorMessage || "Đã có lỗi xảy ra");
         } finally {
             dispatch(toggleLoading(false));
