@@ -10,6 +10,7 @@ export interface User {
   };
   students?: Student[];
   obId?: number;
+  roleInFamily?: string;
 }
 
 export interface Student {
@@ -52,7 +53,6 @@ export interface GuardianRegisterDto {
   password: string;
   phoneNumber: string;
   roleInFamily: string;
-  isCallFirst: boolean;
   students: StudentRegisterDto[];
   roleId?: number;
 }
@@ -61,7 +61,6 @@ export interface Guardian {
   obId: number;
   phoneNumber: string;
   roleInFamily: string;
-  isCallFirst: boolean;
   userId: number;
   fullname: string;
   students: Student[];
