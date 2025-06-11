@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Modal_edit_medical_Event from './Modal/Modal_edit_medical_Event';
 import { notificationService } from '../../services/NotificationService';
+import { medicalEventService } from '../../services/MedicalEventService';
 
 interface MedicalEventDetail {
   OrtherM_ID: number;
@@ -22,7 +23,7 @@ interface MedicalEventDetail {
     class: string;
     historyHealth: string;
   };
-  UserFullname: string;
+  UserFullname?: string;
 }
 
 const Detail_medical_event: React.FC = () => {
@@ -31,10 +32,8 @@ const Detail_medical_event: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
     const params = new URLSearchParams(window.location.search);
     if (params.get('updated') === 'true') {
       notificationService.success('Cập nhật sự kiện thành công', { autoClose: 3000 });
@@ -43,18 +42,19 @@ const Detail_medical_event: React.FC = () => {
       }, 3000);
     }
 
-    fetch(`http://localhost:3333/api/v1/other-medical/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
+    const fetchEventDetail = async () => {
+      try {
+        if (!id) return;
+        const data = await medicalEventService.getMedicalEventById(id);
+        setEventDetail(data);
+      } catch (error) {
+        notificationService.error('Có lỗi xảy ra khi tải dữ liệu');
+      } finally {
+        setLoading(false);
       }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setEventDetail(data.data);
-        }
-      })
-      .finally(() => setLoading(false));
+    };
+
+    fetchEventDetail();
   }, [id, navigate]);
 
   const handleGoBack = () => {
@@ -63,31 +63,14 @@ const Detail_medical_event: React.FC = () => {
 
   const handleEditSubmit = async (formData: any) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      const form = new FormData();
-      form.append('MR_ID', formData.MR_ID);
-      form.append('Decription', formData.Decription);
-      form.append('Handle', formData.Handle);
-      form.append('Is_calLOb', String(formData.Is_calLOb));
-      if (formData.Image) {
-        form.append('Image', formData.Image);
-      }
-
-      const response = await fetch(`http://localhost:3333/api/v1/other-medical/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: form
-      });
-
-      const data = await response.json();
-      if (data.success) {
+      if (!id) return;
+      const response = await medicalEventService.updateMedicalEvent(id, formData);
+      if (response.success) {
         setIsEditModalOpen(false);
         navigate(`/nurse/medical-events/detail/${id}?updated=true`, { replace: true });
         window.location.reload();
       } else {
-        throw new Error(data.message || 'Có lỗi xảy ra');
+        throw new Error(response.message || 'Có lỗi xảy ra');
       }
     } catch (error: any) {
       notificationService.error(error.message || 'Có lỗi xảy ra khi cập nhật sự kiện');

@@ -24,7 +24,7 @@ interface ModalProps {
       class: string;
       historyHealth: string;
     };
-    UserFullname: string;
+    UserFullname?: string;
   } | null;
 }
 
