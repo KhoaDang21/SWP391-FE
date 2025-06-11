@@ -3,7 +3,7 @@ import { Card, Table, Tag, Button, Input, Space, Tooltip, Popconfirm, Modal, For
 import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined, IdcardOutlined, PlusOutlined, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto, createGuardianWithStudents, deleteGuardianByObId, Guardian, getAllGuardians, Student } from '../../../services/AccountService';
+import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto, createGuardianWithStudents, deleteGuardianByObId, Guardian, getAllGuardians, Student, addStudentToGuardian, deleteStudent } from '../../../services/AccountService';
 import { notificationService } from '../../../services/NotificationService';
 
 const UserManagement: React.FC = () => {
@@ -41,7 +41,8 @@ const UserManagement: React.FC = () => {
                     const guardian = guardiansData.find(g => g.userId === user.id);
                     return {
                         ...user,
-                        students: guardian ? guardian.students : [] // Add students to guardian user
+                        students: guardian ? guardian.students : [],
+                        obId: guardian ? guardian.obId : undefined
                     };
                 }
                 return user;
@@ -292,7 +293,7 @@ const UserManagement: React.FC = () => {
                     dataIndex: 'roleId',
                     key: 'roleId',
                     width: 100,
-                    render: (roleId: number) => {
+                    render: () => {
                         const displayRole = 'Student';
                         const roleColor = getRoleColor(3);
 
@@ -318,19 +319,25 @@ const UserManagement: React.FC = () => {
                     title: 'Thao tác',
                     key: 'actions',
                     width: 120,
-                    render: (_, record) => (
+                    render: (_, studentRecord) => (
                         <Space>
                             <Tooltip title="Xem chi tiết">
                                 <Button
                                     type="text"
                                     icon={<EyeOutlined className="text-blue-500 hover:text-blue-600" />}
-                                    onClick={() => navigate(`/admin/management/users/${record.id}`)}
+                                    onClick={() => navigate(`/admin/management/users/${studentRecord.id}`)}
                                 />
                             </Tooltip>
 
-                            {/* <Popconfirm
+                            <Popconfirm
                                 title="Bạn chắc chắn muốn xóa học sinh này?"
-                                onConfirm={() => handleDelete(record.id)}
+                                onConfirm={() => {
+                                    if (record.obId !== undefined) {
+                                        handleDeleteStudent(record.obId, studentRecord.id);
+                                    } else {
+                                        notificationService.error('Không tìm thấy ID phụ huynh để xóa.');
+                                    }
+                                }}
                                 okText="Xóa"
                                 cancelText="Hủy"
                                 placement="topRight"
@@ -342,7 +349,7 @@ const UserManagement: React.FC = () => {
                                         icon={<DeleteOutlined />}
                                     />
                                 </Tooltip>
-                            </Popconfirm> */}
+                            </Popconfirm>
                         </Space>
                     ),
                 }
@@ -362,8 +369,12 @@ const UserManagement: React.FC = () => {
                     <Button
                         type="dashed"
                         onClick={() => {
-                            setCurrentGuardianId(record.id);
-                            setIsAddStudentModalVisible(true);
+                            if (record.obId !== undefined) {
+                                setCurrentGuardianId(record.obId);
+                                setIsAddStudentModalVisible(true);
+                            } else {
+                                notificationService.error('Không tìm thấy ID phụ huynh.');
+                            }
                         }}
                         block
                         icon={<PlusOutlined />}
@@ -390,7 +401,8 @@ const UserManagement: React.FC = () => {
                 notificationService.error('Vui lòng đăng nhập để tiếp tục');
                 return;
             }
-            notificationService.success('Đã gửi yêu cầu thêm học sinh. Cần API backend để hoàn tất.');
+            await addStudentToGuardian(currentGuardianId, values, token);
+            notificationService.success('Thêm học sinh thành công!');
             setIsAddStudentModalVisible(false);
             addStudentForm.resetFields();
             await fetchUsers();
@@ -399,6 +411,22 @@ const UserManagement: React.FC = () => {
             notificationService.error(error.message || 'Có lỗi xảy ra khi thêm học sinh.');
         } finally {
             setAddStudentLoading(false);
+        }
+    };
+
+    const handleDeleteStudent = async (guardianObId: number, studentId: number) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                notificationService.error('Vui lòng đăng nhập để tiếp tục');
+                return;
+            }
+
+            await deleteStudent(guardianObId, studentId, token);
+            notificationService.success('Xóa học sinh thành công');
+            fetchUsers();
+        } catch (error: any) {
+            notificationService.error(error.message || 'Có lỗi xảy ra khi xóa học sinh.');
         }
     };
 
@@ -482,8 +510,6 @@ const UserManagement: React.FC = () => {
                 }}
                 className="border border-gray-200 rounded-lg"
             />
-
-
 
             <Modal
                 title="Thêm quản lý mới"

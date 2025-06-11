@@ -9,7 +9,8 @@ import {
     LogoutOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
-    DownOutlined
+    DownOutlined,
+    FileExcelOutlined
 } from '@ant-design/icons';
 import logo from '../../assets/images/medical-book.png';
 import { logout } from '../../services/AuthServices';
@@ -18,13 +19,28 @@ import { notificationService } from '../../services/NotificationService';
 
 const menuConfig = [
     {
-        key: 'dashboard',
+        key: 'health-overview',
         icon: <HomeOutlined className="w-5 h-5" />,
-        label: 'Dashboard',
-        children: [
-            { key: 'health-overview', label: 'Tình hình y tế học đường', path: '/admin/health-overview' },
-            { key: 'export-excel', label: 'Xuất file Excel', path: '/admin/export-excel' },
-        ]
+        label: 'Tình hình y tế học đường',
+        path: '/admin/health-overview'
+    },
+    {
+        key: 'export-excel',
+        icon: <FileExcelOutlined className="text-lg" />,
+        label: 'Xuất file Excel',
+        path: '/admin/export-excel'
+    },
+    {
+        key: 'student-profiles',
+        icon: <TeamOutlined className="text-lg" />,
+        label: 'Hồ sơ học sinh',
+        path: '/admin/students/health-records'
+    },
+    {
+        key: 'forms',
+        icon: <FormOutlined className="text-lg" />,
+        label: 'Biểu mẫu xác nhận',
+        path: '/admin/forms/create'
     },
     {
         key: 'reports',
@@ -33,22 +49,6 @@ const menuConfig = [
         children: [
             { key: 'health-events', label: 'Sự kiện y tế', path: '/admin/reports/health-events' },
             { key: 'vaccination-reports', label: 'Báo cáo kiểm tra & tiêm chủng', path: '/admin/reports/vaccination' },
-        ]
-    },
-    {
-        key: 'student-profiles',
-        icon: <TeamOutlined className="text-lg" />,
-        label: 'Hồ sơ học sinh',
-        children: [
-            { key: 'health-records', label: 'Hồ sơ y tế học sinh', path: '/admin/students/health-records' },
-        ]
-    },
-    {
-        key: 'forms',
-        icon: <FormOutlined className="text-lg" />,
-        label: 'Biểu mẫu xác nhận',
-        children: [
-            { key: 'create-form', label: 'Tạo form xác nhận', path: '/admin/forms/create' },
         ]
     },
     {
@@ -73,10 +73,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
     const [openGroups, setOpenGroups] = useState<string[]>([]);
 
     useEffect(() => {
-        const found = menuConfig.find(group => group.children.some(item => location.pathname.startsWith(item.path)));
-        if (found && !openGroups.includes(found.key)) {
-            setOpenGroups(prev => [...prev, found.key]);
+        // Default to 'Tình hình y tế học đường' if no path is active or if it's the root admin path
+        if (location.pathname === '/admin' || location.pathname === '/admin/') {
+            navigate('/admin/health-overview');
         }
+
+        // Open parent groups for active child paths
+        const foundParent = menuConfig.find(group =>
+            group.children?.some(item => location.pathname.startsWith(item.path))
+        );
+
+        if (foundParent && !openGroups.includes(foundParent.key)) {
+            setOpenGroups(prev => [...prev, foundParent.key]);
+        }
+
     }, [location.pathname]);
 
     const isActive = (path: string) => location.pathname.startsWith(path);
@@ -150,39 +160,54 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
                                     {group.icon}
                                 </button>
                             ) : (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleToggleGroup(group.key)}
-                                        className={`w-full flex items-center text-white/80 font-semibold text-sm mb-1 px-3 py-2 rounded-lg transition-all duration-200
+                                group.children ? (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleToggleGroup(group.key)}
+                                            className={`w-full flex items-center text-white/80 font-semibold text-sm mb-1 px-3 py-2 rounded-lg transition-all duration-200
                                             ${openGroups.includes(group.key) ? 'bg-white/10' : 'hover:bg-white/10'}
+                                        `}
+                                        >
+                                            <span className="mr-2">{group.icon}</span>
+                                            <span>{group.label}</span>
+                                            <DownOutlined
+                                                className="w-4 h-4 ml-auto text-white/70 transition-transform duration-200"
+                                                style={{ transform: openGroups.includes(group.key) ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                                            />
+                                        </button>
+                                        {openGroups.includes(group.key) && !collapsed && (
+                                            <div className="flex flex-col space-y-1">
+                                                {group.children.map((item) => (
+                                                    <Link
+                                                        key={item.key}
+                                                        to={item.path}
+                                                        className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 pl-8
+                                                        ${isActive(item.path)
+                                                                ? 'bg-white/20 text-white font-bold shadow border border-white/30'
+                                                                : 'text-white hover:bg-white/10 hover:text-white font-normal'}
+                                                    `}
+                                                    >
+                                                        <span>{item.label}</span>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <Link
+                                        key={group.key}
+                                        to={group.path}
+                                        className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                                            ${isActive(group.path)
+                                                ? 'bg-white/20 text-white font-bold shadow border border-white/30'
+                                                : 'text-white hover:bg-white/10 hover:text-white font-normal'}
                                         `}
                                     >
                                         <span className="mr-2">{group.icon}</span>
                                         <span>{group.label}</span>
-                                        <DownOutlined
-                                            className="w-4 h-4 ml-auto text-white/70 transition-transform duration-200"
-                                            style={{ transform: openGroups.includes(group.key) ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-                                        />
-                                    </button>
-                                    {openGroups.includes(group.key) && !collapsed && (
-                                        <div className="flex flex-col space-y-1">
-                                            {group.children.map((item) => (
-                                                <Link
-                                                    key={item.key}
-                                                    to={item.path}
-                                                    className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 pl-8
-                                                        ${isActive(item.path)
-                                                            ? 'bg-white/20 text-white font-bold shadow border border-white/30'
-                                                            : 'text-white hover:bg-white/10 hover:text-white font-normal'}
-                                                    `}
-                                                >
-                                                    <span>{item.label}</span>
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    )}
-                                </>
+                                    </Link>
+                                )
                             )}
                         </div>
                     ))}
