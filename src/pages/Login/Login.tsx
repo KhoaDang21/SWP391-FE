@@ -8,6 +8,7 @@ import { useDispatch } from 'react-redux';
 import { toggleLoading } from '../../app/redux/loading.slice';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { notificationService } from "../../services/NotificationService";
+import { ToyBrick } from "lucide-react";
 
 const getRedirectPath = (role: string) => {
     switch (role) {
@@ -39,10 +40,8 @@ const Login = () => {
     const [password, setPassword] = useState<string>("");
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-    const [submitError, setSubmitError] = useState<string>("");
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
 
     const validate = () => {
         const newErrors: typeof errors = {};
@@ -59,7 +58,7 @@ const Login = () => {
     };
 
     const handleLogin = async () => {
-        setSubmitError("");
+
         if (!validate()) return;
 
         try {
@@ -184,7 +183,7 @@ const Login = () => {
                             {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                         </div>
 
-                        {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+
 
                         <button
                             type="submit"

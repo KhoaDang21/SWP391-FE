@@ -1,20 +1,22 @@
 import React from 'react';
 import { Input } from 'antd';
 
-const { Search } = Input;
-
 interface NewsSearchProps {
   onSearch: (value: string) => void;
 }
 
 const NewsSearch: React.FC<NewsSearchProps> = ({ onSearch }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onSearch(e.target.value);
+  };
+
   return (
-    <Search
+    <Input
       placeholder="Tìm kiếm tin tức..."
       allowClear
-      enterButton="Tìm kiếm"
       size="large"
-      onSearch={onSearch}
+      onChange={handleChange}
+      className="w-full"
     />
   );
 };
