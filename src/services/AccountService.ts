@@ -8,6 +8,17 @@ export interface User {
   Role?: {
     name: string;
   };
+  students?: Student[];
+  obId?: number;
+}
+
+export interface Student {
+  id: number;
+  fullname: string;
+  username: string;
+  email: string;
+  password?: string;
+  roleId: number;
 }
 
 export interface UpdateUserDto {
@@ -53,7 +64,7 @@ export interface Guardian {
   isCallFirst: boolean;
   userId: number;
   fullname: string;
-  students: any[]; // Adjust this type if you have a specific Student interface
+  students: Student[];
 }
 
 const API_URL = 'http://localhost:3333/api/v1';
@@ -214,4 +225,43 @@ export async function getAllGuardians(token: string): Promise<Guardian[]> {
 
   const data = await res.json();
   return data;
+}
+
+export async function addStudentToGuardian(
+  guardianId: number,
+  studentData: StudentRegisterDto,
+  token: string
+): Promise<Student> {
+  const studentDataWithRole = { ...studentData, roleId: 3 }; // Default to Student (roleId: 3)
+  const res = await fetch(`${API_URL}/guardians/${guardianId}/add-student`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(studentDataWithRole)
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Lỗi khi thêm học sinh mới');
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+export async function deleteStudent(guardianId: number, studentId: number, token: string): Promise<void> {
+  const res = await fetch(`${API_URL}/guardians/${guardianId}/student/${studentId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Lỗi khi xóa học sinh');
+  }
 }
