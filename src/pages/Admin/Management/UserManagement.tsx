@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Button, Input, Space, Tooltip, Popconfirm, Modal, Form, Switch } from 'antd';
-import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined, IdcardOutlined, PlusOutlined, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Button, Input, Space, Tooltip, Popconfirm, Modal, Form, Select } from 'antd';
+import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined, IdcardOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto, createGuardianWithStudents, deleteGuardianByObId, Guardian, getAllGuardians, Student, addStudentToGuardian, deleteStudent } from '../../../services/AccountService';
@@ -22,6 +22,7 @@ const UserManagement: React.FC = () => {
     const [addStudentForm] = Form.useForm();
     const [addStudentLoading, setAddStudentLoading] = useState(false);
     const [currentGuardianId, setCurrentGuardianId] = useState<number | null>(null);
+    const [selectedRole, setSelectedRole] = useState<string>('All');
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -37,19 +38,28 @@ const UserManagement: React.FC = () => {
             ]);
 
             const combinedUsers: User[] = usersData.map(user => {
-                if (user.roleId === 4) {
-                    const guardian = guardiansData.find(g => g.userId === user.id);
+                const guardian = guardiansData.find(g => g.userId === user.id);
+
+                if (user.roleId === 4 || user.roleId === 3) {
                     return {
                         ...user,
                         students: guardian ? guardian.students : [],
-                        obId: guardian ? guardian.obId : undefined
+                        obId: guardian ? guardian.obId : undefined,
+                        roleInFamily: guardian ? guardian.roleInFamily : undefined
+                    };
+                } else if (user.roleId === 2 && guardian) {
+                    return {
+                        ...user,
+                        roleId: 4,
+                        students: guardian.students,
+                        obId: guardian.obId,
+                        roleInFamily: guardian.roleInFamily
                     };
                 }
                 return user;
-            }).filter(user => user.roleId !== 3);
+            });
 
             setUsers(combinedUsers);
-            setFilteredUsers(combinedUsers);
         } catch (error: any) {
             notificationService.error(error.message || 'Có lỗi xảy ra khi tải danh sách người dùng');
         } finally {
@@ -61,20 +71,31 @@ const UserManagement: React.FC = () => {
         fetchUsers();
     }, []);
 
-    const handleSearch = (value: string) => {
-        setSearchText(value);
-        const filtered = users.filter(user =>
-            user.username.toLowerCase().includes(value.toLowerCase()) ||
-            user.fullname.toLowerCase().includes(value.toLowerCase()) ||
-            user.email.toLowerCase().includes(value.toLowerCase()) ||
-            user.phoneNumber.includes(value) ||
-            (user.roleId === 4 && user.students && user.students.some(student =>
-                student.fullname.toLowerCase().includes(value.toLowerCase()) ||
-                student.username.toLowerCase().includes(value.toLowerCase())
-            ))
-        );
+    useEffect(() => {
+        const filtered = users.filter(user => {
+            const matchesSearchText = (
+                user.username.toLowerCase().includes(searchText.toLowerCase()) ||
+                user.fullname.toLowerCase().includes(searchText.toLowerCase()) ||
+                user.email.toLowerCase().includes(searchText.toLowerCase()) ||
+                (user.phoneNumber && user.phoneNumber.includes(searchText)) ||
+                (user.roleId === 4 && user.students && user.students.some(student =>
+                    student.fullname.toLowerCase().includes(searchText.toLowerCase()) ||
+                    student.username.toLowerCase().includes(searchText.toLowerCase())
+                ))
+            );
+
+            let matchesRole = false;
+            if (selectedRole === 'All') {
+                // For 'All', show everyone except students (roleId 3) as top-level users
+                matchesRole = user.roleId !== 3;
+            } else {
+                matchesRole = getRoleName(user.roleId) === selectedRole;
+            }
+
+            return matchesSearchText && matchesRole;
+        });
         setFilteredUsers(filtered);
-    };
+    }, [users, searchText, selectedRole]);
 
     const handleDelete = async (userId: number) => {
         try {
@@ -165,10 +186,12 @@ const UserManagement: React.FC = () => {
                         <MailOutlined className="text-blue-500" />
                         <span className="text-gray-600">{record.email}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <PhoneOutlined className="text-green-500" />
-                        <span className="text-gray-600">{record.phoneNumber}</span>
-                    </div>
+                    {record.roleId !== 3 && (  // Chỉ hiển thị số điện thoại nếu không phải Student
+                        <div className="flex items-center gap-2">
+                            <PhoneOutlined className="text-green-500" />
+                            <span className="text-gray-600">{record.phoneNumber}</span>
+                        </div>
+                    )}
                 </div>
             ),
         },
@@ -432,83 +455,59 @@ const UserManagement: React.FC = () => {
 
     return (
         <Card className="shadow-md">
-            <div className="mb-6 flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-blue-600 mb-6">
+            <div className="mb-6 flex justify-between items-center h-14">
+                <h1 className="text-2xl font-bold text-blue-600 m-0 leading-none flex items-center h-full">
                     Quản lý người dùng
                 </h1>
-                <Space>
+                <div className="flex items-center gap-4">
                     <Input
-                        placeholder="Tìm kiếm người dùng..."
-                        prefix={<SearchOutlined className="text-gray-400" />}
-                        className="min-w-[300px]"
+                        placeholder="Tìm kiếm"
+                        prefix={<SearchOutlined />}
                         value={searchText}
-                        onChange={(e) => handleSearch(e.target.value)}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        className="flex-grow"
+                        style={{ width: 250 }}
                         allowClear
                     />
+                    <Select
+                        defaultValue="All"
+                        style={{ width: 120 }}
+                        onChange={(value) => setSelectedRole(value)}
+                        value={selectedRole}
+                    >
+                        <Select.Option value="All">Tất cả</Select.Option>
+                        <Select.Option value="Nurse">Y tá</Select.Option>
+                        <Select.Option value="Guardian">Phụ huynh</Select.Option>
+                        <Select.Option value="Student">Học sinh</Select.Option>
+                    </Select>
                     <Button
                         type="primary"
-                        onClick={() => setIsRegisterModalVisible(true)}
+                        icon={<PlusOutlined />}
                         style={{ backgroundColor: '#28a745' }}
+                        className="h-full flex items-center"
+                        onClick={() => setIsRegisterModalVisible(true)}
                     >
                         Thêm quản lý
                     </Button>
                     <Button
                         type="primary"
                         onClick={() => setIsGuardianRegisterModalVisible(true)}
-                        style={{ backgroundColor: '#1890ff' }}
                     >
                         Thêm phụ huynh
                     </Button>
-                </Space>
+                </div>
             </div>
 
             <Table
                 columns={columns}
                 dataSource={filteredUsers}
-                rowKey="id"
                 loading={loading}
-                pagination={{
-                    pageSize: 10,
-                    showSizeChanger: false,
-                    showTotal: (total) => `Tổng số ${total} người dùng`,
-                }}
+                rowKey="id"
+                pagination={{ pageSize: 10 }}
                 expandable={{
-                    expandedRowRender: expandedRowRender,
-                    rowExpandable: (record: User): boolean =>
-                        record.roleId === 4 && Array.isArray(record.students) && record.students.length > 0,
-                    expandIcon: ({ expanded, onExpand, record }) => {
-                        const isGuardianWithStudents =
-                            record.roleId === 4 && record.students && record.students.length > 0;
-                        if (!isGuardianWithStudents) return null;
-
-                        return expanded ? (
-                            <Tooltip title="Thu gọn">
-                                <MinusCircleOutlined
-                                    onClick={e => onExpand(record, e)}
-                                    style={{
-                                        color: '#2563eb',
-                                        fontSize: 20,
-                                        marginLeft: 8,
-                                        cursor: 'pointer',
-                                    }}
-                                />
-                            </Tooltip>
-                        ) : (
-                            <Tooltip title="Mở rộng">
-                                <PlusCircleOutlined
-                                    onClick={e => onExpand(record, e)}
-                                    style={{
-                                        color: '#2563eb',
-                                        fontSize: 20,
-                                        marginLeft: 8,
-                                        cursor: 'pointer',
-                                    }}
-                                />
-                            </Tooltip>
-                        );
-                    },
+                    expandedRowRender,
+                    rowExpandable: (record: User): boolean => record.roleId === 4 && Array.isArray(record.students) && record.students.length > 0,
                 }}
-                className="border border-gray-200 rounded-lg"
             />
 
             <Modal
@@ -670,14 +669,6 @@ const UserManagement: React.FC = () => {
                         rules={[{ required: true, message: 'Vui lòng nhập vai trò trong gia đình' }]}
                     >
                         <Input />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="isCallFirst"
-                        label="Ưu tiên gọi đầu tiên"
-                        valuePropName="checked"
-                    >
-                        <Switch />
                     </Form.Item>
 
                     <Form.List name="students">
