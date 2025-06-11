@@ -3,8 +3,10 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import Modal_create_medical_Event from './Modal/Modal_create_medical_Event';
 import DeleteConfirmationModal from './Modal/DeleteConfirmationModal';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Trash2, Eye } from 'lucide-react';
+import { medicalEventService } from '../../services/MedicalEventService';
+import { notificationService } from '../../services/NotificationService';
 
 interface MedicalEventApi {
   OrtherM_ID: number;
@@ -37,19 +39,11 @@ interface FormData {
 }
 
 const MedicalEventManagement: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [medicalEvents, setMedicalEvents] = useState<MedicalEventApi[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastConfig, setToastConfig] = useState<{show: boolean; message: string; type: 'success' | 'error'}>({
-    show: false,
-    message: '',
-    type: 'success'
-  });
-  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteModalConfig, setDeleteModalConfig] = useState<{
     isOpen: boolean;
     eventId: number | null;
@@ -59,20 +53,19 @@ const MedicalEventManagement: React.FC = () => {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const fetchMedicalEvents = async () => {
     setLoading(true);
-    fetch('http://localhost:3333/api/v1/other-medical', {
-      headers: {
-        'Authorization': `Bearer ${token}`
+      try {
+        const data = await medicalEventService.getAllMedicalEvents();
+        setMedicalEvents(data);
+      } catch (error) {
+        notificationService.error('Có lỗi xảy ra khi tải dữ liệu');
+      } finally {
+        setLoading(false);
       }
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.success && Array.isArray(data.data)) {
-          setMedicalEvents(data.data);
-        }
-      })
-      .finally(() => setLoading(false));
+    };
+
+    fetchMedicalEvents();
   }, []);
 
   const filteredEvents = selectedDate
@@ -85,58 +78,24 @@ const MedicalEventManagement: React.FC = () => {
     : medicalEvents;
 
   const handleCreateEvent = async (formData: FormData) => {
-    const token = localStorage.getItem("accessToken");
-    const submitData = new FormData();
-    submitData.append('MR_ID', formData.MR_ID);
-    submitData.append('Decription', formData.Decription);
-    submitData.append('Handle', formData.Handle);
-    submitData.append('Is_calLOb', formData.Is_calLOb.toString());
-    if (formData.Image) {
-      submitData.append('Image', formData.Image);
-    }
-
     try {
-      const response = await fetch('http://localhost:3333/api/v1/other-medical', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: submitData,
-      });
-      
-      const data = await response.json();
-      if (data.status === 201) {
+      const response = await medicalEventService.createMedicalEvent(formData);
+      if (response.status === 201) {
         setIsModalOpen(false);
-        setToastConfig({
-          show: true,
-          message: 'Tạo sự kiện thành công!',
-          type: 'success'
-        });   
+        notificationService.success('Tạo sự kiện thành công!');
         
         // Refresh data
-        const refreshResponse = await fetch('http://localhost:3333/api/v1/other-medical', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const refreshData = await refreshResponse.json();
-        if (refreshData && refreshData.success && Array.isArray(refreshData.data)) {
-          setMedicalEvents(refreshData.data);
-        }
-      } else {
-        throw new Error(data.message || 'Có lỗi xảy ra khi tạo sự kiện');
+        const refreshData = await medicalEventService.getAllMedicalEvents();
+        setMedicalEvents(refreshData);
       }
     } catch (error: any) {
-      setToastConfig({
-        show: true,
-        message: error.message || 'Có lỗi xảy ra khi tạo sự kiện',
-        type: 'error'
-      });
-      throw error; // Re-throw to trigger loading state in modal
+      notificationService.error(error.message || 'Có lỗi xảy ra khi tạo sự kiện');
+      throw error;
     }
   };
 
-  const handleRowClick = (id: number) => {
+  const handleViewDetails = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     navigate(`/nurse/medical-events/detail/${id}`, {
       state: { from: 'medical-events', keepActive: true }
     });
@@ -150,31 +109,16 @@ const MedicalEventManagement: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (!deleteModalConfig.eventId) return;
     
-    const token = localStorage.getItem("accessToken");
     try {
-      const response = await fetch(`http://localhost:3333/api/v1/other-medical/${deleteModalConfig.eventId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      if (data.success) {
+      const response = await medicalEventService.deleteMedicalEvent(deleteModalConfig.eventId);
+      if (response.success) {
         setMedicalEvents(prev => prev.filter(event => event.OrtherM_ID !== deleteModalConfig.eventId));
-        setToastConfig({
-          show: true,
-          message: 'Xóa sự kiện thành công!',
-          type: 'success'
-        });
+        notificationService.success('Xóa sự kiện thành công!');
       } else {
-        throw new Error(data.message);
+        throw new Error(response.message);
       }
     } catch (error: any) {
-      setToastConfig({
-        show: true,
-        message: error.message || 'Có lỗi xảy ra khi xóa sự kiện',
-        type: 'error'
-      });
+      notificationService.error(error.message || 'Có lỗi xảy ra khi xóa sự kiện');
     }
   };
 
@@ -229,8 +173,7 @@ const MedicalEventManagement: React.FC = () => {
               filteredEvents.map((event, index) => (
                 <tr 
                   key={event.OrtherM_ID} 
-                  onClick={() => handleRowClick(event.OrtherM_ID)}
-                  className="hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                  className="hover:bg-gray-50 transition-colors duration-200"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{index + 1}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -255,13 +198,23 @@ const MedicalEventManagement: React.FC = () => {
                       ? new Date(event.history[0].Date_create).toLocaleDateString('vi-VN')
                       : ''}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={(e) => handleDelete(event.OrtherM_ID, e)}
-                      className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <div className="flex items-center space-x-3">
+                      <button
+                        onClick={(e) => handleViewDetails(event.OrtherM_ID, e)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                        title="Xem chi tiết"
+                      >
+                        <Eye className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(event.OrtherM_ID, e)}
+                        className="text-red-600 hover:text-red-800 transition-colors duration-200"
+                        title="Xóa"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -281,27 +234,6 @@ const MedicalEventManagement: React.FC = () => {
         onClose={() => setDeleteModalConfig({ isOpen: false, eventId: null })}
         onConfirm={handleConfirmDelete}
       />
-
-      {toastConfig.show && (
-        <div className={`fixed bottom-4 right-4 border px-6 py-4 rounded-lg shadow-xl transition-all duration-500 z-50 ${
-          toastConfig.type === 'success' 
-            ? 'bg-green-100 border-green-400 text-green-800'
-            : 'bg-red-100 border-red-400 text-red-800'
-        }`}>
-          <p className="flex items-center text-base font-medium">
-            {toastConfig.type === 'success' ? (
-              <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
-            </svg>
-            ) : (
-              <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
-              </svg>
-            )}
-            {toastConfig.message}
-          </p>
-        </div>
-      )}
     </div>
   );
 };
