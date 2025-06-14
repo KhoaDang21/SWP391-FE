@@ -8,7 +8,6 @@ import { useDispatch } from 'react-redux';
 import { toggleLoading } from '../../app/redux/loading.slice';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { notificationService } from "../../services/NotificationService";
-import { ToyBrick } from "lucide-react";
 
 const getRedirectPath = (role: string) => {
     switch (role) {
@@ -40,8 +39,10 @@ const Login = () => {
     const [password, setPassword] = useState<string>("");
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+    const [submitError, setSubmitError] = useState<string>("");
     const navigate = useNavigate();
     const dispatch = useDispatch();
+
 
     const validate = () => {
         const newErrors: typeof errors = {};
@@ -58,18 +59,21 @@ const Login = () => {
     };
 
     const handleLogin = async () => {
-
+        setSubmitError("");
         if (!validate()) return;
 
         try {
             dispatch(toggleLoading(true));
             const payload = { email, password };
             const res = await login(payload);
-
+            console.log("Login response:", res.user);
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             // Lưu thông tin user vào localStorage
             const userData = {
+                email: res.user.email,
+                phone: res.user.phone,
+                id: res.user.id,
                 username: res.user.username,
                 role: res.user.role.charAt(0).toUpperCase() + res.user.role.slice(1),
             };
@@ -97,7 +101,7 @@ const Login = () => {
                 notificationService.error(errorMessage || 'Đã có lỗi xảy ra khi đăng nhập');
             }
 
-
+            setSubmitError(errorMessage || "Đã có lỗi xảy ra");
         } finally {
             dispatch(toggleLoading(false));
         }
@@ -180,7 +184,7 @@ const Login = () => {
                             {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                         </div>
 
-
+                        {submitError && <p className="text-sm text-red-600">{submitError}</p>}
 
                         <button
                             type="submit"
