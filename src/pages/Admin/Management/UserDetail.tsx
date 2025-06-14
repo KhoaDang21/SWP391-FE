@@ -22,14 +22,17 @@ const UserDetail: React.FC = () => {
                 return;
             }
             if (!id) return;
-            const data = await getUserById(parseInt(id), token);
-            setUser(data);
+            const [userData] = await Promise.all([
+                getUserById(parseInt(id), token),
+            ]);
+
+            setUser(userData);
 
             form.setFieldsValue({
-                username: data.username,
-                fullname: data.fullname,
-                email: data.email,
-                phoneNumber: data.phoneNumber,
+                username: userData.username,
+                fullname: userData.fullname,
+                email: userData.email,
+                phoneNumber: userData.phoneNumber,
             });
         } catch (error: any) {
             notificationService.error(error.message || 'Có lỗi xảy ra khi tải thông tin người dùng');

@@ -10,6 +10,7 @@ export interface User {
     };
     students?: Student[];
     obId?: number;
+    roleInFamily?: string;
 }
 
 export interface Student {
