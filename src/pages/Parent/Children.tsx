@@ -29,36 +29,54 @@ import {
     HeartOutlined,
     SafetyOutlined
 } from '@ant-design/icons';
-import { getGuardiansByUserId } from '../../services/GuardianService';
+import { getStudentsByGuardianUserId } from '../../services/AccountService';
+import { createMedicalRecord, deleteMedicalRecord, getAllMedicalRecords, updateMedicalRecord } from '../../services/MedicalRecordService';
+import type { MedicalRecord } from '../../services/MedicalRecordService';
 const { Option } = Select;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
 
 const Children = () => {
+    const token = localStorage.getItem('accessToken') as string;
+    // const [children, setChildren] = useState([
+    //     {
+    //         id: 1,
+    //         name: 'Nguyễn Văn A',
+    //         dateOfBirth: '2018-05-15',
+    //         gender: 'Nam',
+    //         bloodType: 'O+',
+    //         height: 120,
+    //         weight: 30,
+    //         vaccines: [
+    //             { name: 'BCG', date: '2018-06-01', status: 'Đã tiêm' },
+    //             { name: 'Viêm gan B', date: '2018-07-15', status: 'Đã tiêm' },
+    //             { name: 'DPT', date: '2018-08-20', status: 'Đã tiêm' }
+    //         ],
+    //         chronicDiseases: ['Hen suyễn nhẹ'],
+    //         allergies: ['Phấn hoa', 'Tôm cua'],
+    //         pastIllnesses: [
+    //             { disease: 'Viêm phổi', date: '2020-12-10', treatment: 'Kháng sinh' },
+    //             { disease: 'Sốt xuất huyết', date: '2021-06-20', treatment: 'Nhập viện 5 ngày' }
+    //         ]
+    //     }
+    // ]);
 
-    const [children, setChildren] = useState([
-        {
-            id: 1,
-            name: 'Nguyễn Văn A',
-            dateOfBirth: '2018-05-15',
-            gender: 'Nam',
-            bloodType: 'O+',
-            height: 120,
-            weight: 30,
-            vaccines: [
-                { name: 'BCG', date: '2018-06-01', status: 'Đã tiêm' },
-                { name: 'Viêm gan B', date: '2018-07-15', status: 'Đã tiêm' },
-                { name: 'DPT', date: '2018-08-20', status: 'Đã tiêm' }
-            ],
-            chronicDiseases: ['Hen suyễn nhẹ'],
-            allergies: ['Phấn hoa', 'Tôm cua'],
-            pastIllnesses: [
-                { disease: 'Viêm phổi', date: '2020-12-10', treatment: 'Kháng sinh' },
-                { disease: 'Sốt xuất huyết', date: '2021-06-20', treatment: 'Nhập viện 5 ngày' }
-            ]
-        }
-    ]);
+    const [children, setChildren] = useState<MedicalRecord[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const records = await getAllMedicalRecords(token);
+                console.log('Fetched medical records:', records);
+                setChildren(records);
+            } catch (error) {
+                console.error('Lỗi khi lấy hồ sơ y tế:', error);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     interface Child {
         id: number;
@@ -76,14 +94,14 @@ const Children = () => {
 
 
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [editingChild, setEditingChild] = useState<Child | null>(null);
+    const [editingChild, setEditingChild] = useState<MedicalRecord | null>(null);
     const [form] = Form.useForm();
 
     useEffect(() => {
         const fetchChildren = async () => {
             try {
                 const user = localStorage.getItem('user');
-                const token = localStorage.getItem('accessToken');
+
                 const userIdStr = user ? JSON.parse(user).id : null;
 
                 if (!userIdStr || !token) {
@@ -92,12 +110,13 @@ const Children = () => {
                 }
 
                 const userId = parseInt(userIdStr, 10);
-                const data = await getGuardiansByUserId(userId, token);
-
+                const data = await getStudentsByGuardianUserId(userId, token);
+                console.log('Fetched children data:', data);
                 const studentList = data.students.map((student: any) => ({
                     id: student.id,
                     name: student.fullname
                 }));
+                console.log('Processed children list:', studentList);
                 setChildrenList(studentList);
             } catch (error) {
                 console.error('Lỗi lấy danh sách học sinh:', error);
@@ -109,6 +128,7 @@ const Children = () => {
 
 
     const [childrenList, setChildrenList] = useState<{ id: number; name: string }[]>([]);
+
 
 
     const vaccineOptions = [
@@ -126,13 +146,12 @@ const Children = () => {
         'Phấn hoa', 'Bụi nhà', 'Lông động vật', 'Tôm cua', 'Sữa',
         'Trứng', 'Đậu phộng', 'Kháng sinh Penicillin', 'Aspirin'
     ];
-    const showModal = (child: Child | null = null) => {
+    const showModal = (child: MedicalRecord | null = null) => {
         setEditingChild(child);
         setIsModalVisible(true);
         if (child) {
             form.setFieldsValue({
                 ...child,
-                dateOfBirth: child.dateOfBirth,
                 vaccines: child.vaccines || [],
                 chronicDiseases: child.chronicDiseases || [],
                 allergies: child.allergies || [],
@@ -149,29 +168,55 @@ const Children = () => {
         form.resetFields();
     };
 
-    const handleSubmit = (values: Omit<Child, 'id'>) => {
+    const handleSubmit = async (values: any) => {
+        const token = localStorage.getItem('accessToken') as string;
+        if (!token) {
+            console.error('Không tìm thấy token');
+            return;
+        }
         const newChild = {
             ...values,
-            id: editingChild ? editingChild.id : Date.now(),
+            // userId: editingChild ? editingChild.userId : Date.now(),
+            height: Number(values.height),
+            weight: Number(values.weight),
+            chronicDiseases: values.chronicDiseases?.map((d: string) => ({ name: d })) || [],
+            allergies: values.allergies?.map((a: string) => ({ name: a })) || [],
         };
+
         console.log('Submitted values:', newChild);
 
         if (editingChild) {
-            setChildren(children.map(child =>
-                child.id === editingChild.id ? newChild : child
-            ));
+            console.log('Updating child:', editingChild.ID);
+            console.log('Token:', token);
+            await updateMedicalRecord(editingChild.ID!, newChild, token);
         } else {
-            setChildren([...children, newChild]);
+            await createMedicalRecord(newChild, token);
         }
+
+        const updatedRecords = await getAllMedicalRecords(token);
+        setChildren(updatedRecords);
 
         setIsModalVisible(false);
         setEditingChild(null);
         form.resetFields();
     };
 
-    const deleteChild = (id: number) => {
-        setChildren(children.filter(child => child.id !== id));
+
+    const deleteChild = async (id: number) => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+
+        try {
+            await deleteMedicalRecord(id, token);
+
+            // Fetch lại danh sách sau khi xóa
+            const updatedRecords = await getAllMedicalRecords(token);
+            setChildren(updatedRecords);
+        } catch (error) {
+            console.error('Lỗi khi xóa hồ sơ y tế:', error);
+        }
     };
+
 
     const calculateAge = (dateOfBirth: string) => {
         const today = new Date();
@@ -230,26 +275,20 @@ const Children = () => {
 
                         <Row gutter={[16, 16]}>
                             {children.map(child => (
-                                <Col xs={24} lg={12} key={child.id}>
+                                <Col xs={24} lg={12} key={child.userId}>
                                     <Card
                                         style={{ height: '100%' }}
                                         actions={[
                                             <EditOutlined key="edit" onClick={() => showModal(child)} />,
-                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.id)} />
+                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.ID)} />
                                         ]}
                                     >
                                         <div style={{ marginBottom: '16px' }}>
                                             <Space>
                                                 <Avatar size={64} icon={<UserOutlined />} />
                                                 <div>
-                                                    <Title level={4} style={{ margin: 0 }}>{child.name}</Title>
-                                                    <Text type="secondary">
-                                                        {calculateAge(child.dateOfBirth)} tuổi • {child.gender}
-                                                    </Text>
-                                                    <br />
-                                                    {/* <Text type="secondary">Nhóm máu: {child.bloodType || 'Chưa xác định'}</Text> */}
+                                                    <Title level={4} style={{ margin: 0 }}>{child.fullname}</Title>
                                                     <Text type="secondary">Chiều cao: {child.height || 'Chưa xác định'} cm  • Cân nặng: {child.weight || 'Chưa xác định'} kg</Text>
-                                                    {/* <Text type="secondary">Cân nặng: {child.weight || 'Chưa xác định'} kg</Text> */}
                                                 </div>
                                             </Space>
                                         </div>
@@ -273,31 +312,31 @@ const Children = () => {
                                                 </div>
                                             </TabPane>
 
-                                            <TabPane tab={<span><MedicineBoxOutlined />Sức khỏe</span>} key="2">
+                                            <TabPane tab={<div><MedicineBoxOutlined />Sức khỏe</div>} key="2">
                                                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {child.chronicDiseases && child.chronicDiseases.length > 0 && (
+                                                    {Array.isArray(child.chronicDiseases) && child.chronicDiseases.length > 0 && (
                                                         <div style={{ marginBottom: '12px' }}>
                                                             <Text strong>Bệnh nền:</Text>
                                                             <div style={{ marginTop: '4px' }}>
                                                                 {child.chronicDiseases.map((disease, index) => (
-                                                                    <Tag key={index} color="orange">{disease}</Tag>
+                                                                    <Tag key={index} color="orange">{disease.name}</Tag>
                                                                 ))}
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    {child.allergies && child.allergies.length > 0 && (
+                                                    {Array.isArray(child.allergies) && child.allergies.length > 0 && (
                                                         <div style={{ marginBottom: '12px' }}>
                                                             <Text strong>Dị ứng:</Text>
                                                             <div style={{ marginTop: '4px' }}>
                                                                 {child.allergies.map((allergy, index) => (
-                                                                    <Tag key={index} color="red">{allergy}</Tag>
+                                                                    <Tag key={index} color="red">{allergy.name}</Tag>
                                                                 ))}
                                                             </div>
                                                         </div>
                                                     )}
 
-                                                    {child.pastIllnesses && child.pastIllnesses.length > 0 && (
+                                                    {Array.isArray(child.pastIllnesses) && child.pastIllnesses.length > 0 && (
                                                         <div>
                                                             <Text strong>Bệnh đã mắc:</Text>
                                                             <div style={{ marginTop: '4px' }}>
@@ -311,6 +350,7 @@ const Children = () => {
                                                     )}
                                                 </div>
                                             </TabPane>
+
                                         </Tabs>
                                     </Card>
                                 </Col>
@@ -341,26 +381,55 @@ const Children = () => {
                         />
 
                         <Form.Item
-                            name="name"
+                            name="userId"
                             label="Chọn con"
                             rules={[{ required: true, message: 'Vui lòng chọn con!' }]}
                         >
                             <Select placeholder="Chọn tên con">
-                                {childrenList.map(child => (
-                                    <Select.Option key={child.id} value={child.name}>
-                                        {child.name}
-                                    </Select.Option>
-                                ))}
+                                {childrenList
+                                    .filter(child => {
+                                        const alreadyUsed = children.some(record =>
+                                            record.userId === child.id && record.userId !== editingChild?.userId
+                                        );
+                                        return !alreadyUsed;
+                                    })
+                                    .map(child => (
+                                        <Select.Option key={child.id} value={child.id}>
+                                            {child.name}
+                                        </Select.Option>
+                                    ))}
                             </Select>
                         </Form.Item>
 
-                        <Form.Item name="height" label="Chiều cao (cm)">
-                            <Input type="number" placeholder="Nhập chiều cao" />
+
+                        <Form.Item
+                            name="height"
+                            label="Chiều cao (cm)"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập chiều cao!' },
+                                {
+                                    validator: (_, value) =>
+                                        value > 0 ? Promise.resolve() : Promise.reject('Chiều cao phải lớn hơn 0'),
+                                },
+                            ]}
+                        >
+                            <Input type="number" min={1} placeholder="Nhập chiều cao" />
                         </Form.Item>
 
-                        <Form.Item name="weight" label="Cân nặng (kg)">
-                            <Input type="number" placeholder="Nhập cân nặng" />
+                        <Form.Item
+                            name="weight"
+                            label="Cân nặng (kg)"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập cân nặng!' },
+                                {
+                                    validator: (_, value) =>
+                                        value > 0 ? Promise.resolve() : Promise.reject('Cân nặng phải lớn hơn 0'),
+                                },
+                            ]}
+                        >
+                            <Input type="number" min={1} placeholder="Nhập cân nặng" />
                         </Form.Item>
+
 
 
                         <Divider />
@@ -396,7 +465,10 @@ const Children = () => {
                                                     name={[field.name, 'date']}
                                                     label={field.key === 0 ? "Ngày tiêm" : ""}
                                                 >
-                                                    <Input type="date" />
+                                                    <Input
+                                                        type="date"
+                                                        max={new Date().toISOString().split("T")[0]}
+                                                    />
                                                 </Form.Item>
                                             </Col>
                                             <Col span={6}>
@@ -413,7 +485,7 @@ const Children = () => {
                                             </Col>
                                             <Col span={4}>
                                                 {field.key === 0 && <div style={{ height: '22px' }} />}
-                                                <Button type="link" onClick={() => remove(field.name)}>
+                                                <Button className='mb-4' onClick={() => remove(field.name)}>
                                                     Xóa
                                                 </Button>
                                             </Col>
@@ -494,7 +566,10 @@ const Children = () => {
                                                     name={[field.name, 'date']}
                                                     label={field.key === 0 ? "Ngày mắc" : ""}
                                                 >
-                                                    <Input type="date" />
+                                                    <Input
+                                                        type="date"
+                                                        max={new Date().toISOString().split("T")[0]}
+                                                    />
                                                 </Form.Item>
                                             </Col>
                                             <Col span={6}>
@@ -508,7 +583,7 @@ const Children = () => {
                                             </Col>
                                             <Col span={4}>
                                                 {field.key === 0 && <div style={{ height: '22px' }} />}
-                                                <Button type="link" onClick={() => remove(field.name)}>
+                                                <Button className='mb-4' onClick={() => remove(field.name)}>
                                                     Xóa
                                                 </Button>
                                             </Col>
