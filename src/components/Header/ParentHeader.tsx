@@ -1,5 +1,6 @@
+import React, { useState, useEffect } from 'react';
 import { UserOutlined } from "@ant-design/icons";
-import { Avatar, Dropdown, Menu } from "antd";
+import { Avatar, Dropdown, Menu, Badge } from "antd";
 import { NavLink, useNavigate } from "react-router-dom";
 import Noti from "../../pages/Noti/Noti";
 import { logout } from "../../services/AuthServices";
@@ -13,8 +14,20 @@ const Header = () => {
   const inactiveClass = "text-gray-700 hover:text-blue-600";
   const userInfo = localStorage.getItem("user");
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await notificationService.getNotificationsForCurrentUser();
+        setUnreadCount(response.unreadCount);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    };
 
+    fetchNotifications();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -77,7 +90,9 @@ const Header = () => {
 
         <div className="flex items-center space-x-4 -mr-20">
           <div className="ml-4">
-            <Noti />
+            <Badge count={unreadCount}>
+              <Noti />
+            </Badge>
           </div>
 
           <Dropdown overlay={menu} trigger={['hover']} arrow placement="bottomRight">
