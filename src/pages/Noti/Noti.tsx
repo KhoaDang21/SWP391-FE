@@ -1,129 +1,122 @@
 // src/components/Noti.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge, Popover, List, Spin, Divider } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
+import { notificationService } from '../../services/NotificationService';
 
 interface Notification {
-    id: string;
-    title: string;
-    message: string;
-    createdAt: string;
-    isRead: boolean;
+  notiId: number;
+  title: string;
+  mess: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
-const sampleData: Notification[] = [
-    {
-        id: '1',
-        title: 'Nhắc nhở tiêm chủng mũi 1 ',
-        message: 'Hãy đưa bé đến trung tâm y tế để tiêm mũi 1 vào ngày mai.',
-        createdAt: new Date().toISOString(),
-        isRead: false,
-    },
-    {
-        id: '2',
-        title: 'Kết quả khám sức khỏe',
-        message: 'Kết quả khám định kỳ đã có, vui lòng xem chi tiết.',
-        createdAt: new Date(Date.now() - 3600 * 1000).toISOString(),
-        isRead: true,
-    },
-    {
-        id: '3',
-        title: 'Đơn thuốc mới',
-        message: 'Bác sĩ đã kê đơn thuốc cho bé, vui lòng kiểm tra.',
-        createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-        isRead: false,
-    },
-
-];
-
 const Noti: React.FC = () => {
-    const [open, setOpen] = useState(false);
-    const [notifications, setNotifications] = useState<Notification[]>(sampleData);
-    const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-    const handleOpenChange = (visible: boolean) => {
-        setOpen(visible);
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      setLoading(true);
+      try {
+        const response = await notificationService.getNotificationsForCurrentUser();
+        setNotifications(response.notifications);
+        setUnreadCount(response.unreadCount);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const unreadCount = notifications.filter((n) => !n.isRead).length;
+    fetchNotifications();
+  }, []);
 
-    const content = (
-        <div style={{ width: 360, maxHeight: 400, overflowY: 'auto' }}>
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: 20 }}>
-                    <Spin />
-                </div>
-            ) : (
-                <List
-                    dataSource={notifications}
-                    renderItem={(item) => (
-                        <React.Fragment key={item.id}>
-                            <List.Item
-                                style={{ padding: '12px 16px' }}
-                                onClick={() => {
-                                    setNotifications((prev) =>
-                                        prev.map((n) =>
-                                            n.id === item.id ? { ...n, isRead: true } : n
-                                        )
-                                    );
-                                }}      >
-                                <List.Item.Meta
-                                    avatar={
-                                        <span
-                                            style={{
-                                                display: 'inline-block',
-                                                width: 8,
-                                                height: 8,
-                                                borderRadius: '50%',
-                                                backgroundColor: item.isRead ? 'transparent' : '#1890ff',
-                                                marginTop: 6,
-                                                marginRight: 8
-                                            }}
-                                        />
-                                    }
-                                    title={
-                                        <span style={{ fontWeight: item.isRead ? 'normal' : 'bold' }}>
-                                            {item.title}
-                                        </span>
-                                    }
-                                    description={
-                                        <div>
-                                            <div style={{ fontSize: 12, color: '#888' }}>
-                                                {new Date(item.createdAt).toLocaleString()}
-                                            </div>
-                                            <div style={{ marginTop: 4 }}>{item.message}</div>
-                                        </div>
-                                    }
-                                />
-                            </List.Item>
-                            <Divider style={{ margin: 0, opacity: 0.3 }} />
-                        </React.Fragment>
-                    )}
-                />
+  const handleOpenChange = (visible: boolean) => {
+    setOpen(visible);
+  };
 
-            )}
+  const content = (
+    <div style={{ width: 360, maxHeight: 400, overflowY: 'auto' }}>
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 20 }}>
+          <Spin />
         </div>
-    );
-
-    return (
-        <Popover
-            content={content}
-            trigger="click"
-            open={open}
-            onOpenChange={handleOpenChange}
-            placement="bottomRight"
-        >
-            <Badge count={unreadCount} size="small">
-                <BellOutlined
-                    style={{
-                        fontSize: 24,
-                        color: open ? '#1890ff' : '#000',
-                        cursor: 'pointer',
-                    }}
+      ) : (
+        <List
+          dataSource={notifications}
+          renderItem={(item) => (
+            <React.Fragment key={item.notiId}>
+              <List.Item
+                style={{ padding: '12px 16px' }}
+                onClick={() => {
+                  setNotifications((prev) =>
+                    prev.map((n) =>
+                      n.notiId === item.notiId ? { ...n, isRead: true } : n
+                    )
+                  );
+                }}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: item.isRead ? 'transparent' : '#1890ff',
+                        marginTop: 6,
+                        marginRight: 8
+                      }}
+                    />
+                  }
+                  title={
+                    <span style={{ fontWeight: item.isRead ? 'normal' : 'bold' }}>
+                      {item.title}
+                    </span>
+                  }
+                  description={
+                    <div>
+                      <div style={{ fontSize: 12, color: '#888' }}>
+                        {new Date(item.createdAt).toLocaleString()}
+                      </div>
+                      <div style={{ marginTop: 4 }}>{item.mess}</div>
+                    </div>
+                  }
                 />
-            </Badge>
-        </Popover>
-    );
+              </List.Item>
+              <Divider style={{ margin: 0, opacity: 0.3 }} />
+            </React.Fragment>
+          )}
+        />
+      )}
+    </div>
+  );
+
+  return (
+    <Popover
+      content={content}
+      trigger="click"
+      open={open}
+      onOpenChange={handleOpenChange}
+      placement="bottomRight"
+    >
+      <Badge count={unreadCount} size="small">
+        <BellOutlined
+          style={{
+            fontSize: 24,
+            color: open ? '#1890ff' : '#000',
+            cursor: 'pointer',
+          }}
+        />
+      </Badge>
+    </Popover>
+  );
 };
 
 export default Noti;
+            
