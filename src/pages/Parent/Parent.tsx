@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Layout,
     Card,
@@ -37,6 +37,7 @@ import {
     EyeOutlined,
     FileTextOutlined
 } from '@ant-design/icons';
+import { notificationService } from '../../services/NotificationService';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -63,46 +64,29 @@ interface HealthRecord {
 }
 
 interface Notification {
-    id: number;
-    title: string;
-    content: string;
-    type: 'info' | 'warning' | 'success' | 'error';
-    date: string;
-    isRead: boolean;
+  notiId: number;
+  title: string;
+  mess: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userId: number;
 }
 
-// Mock thông báo
-const notifications: Notification[] = [
-    {
-        id: 1,
-        title: "Nhắc nhở tiêm chủng mũi 1",
-        content: "Hãy đưa bé đến trung tâm y tế để tiêm mũi 1 vào ngày mai.",
-        type: 'warning',
-        date: '2024-04-20',
-        isRead: false
-    },
-    {
-        id: 2,
-        title: "Kết quả khám sức khỏe",
-        content: "Kết quả khám sức khỏe của con bạn đã có. Vui lòng xem chi tiết.",
-        type: 'success',
-        date: '2024-04-18',
-        isRead: true
-    },
-    {
-        id: 3,
-        title: "Tiêm chủng sắp tới",
-        content: "Con bạn cần tiêm vaccine sởi vào tháng 5/2024",
-        type: 'info',
-        date: '2024-04-15',
-        isRead: false
-    }
-];
+interface NotificationResponse {
+  notifications: Notification[];
+  pagination: {
+    currentPage: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  unreadCount: number;
+}
 
 const Parent: React.FC = () => {
     const [selectedChild, setSelectedChild] = useState<number>(1);
     const [modalVisible, setModalVisible] = useState(false);
-    const [noti, setNoti] = useState<Notification[]>(notifications);
+    const [noti, setNoti] = useState<Notification[]>([]);
 
     // Mock data cho con em
     const children: Child[] = [
@@ -153,7 +137,6 @@ const Parent: React.FC = () => {
             doctor: 'Y tá Lê Văn C'
         }
     ];
-
 
     const currentChild = children.find(child => child.id === selectedChild) || children[0];
 
@@ -211,6 +194,22 @@ const Parent: React.FC = () => {
             key: 'doctor',
         },
     ];
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const response = await notificationService.getNotificationsForCurrentUser();
+                if (response && response.notifications) {
+                  setNoti(response.notifications);
+                }
+            } catch (error) {
+                console.error('Failed to fetch notifications:', error);
+                setNoti([]);
+            }
+        };
+
+        fetchNotifications();
+    }, []);
 
     return (
         <div style={{ padding: '24px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
@@ -390,41 +389,35 @@ const Parent: React.FC = () => {
                                 dataSource={noti}
                                 renderItem={(item) => (
                                     <List.Item
-                                        onClick={() => {
-                                            setNoti((prev) =>
-                                                prev.map((n) =>
-                                                    n.id === item.id ? { ...n, isRead: true } : n
-                                                )
-                                            );
-                                        }}
-                                        style={{
-                                            backgroundColor: !item.isRead ? '#f6ffed' : 'transparent',
-                                            padding: '12px',
-                                            borderRadius: '6px',
-                                            marginBottom: '8px'
-
-                                        }}>
-                                        <List.Item.Meta
-                                            avatar={
-                                                <Badge dot={!item.isRead}>
-                                                    <Avatar
-                                                        icon={<BellOutlined />}
-                                                        style={{
-                                                            backgroundColor: item.type === 'warning' ? '#faad14' :
-                                                                item.type === 'success' ? '#52c41a' :
-                                                                    item.type === 'error' ? '#ff4d4f' : '#1677ff'
-                                                        }}
-                                                    />
-                                                </Badge>
-                                            }
-                                            title={<Text strong={!item.isRead}>{item.title}</Text>}
-                                            description={
-                                                <div>
-                                                    <Paragraph ellipsis={{ rows: 2 }}>{item.content}</Paragraph>
-                                                    <Text type="secondary" style={{ fontSize: '12px' }}>{item.date}</Text>
-                                                </div>
-                                            }
-                                        />
+                                      onClick={() => {
+                                        setNoti((prev) =>
+                                          prev.map((n) =>
+                                            n.notiId === item.notiId ? { ...n, isRead: true } : n
+                                          )
+                                        );
+                                      }}
+                                      style={{
+                                        backgroundColor: !item.isRead ? '#f6ffed' : 'transparent',
+                                        padding: '12px',
+                                        borderRadius: '6px',
+                                        marginBottom: '8px'
+                                      }}>
+                                      <List.Item.Meta
+                                        avatar={
+                                          <Badge dot={!item.isRead}>
+                                            <Avatar icon={<BellOutlined />} style={{ backgroundColor: '#1677ff' }} />
+                                          </Badge>
+                                        }
+                                        title={<Text strong={!item.isRead}>{item.title}</Text>}
+                                        description={
+                                          <div>
+                                            <Paragraph ellipsis={{ rows: 2 }}>{item.mess}</Paragraph>
+                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                              {new Date(item.createdAt).toLocaleString()}
+                                            </Text>
+                                          </div>
+                                        }
+                                      />
                                     </List.Item>
                                 )}
                             />

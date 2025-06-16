@@ -12,7 +12,7 @@ interface MedicineRecord {
 
 const MedicineManagement: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [medicineRecords, setMedicineRecords] = useState<MedicineRecord[]>([
+  const [medicineRecords] = useState<MedicineRecord[]>([
     {
       id: 1,
       date: new Date(),
