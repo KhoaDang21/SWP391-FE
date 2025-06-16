@@ -33,7 +33,7 @@ const MedicineManagement: React.FC = () => {
       <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Quản lý đơn thuốc</h1>
         <button className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-blue-500/30">
-          + Thêm đơn thuốc
+          + Tạo đợt khám
         </button>
       </div>
 
