@@ -1,292 +1,221 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Button, Select, Space, Table, Modal, Form, Input, DatePicker } from 'antd';
+import moment from 'moment';
+import { healthCheckService, HealthCheckEvent, CreateHealthCheckRequest } from '../../services/Healthcheck';
+import { notificationService } from '../../services/NotificationService';
 
-interface HealthCheckRecord {
-  id: number;
-  studentName: string;
-  class: string;
-  height: string;
-  weight: string;
-  blood_pressure: string;
-  vision: string;
-  dental: string;
-  ent: string;
-  skin: string;
-  status: string;
-  conclusion?: string;
-}
+const { Option } = Select;
+const { TextArea } = Input;
 
-const Manage_healthcheck: React.FC = () => {
-  const [isEditing, setIsEditing] = useState(false);
+const ManageHealthcheck: React.FC = () => {
+  const [healthEvents, setHealthEvents] = useState<HealthCheckEvent[]>([]);
+  const [schoolYears, setSchoolYears] = useState<string[]>([]);
+  const [selectedYear, setSelectedYear] = useState<string>('Tất cả');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [conclusion, setConclusion] = useState('');
-  const [selectedRecord, setSelectedRecord] = useState<HealthCheckRecord | null>(null);
-  const [healthRecords] = useState<HealthCheckRecord[]>([
-    {
-      id: 1,
-      studentName: "Nguyễn Văn A",
-      class: "10A1",
-      height: "170",
-      weight: "60",
-      blood_pressure: "120/80",
-      vision: "10/10",
-      dental: "Bình thường",
-      ent: "Bình thường",
-      skin: "Bình thường",
-      status: "Đã khám"
-    },
-  ]);
-  const [selectedYear, setSelectedYear] = useState('2023-2024');
-  const [activePhase, setActivePhase] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const schoolYears = [
-    '2023-2024',
-    '2022-2023',
-    '2021-2022',
-  ];
 
-  const handleEditSave = () => {
-    setIsEditing(!isEditing);
-    if (isEditing) {
-      // Thực hiện lưu dữ liệu
-      console.log('Saving data...');
+  const [form] = Form.useForm();
+  const fetchEvents = async () => {
+    try {
+      const events = await healthCheckService.getAllHealthChecks();
+      setHealthEvents(events);
+      const uniqueYears = Array.from(
+        new Set(events.map((e) => e.School_year)),
+      );
+      setSchoolYears(uniqueYears);
+    } catch (error) {
+      console.error('Lỗi khi lấy dữ liệu khám sức khỏe:', error);
     }
   };
 
-  const handleConclusionSave = () => {
-    if (selectedRecord) {
-      // Update conclusion in records
-      // You'll need to implement the actual update logic
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const handleCreatePhase = () => {
+    form.resetFields();
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (values: any) => {
+    const payload: CreateHealthCheckRequest = {
+      title: values.title,
+      type: values.type,
+      description: values.description,
+      dateEvent: values.dateEvent.format('YYYY-MM-DD'),
+      schoolYear: values.schoolYear,
+    };
+    setIsLoading(true);
+    try {
+      await healthCheckService.createHealthCheck(payload);
+      await fetchEvents();
+      notificationService.success('Tạo đợt khám thành công!');
       setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error creating health check:', error);
+      notificationService.error(
+        'Có lỗi xảy ra khi tạo đợt khám sức khỏe',
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const filteredEvents =
+    selectedYear === 'Tất cả'
+      ? healthEvents
+      : healthEvents.filter((e) => e.School_year === selectedYear);
+
+  const columns = [
+    {
+      title: 'STT',
+      key: 'index',
+      render: (_text: any, _record: any, index: number) => index + 1,
+      width: 80,
+    },
+    {
+      title: 'Tên đợt khám',
+      dataIndex: 'title',
+      key: 'title',
+    },
+    {
+      title: 'Năm học',
+      dataIndex: 'School_year',
+      key: 'School_year',
+    },
+    {
+      title: 'Ngày khám',
+      dataIndex: ['Event', 'dateEvent'],
+      key: 'dateEvent',
+      render: (date: string) => moment(date).format('YYYY-MM-DD'),
+    },
+    {
+      title: 'Loại',
+      dataIndex: ['Event', 'type'],
+      key: 'type',
+    },
+    {
+      title: 'Mô tả',
+      dataIndex: 'description',
+      key: 'description',
+    },
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Quản lý khám sức khỏe</h1>
-        <button
-          onClick={handleEditSave}
-          className={`px-6 py-2.5 rounded-lg transition-all duration-200 shadow-lg ${isEditing
-              ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:shadow-green-500/30'
-              : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-blue-500/30'
-            } text-white`}
-        >
-          {isEditing ? 'Lưu' : 'Chỉnh sửa'}
-        </button>
-      </div>
-
-      <div className="mb-8 p-4 bg-white rounded-xl shadow-sm border border-gray-200 space-y-4">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <label className="font-medium text-gray-700">Năm học:</label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="min-w-[150px] border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            >
-              {schoolYears.map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex rounded-lg overflow-hidden border border-gray-300 shadow-sm">
-            <button
-              className={`px-6 py-2.5 font-medium transition-all duration-200 ${activePhase === 1
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              onClick={() => setActivePhase(1)}
-            >
-              Đợt 1
-            </button>
-            <button
-              className={`px-6 py-2.5 font-medium transition-all duration-200 ${activePhase === 2
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              onClick={() => setActivePhase(2)}
-            >
-              Đợt 2
-            </button>
-          </div>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <h1 className="text-3xl font-bold text-gray-800">Quản lý đơn thuốc</h1>
+          {/* <Button type="primary" onClick={handleCreatePhase}>
+            + Tạo đợt khám
+          </Button> */}
+          <button className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-blue-500/30"
+            type="button"
+            onClick={handleCreatePhase}>
+            + Thêm đơn thuốc
+          </button>
         </div>
-      </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 table-fixed">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="w-[5%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STT</th>
-              <th className="w-[15%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Họ và tên</th>
-              <th className="w-[8%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lớp</th>
-              <th className="w-[8%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chiều cao</th>
-              <th className="w-[8%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cân nặng</th>
-              <th className="w-[8%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Huyết áp</th>
-              <th className="w-[8%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thị lực</th>
-              <th className="w-[10%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Răng miệng</th>
-              <th className="w-[10%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tai-Mũi-Họng</th>
-              <th className="w-[8%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Da liễu</th>
-              <th className="w-[7%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-              <th className="w-[5%] px-3 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kết luận</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {healthRecords.map((record, index) => (
-              <tr key={record.id} className="hover:bg-gray-50 transition-colors duration-200">
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">{index + 1}</td>
-                <td className="px-3 py-4 whitespace-nowrap">
-                  <div className="font-medium text-gray-900">{record.studentName}</div>
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">{record.class}</td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      defaultValue={record.height}
-                      className="w-16 border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  ) : (
-                    `${record.height} cm`
-                  )}
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      defaultValue={record.weight}
-                      className="w-16 border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  ) : (
-                    `${record.weight} kg`
-                  )}
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      defaultValue={record.blood_pressure}
-                      className="w-20 border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  ) : (
-                    `${record.blood_pressure} mmHg`
-                  )}
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      defaultValue={record.vision}
-                      className="w-20 border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  ) : record.vision}
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {isEditing ? (
-                    <select
-                      defaultValue={record.dental}
-                      className="w-28 border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    >
-                      <option>Bình thường</option>
-                      <option>Cần tham vấn</option>
-                    </select>
-                  ) : record.dental}
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {isEditing ? (
-                    <select
-                      defaultValue={record.ent}
-                      className="border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option>Bình thường</option>
-                      <option>Cần tham vấn</option>
-                    </select>
-                  ) : record.ent}
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {isEditing ? (
-                    <select
-                      defaultValue={record.skin}
-                      className="border rounded px-1 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option>Bình thường</option>
-                      <option>Cần tham vấn</option>
-                    </select>
-                  ) : record.skin}
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${record.status === 'Đã khám'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                    {record.status}
-                  </span>
-                </td>
-                <td className="px-3 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => {
-                      setSelectedRecord(record);
-                      setConclusion(record.conclusion || '');
-                      setIsModalOpen(true);
-                    }}
-                    className="text-blue-600 hover:text-blue-900 font-medium"
-                  >
-                    {isEditing ? 'Kết luận' : record.conclusion ? 'Xem' : 'Kết luận'}
-                  </button>
-                </td>
-              </tr>
+        <Space align="center">
+          <span>Năm học:</span>
+          <Select
+            value={selectedYear}
+            onChange={(val) => setSelectedYear(val)}
+            style={{ width: 200 }}
+          >
+            <Option value="Tất cả">Tất cả</Option>
+            {schoolYears.map((year) => (
+              <Option key={year} value={year}>
+                {year}
+              </Option>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </Select>
+        </Space>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 w-full max-w-2xl mx-4 shadow-2xl transform transition-all">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Kết luận khám sức khỏe</h3>
-              <button
+        <Table
+          dataSource={filteredEvents}
+          rowKey="HC_ID"
+          pagination={{ pageSize: 10 }}
+          bordered
+          columns={columns}
+        />
+      </Space>
+
+      <Modal
+        title="Tạo đợt khám mới"
+        visible={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmit}
+          initialValues={{}}
+        >
+          <Form.Item
+            name="title"
+            label="Tên đợt khám"
+            rules={[{ required: true, message: 'Vui lòng nhập tên đợt khám' }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="type"
+            label="Loại khám"
+            rules={[{ required: true, message: 'Vui lòng nhập loại khám' }]}
+          >
+            <Input placeholder="VD: Khám sức khỏe định kỳ" />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="Mô tả"
+            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+          >
+            <TextArea rows={3} />
+          </Form.Item>
+
+          <Form.Item
+            name="dateEvent"
+            label="Ngày khám"
+            rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}
+          >
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            name="schoolYear"
+            label="Năm học"
+            rules={[{ required: true, message: 'Vui lòng nhập năm học' }]}
+          >
+            <Input placeholder="VD: 2025-2026" />
+          </Form.Item>
+
+          <Form.Item>
+            <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="mb-6">
-              <div className="mb-4">
-                <span className="font-medium text-gray-700">Học sinh: </span>
-                <span className="text-gray-900">{selectedRecord?.studentName}</span>
-                <span className="mx-2">-</span>
-                <span className="text-gray-600">Lớp {selectedRecord?.class}</span>
-              </div>
-              <textarea
-                value={conclusion}
-                onChange={(e) => setConclusion(e.target.value)}
-                className="w-full h-40 p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 resize-none"
-                placeholder="Nhập kết luận chi tiết về tình trạng sức khỏe của học sinh..."
-              />
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-6 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                style={{ marginRight: 8 }}
               >
                 Hủy
-              </button>
-              <button
-                onClick={handleConclusionSave}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-blue-500/30 font-medium"
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={isLoading}
               >
-                Lưu kết luận
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                Tạo đợt khám
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
 
-export default Manage_healthcheck;
+export default ManageHealthcheck;
