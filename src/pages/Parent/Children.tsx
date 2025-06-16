@@ -168,6 +168,23 @@ const Children = () => {
         form.resetFields();
     };
 
+    useEffect(() => {
+        if (editingChild) {
+            form.setFieldsValue({
+                ...editingChild,
+                chronicDiseases: editingChild.chronicDiseases?.map((item: any) =>
+                    typeof item.name === 'string' ? item.name : item.name?.name
+                ),
+                allergies: editingChild.allergies?.map((item: any) =>
+                    typeof item.name === 'string' ? item.name : item.name?.name
+                ),
+                pastIllnesses: editingChild.pastIllnesses || [],
+                vaccines: editingChild.vaccines || [],
+            });
+        }
+    }, [editingChild]);
+
+
     const handleSubmit = async (values: any) => {
         const token = localStorage.getItem('accessToken') as string;
         if (!token) {
@@ -186,8 +203,6 @@ const Children = () => {
         console.log('Submitted values:', newChild);
 
         if (editingChild) {
-            console.log('Updating child:', editingChild.ID);
-            console.log('Token:', token);
             await updateMedicalRecord(editingChild.ID!, newChild, token);
         } else {
             await createMedicalRecord(newChild, token);
@@ -401,6 +416,13 @@ const Children = () => {
                             </Select>
                         </Form.Item>
 
+                        <Form.Item
+                            name="class"
+                            label="Lớp"
+                            rules={[{ required: true, message: 'Vui lòng nhập lớp!' }]}
+                        >
+                            <Input placeholder="Nhập lớp" />
+                        </Form.Item>
 
                         <Form.Item
                             name="height"
