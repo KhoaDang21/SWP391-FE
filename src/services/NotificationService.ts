@@ -12,7 +12,6 @@ const defaultOptions: ToastOptions = {
 
 const API_URL = "http://localhost:3333/api/v1";
 
-// Helper to decode JWT and get userId
 function getUserIdFromToken(): number | null {
     const token = localStorage.getItem("accessToken");
     if (!token) return null;
@@ -40,6 +39,10 @@ interface NotificationResponse {
     totalPages: number;
   };
   unreadCount: number;
+}
+
+interface MarkReadRequest {
+    notificationIds: number[];
 }
 
 class NotificationService {
@@ -76,6 +79,33 @@ class NotificationService {
         }
 
         return await response.json();
+    }
+
+    async markNotificationsAsRead(notificationIds: number[]): Promise<any> {
+        const token = localStorage.getItem("accessToken");
+        if (!token) throw new Error("No access token found");
+
+        try {
+            const response = await fetch(`${API_URL}/notify/mark-read`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    notificationIds
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to mark notifications as read');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error marking notifications as read:', error);
+            throw error;
+        }
     }
 
     startAutoRefresh(callback: (data: NotificationResponse) => void) {

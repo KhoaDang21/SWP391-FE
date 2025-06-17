@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge, Popover, List, Spin, Divider } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { notificationService } from '../../services/NotificationService';
+import { useNavigate } from 'react-router-dom';
 
 interface Notification {
   notiId: number;
@@ -13,30 +14,47 @@ interface Notification {
 }
 
 const Noti: React.FC = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      setLoading(true);
-      try {
-        const response = await notificationService.getNotificationsForCurrentUser();
-        setNotifications(response.notifications);
-        setUnreadCount(response.unreadCount);
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    notificationService.startAutoRefresh((response) => {
+      setNotifications(response.notifications);
+      setUnreadCount(response.unreadCount);
+      setLoading(false);
+    });
 
-    fetchNotifications();
+    // Cleanup on component unmount
+    return () => {
+      notificationService.stopAutoRefresh();
+    };
   }, []);
 
   const handleOpenChange = (visible: boolean) => {
     setOpen(visible);
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    try {
+      await notificationService.markNotificationsAsRead([notification.notiId]);
+      
+      setNotifications(prev =>
+        prev.map(n =>
+          n.notiId === notification.notiId ? { ...n, isRead: true } : n
+        )
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+
+      if (notification.title.toLowerCase().includes('lịch tiêm chủng')) {
+        navigate('/guardian/vaccines?openModal=true');
+        setOpen(false);
+      }
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
   };
 
   const content = (
@@ -51,14 +69,12 @@ const Noti: React.FC = () => {
           renderItem={(item) => (
             <React.Fragment key={item.notiId}>
               <List.Item
-                style={{ padding: '12px 16px' }}
-                onClick={() => {
-                  setNotifications((prev) =>
-                    prev.map((n) =>
-                      n.notiId === item.notiId ? { ...n, isRead: true } : n
-                    )
-                  );
+                style={{ 
+                  padding: '12px 16px',
+                  cursor: 'pointer'
                 }}
+                onClick={() => handleNotificationClick(item)}
+                onDoubleClick={() => handleNotificationClick(item)}
               >
                 <List.Item.Meta
                   avatar={
@@ -119,4 +135,4 @@ const Noti: React.FC = () => {
 };
 
 export default Noti;
-            
+
