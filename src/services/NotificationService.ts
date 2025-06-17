@@ -42,6 +42,10 @@ interface NotificationResponse {
   unreadCount: number;
 }
 
+interface MarkReadRequest {
+    notificationIds: number[];
+}
+
 class NotificationService {
     private refreshInterval: number | null = null;
     
@@ -76,6 +80,33 @@ class NotificationService {
         }
 
         return await response.json();
+    }
+
+    async markNotificationsAsRead(notificationIds: number[]): Promise<any> {
+        const token = localStorage.getItem("accessToken");
+        if (!token) throw new Error("No access token found");
+
+        try {
+            const response = await fetch(`${API_URL}/notify/mark-read`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    notificationIds
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to mark notifications as read');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error marking notifications as read:', error);
+            throw error;
+        }
     }
 
     startAutoRefresh(callback: (data: NotificationResponse) => void) {

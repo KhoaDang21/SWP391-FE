@@ -73,7 +73,6 @@ const Header = () => {
             { to: "/guardian/vaccines", label: "Tiêm chủng" },
             { to: "/guardian/checkups", label: "Khám sức khỏe" },
             { to: "/guardian/events", label: "Sự kiện" },
-            // { to: "/guardian/notifications", label: "Thông báo" },
           ].map(({ to, label }) => (
             <NavLink
               key={to}
