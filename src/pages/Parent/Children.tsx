@@ -30,7 +30,7 @@ import {
     SafetyOutlined
 } from '@ant-design/icons';
 import { getStudentsByGuardianUserId } from '../../services/AccountService';
-import { createMedicalRecord, deleteMedicalRecord, getAllMedicalRecords, updateMedicalRecord } from '../../services/MedicalRecordService';
+import { createMedicalRecord, deleteMedicalRecord, getAllMedicalRecords, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
 import type { MedicalRecord } from '../../services/MedicalRecordService';
 const { Option } = Select;
 const { TextArea } = Input;
@@ -67,7 +67,7 @@ const Children = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const records = await getAllMedicalRecords(token);
+                const records = await getMedicalRecordsByGuardian(token);
                 console.log('Fetched medical records:', records);
                 setChildren(records);
             } catch (error) {
@@ -208,7 +208,7 @@ const Children = () => {
             await createMedicalRecord(newChild, token);
         }
 
-        const updatedRecords = await getAllMedicalRecords(token);
+        const updatedRecords = await getMedicalRecordsByGuardian(token);
         setChildren(updatedRecords);
 
         setIsModalVisible(false);
@@ -225,7 +225,7 @@ const Children = () => {
             await deleteMedicalRecord(id, token);
 
             // Fetch lại danh sách sau khi xóa
-            const updatedRecords = await getAllMedicalRecords(token);
+            const updatedRecords = await getMedicalRecordsByGuardian(token);
             setChildren(updatedRecords);
         } catch (error) {
             console.error('Lỗi khi xóa hồ sơ y tế:', error);
