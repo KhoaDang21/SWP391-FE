@@ -12,7 +12,6 @@ const defaultOptions: ToastOptions = {
 
 const API_URL = "http://localhost:3333/api/v1";
 
-// Helper to decode JWT and get userId
 function getUserIdFromToken(): number | null {
     const token = localStorage.getItem("accessToken");
     if (!token) return null;
