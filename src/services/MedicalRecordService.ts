@@ -44,6 +44,21 @@ export async function getAllMedicalRecords(token: string): Promise<MedicalRecord
     return data;
 }
 
+export async function getMedicalRecordsByGuardian(token: string): Promise<MedicalRecord[]> {
+    const res = await fetch(`${API_URL}/by-guardian`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!res.ok) {
+        throw new Error('Lỗi lấy danh sách hồ sơ y tế của học sinh');
+    }
+
+    const data = await res.json();
+    return data;
+}
+
 export async function getMedicalRecordById(id: number, token: string): Promise<MedicalRecord> {
     const res = await fetch(`${API_URL}/${id}`, {
         headers: {
