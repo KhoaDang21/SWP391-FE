@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Table, Input, Badge } from 'antd';
+import { Card, Table, Input } from 'antd';
 
 const { Search } = Input;
 
