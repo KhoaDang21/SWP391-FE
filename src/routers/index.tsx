@@ -9,7 +9,6 @@ import Contact from "../pages/Home/Contact";
 import Login from "../pages/Login/Login";
 import Nurse from "../components/Sidebar/Nurse";
 import Parent from "../pages/Parent/Parent";
-import Student from "../pages/Student/Student";
 import ProtectedRoute from "../roles/ProtectedRoute";
 import AdminLayout from "../components/Layout/AdminLayout";
 // Admin pages
@@ -27,12 +26,6 @@ import SendMedication from "../pages/Parent/SendMedication";
 import Vaccine from "../pages/Parent/Vaccine";
 import Checkup from "../pages/Parent/Checkup";
 import Event from "../pages/Parent/Event";
-
-//Student 
-import StudentLayout from "../components/Layout/StudentLayout";
-import HealthRecord from "../pages/Student/HealthRecord";
-import HealthCheckup from "../pages/Student/HealthCheckup";
-
 import Manage_medical from '../pages/Nurse/Manage_medical';
 import Manage_healthcheck from '../pages/Nurse/Manage_healthcheck';
 import Manage_vaccine from '../pages/Nurse/Manage_vaccine';
@@ -89,7 +82,7 @@ export default function AppRoutes() {
                 <Route path="medical" element={<Manage_medical />} />
                 <Route path="healthcheck" element={<Manage_healthcheck />} />
                 <Route path="vaccine" element={<Manage_vaccine />} />
-                <Route path="medical-events" element={<Manage_medical_events />} />  
+                <Route path="medical-events" element={<Manage_medical_events />} />
                 <Route path="medical-events/detail/:id" element={<Detail_medical_event />} />
             </Route>
             <Route
@@ -107,20 +100,6 @@ export default function AppRoutes() {
                 <Route path="checkups" element={<Checkup />} />
                 <Route path="events" element={<Event />} />
             </Route>
-            {/* Student Routes */}
-            <Route
-                path="/student"
-                element={
-                    <ProtectedRoute allowedRoles={["Student"]}>
-                        <StudentLayout />
-                    </ProtectedRoute>
-                }
-            >
-                <Route index element={<Student />} />
-                <Route path="healthrecord" element={<HealthRecord />} />
-                <Route path="healthcheckup" element={<HealthCheckup />} />
-            </Route>
-
             {/* Catch-all */}
             <Route path="*" element={<Login />} />
         </Routes>
