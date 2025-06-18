@@ -1,26 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Button,
-    Table,
     Modal,
     Form,
-    Input,
     Space,
     Card,
     Tag,
-    DatePicker,
     Row,
     Col,
     Typography,
     Divider,
     message,
-    Progress,
-    Tooltip,
     Select,
-    Switch,
     List,
     Avatar,
-    Badge
+    Badge,
+    Alert
 } from 'antd';
 import {
     EyeOutlined,
@@ -28,18 +23,18 @@ import {
     MedicineBoxOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
-    EditOutlined,
-    SaveOutlined,
-    CalendarOutlined,
-    ExclamationCircleOutlined
+  
+    ExclamationCircleOutlined,
+    ExclamationCircleFilled
 } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import { vaccineService } from '../../services/Vaccineservice';
+import { useSearchParams } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-// Interface cho thông tin vaccine
+
 interface VaccineInfo {
     id: string;
     name: string;
@@ -48,17 +43,19 @@ interface VaccineInfo {
     isRequired: boolean;
 }
 
-// Interface cho lịch sử tiêm vaccine
+
 interface VaccineRecord {
     vaccineId: string;
     isVaccinated: boolean;
+    status: string;
+    vaccineName: string;    
+    vaccineType: string;    
     vaccinatedDate?: string;
     location?: string;
     notes?: string;
     batchNumber?: string;
 }
 
-// Interface cho học sinh
 interface Student {
     id: string;
     name: string;
@@ -67,16 +64,20 @@ interface Student {
     studentCode: string;
     vaccineRecords: VaccineRecord[];
     totalVaccinated: number;
+    totalNeedConfirm: number; 
 }
 
 const Vaccine: React.FC = () => {
+    const [searchParams] = useSearchParams();
     const [detailModalVisible, setDetailModalVisible] = useState(false);
     const [editMode, setEditMode] = useState<string | null>(null);
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [students, setStudents] = useState<Student[]>([]);
+    const [selectedVaccine, setSelectedVaccine] = useState<VaccineRecord | null>(null);
+    const [confirmModalVisible, setConfirmModalVisible] = useState(false);
 
-    // 14 loại vaccine cơ bản
     const vaccineTypes: VaccineInfo[] = [
         { id: '1', name: 'BCG', description: 'Phòng bệnh lao', recommendedAge: '0-1 tháng', isRequired: true },
         { id: '2', name: 'Viêm gan B', description: 'Phòng viêm gan B', recommendedAge: '0-2 tháng', isRequired: true },
@@ -94,120 +95,146 @@ const Vaccine: React.FC = () => {
         { id: '14', name: 'Td', description: 'Nhắc lại uốn ván và bạch hầu', recommendedAge: '4-6 tuổi', isRequired: true }
     ];
 
-    // Mock data học sinh
-    const [students, setStudents] = useState<Student[]>([
-        {
-            id: '1',
-            name: 'Nguyễn Văn A',
-            dateOfBirth: '2018-05-15',
-            class: '4A3',
-            studentCode: 'HS001',
-            totalVaccinated: 12,
-            vaccineRecords: [
-                { vaccineId: '1', isVaccinated: true, vaccinatedDate: '2018-06-01', location: 'Bệnh viện Nhi Trung ương' },
-                { vaccineId: '2', isVaccinated: true, vaccinatedDate: '2018-07-15', location: 'Trạm y tế phường' },
-                { vaccineId: '3', isVaccinated: true, vaccinatedDate: '2018-08-20', location: 'Trường học' },
-                { vaccineId: '4', isVaccinated: true, vaccinatedDate: '2018-08-20', location: 'Trường học' },
-                { vaccineId: '5', isVaccinated: true, vaccinatedDate: '2018-09-10', location: 'Bệnh viện tư' },
-                { vaccineId: '6', isVaccinated: true, vaccinatedDate: '2018-09-25', location: 'Trường học' },
-                { vaccineId: '7', isVaccinated: true, vaccinatedDate: '2018-10-15', location: 'Trạm y tế' },
-                { vaccineId: '8', isVaccinated: true, vaccinatedDate: '2019-02-10', location: 'Trường học' },
-                { vaccineId: '9', isVaccinated: true, vaccinatedDate: '2019-02-10', location: 'Trường học' },
-                { vaccineId: '10', isVaccinated: true, vaccinatedDate: '2019-02-10', location: 'Trường học' },
-                { vaccineId: '11', isVaccinated: true, vaccinatedDate: '2019-03-15', location: 'Bệnh viện tư' },
-                { vaccineId: '12', isVaccinated: true, vaccinatedDate: '2019-04-20', location: 'Trạm y tế' },
-                { vaccineId: '13', isVaccinated: false },
-                { vaccineId: '14', isVaccinated: false }
-            ]
-        },
-        {
-            id: '2',
-            name: 'Trần Thị B',
-            dateOfBirth: '2019-03-20',
-            class: '2A5',
-            studentCode: 'HS002',
-            totalVaccinated: 10,
-            vaccineRecords: [
-                { vaccineId: '1', isVaccinated: true, vaccinatedDate: '2019-04-01', location: 'Trường học' },
-                { vaccineId: '2', isVaccinated: true, vaccinatedDate: '2019-05-15', location: 'Trường học' },
-                { vaccineId: '3', isVaccinated: true, vaccinatedDate: '2019-06-20', location: 'Trạm y tế' },
-                { vaccineId: '4', isVaccinated: true, vaccinatedDate: '2019-06-20', location: 'Trạm y tế' },
-                { vaccineId: '5', isVaccinated: true, vaccinatedDate: '2019-07-10', location: 'Bệnh viện tư' },
-                { vaccineId: '6', isVaccinated: false },
-                { vaccineId: '7', isVaccinated: true, vaccinatedDate: '2019-08-15', location: 'Trường học' },
-                { vaccineId: '8', isVaccinated: true, vaccinatedDate: '2019-12-10', location: 'Trường học' },
-                { vaccineId: '9', isVaccinated: true, vaccinatedDate: '2020-01-15', location: 'Trường học' },
-                { vaccineId: '10', isVaccinated: true, vaccinatedDate: '2020-01-15', location: 'Trường học' },
-                { vaccineId: '11', isVaccinated: true, vaccinatedDate: '2020-02-20', location: 'Bệnh viện tư' },
-                { vaccineId: '12', isVaccinated: true, vaccinatedDate: '2020-03-25', location: 'Trạm y tế' },
-                { vaccineId: '13', isVaccinated: false },
-                { vaccineId: '14', isVaccinated: false }
-            ]
+    const fetchVaccineData = async () => {
+        try {
+            const response = await vaccineService.getVaccinesByGuardian();
+            
+            const transformedStudents: Student[] = response.histories.map(history => ({
+                id: history.medicalRecord.ID.toString(),
+                name: history.user.fullname,
+                dateOfBirth: '',
+                class: history.medicalRecord.class,
+                studentCode: history.medicalRecord.ID.toString(),
+                totalVaccinated: history.vaccineHistory.filter(v => v.Status === 'Đã tiêm').length,
+                totalNeedConfirm: history.vaccineHistory.filter(v => v.Status === 'Chờ xác nhận').length,
+                vaccineRecords: history.vaccineHistory.map(vh => ({
+                    vaccineId: vh.VH_ID.toString(),
+                    isVaccinated: vh.Status === 'Đã tiêm',
+                    status: vh.Status || 'Chưa tiêm',
+                    vaccineName: vh.Vaccine_name || '',
+                    vaccineType: vh.Vaccince_type || '',
+                    vaccinatedDate: vh.Date_injection,
+                    location: '', 
+                    notes: vh.note_affter_injection || '',
+                }))
+            }));
+
+            setStudents(transformedStudents);
+
+            if (selectedStudent) {
+                const updatedSelectedStudent = transformedStudents.find(s => s.id === selectedStudent.id);
+                if (updatedSelectedStudent) {
+                    setSelectedStudent(updatedSelectedStudent);
+                }
+            }
+        } catch (error) {
+            message.error('Failed to fetch vaccine data');
+            console.error(error);
         }
+    };
 
-    ]);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Check URL parameter first
+                const shouldOpenModal = searchParams.get('openModal') === 'true';
+                
+                const response = await vaccineService.getVaccinesByGuardian();
+                const transformedStudents = response.histories.map(history => ({
+                    id: history.medicalRecord.ID.toString(),
+                    name: history.user.fullname,
+                    dateOfBirth: '',
+                    class: history.medicalRecord.class,
+                    studentCode: history.medicalRecord.ID.toString(),
+                    totalVaccinated: history.vaccineHistory.filter(v => v.Status === 'Đã tiêm').length,
+                    totalNeedConfirm: history.vaccineHistory.filter(v => v.Status === 'Chờ xác nhận').length,
+                    vaccineRecords: history.vaccineHistory.map(vh => ({
+                        vaccineId: vh.VH_ID.toString(),
+                        isVaccinated: vh.Status === 'Đã tiêm',
+                        status: vh.Status || 'Chưa tiêm',
+                        vaccineName: vh.Vaccine_name || '',
+                        vaccineType: vh.Vaccince_type || '',
+                        vaccinatedDate: vh.Date_injection,
+                        location: '', 
+                        notes: vh.note_affter_injection || '',
+                    }))
+                }));
 
-    // Xem chi tiết vaccine của học sinh
+                setStudents(transformedStudents);
+
+                // Open modal after data is loaded
+                if (shouldOpenModal && transformedStudents.length > 0) {
+                    setSelectedStudent(transformedStudents[0]);
+                    setTimeout(() => {
+                        setDetailModalVisible(true);
+                    }, 100); // Small delay to ensure state is updated
+                }
+            } catch (error) {
+                message.error('Failed to fetch vaccine data');
+                console.error(error);
+            }
+        };
+
+        fetchData();
+    }, [searchParams]);
+
     const handleViewDetail = (student: Student) => {
         setSelectedStudent(student);
         setDetailModalVisible(true);
         setEditMode(null);
     };
 
-    // Cập nhật thông tin vaccine
-    const handleUpdateVaccine = async (vaccineId: string, values: any) => {
-        if (!selectedStudent) return;
 
+    const handleVaccineClick = (record: VaccineRecord) => {
+        setSelectedVaccine(record);
+        setConfirmModalVisible(true);
+    };
+
+    const handleConfirmVaccine = async (approved: boolean) => {
+        if (!selectedVaccine) return;
+        
         setLoading(true);
         try {
-            const updatedStudents = students.map(student => {
-                if (student.id === selectedStudent.id) {
-                    const updatedRecords = student.vaccineRecords.map(record => {
-                        if (record.vaccineId === vaccineId) {
-                            return {
-                                ...record,
-                                isVaccinated: values.isVaccinated,
-                                vaccinatedDate: values.isVaccinated ? values.vaccinatedDate?.format('YYYY-MM-DD') : undefined,
-                                location: values.location,
-                                notes: values.notes,
-                                batchNumber: values.batchNumber
-                            };
-                        }
-                        return record;
-                    });
-
-                    const totalVaccinated = updatedRecords.filter(r => r.isVaccinated).length;
-
-                    return {
-                        ...student,
-                        vaccineRecords: updatedRecords,
-                        totalVaccinated
-                    };
-                }
-                return student;
-            });
-
-            setStudents(updatedStudents);
-
-            // Cập nhật selectedStudent để hiển thị dữ liệu mới
-            const updatedStudent = updatedStudents.find(s => s.id === selectedStudent.id);
-            if (updatedStudent) {
-                setSelectedStudent(updatedStudent);
+            await vaccineService.confirmVaccine(selectedVaccine.vaccineId, approved);
+            
+            await fetchVaccineData();
+            message.success(`Đã ${approved ? 'cho phép' : 'từ chối'} tiêm vaccine`);
+            setConfirmModalVisible(false);
+        } catch (error: any) {
+            if (error.message !== "Validation error") {
+                message.error('Có lỗi xảy ra khi xác nhận vaccine');
+                console.error('Error confirming vaccine:', error);
+            } else {
+                await fetchVaccineData();
+                setConfirmModalVisible(false);
             }
-
-            message.success('Cập nhật thông tin vaccine thành công!');
-            setEditMode(null);
-        } catch (error) {
-            message.error('Có lỗi xảy ra, vui lòng thử lại!');
         } finally {
             setLoading(false);
         }
     };
 
+    const getStatusColor = (status: string) => {
+        switch(status) {
+            case 'Đã tiêm': return 'success';
+            case 'Cho phép tiêm': return '#faad14';
+            case 'Không cho phép tiêm': return '#ff4d4f';
+            case 'Chờ xác nhận': return '#fa8c16';
+            default: return '#d9d9d9';
+        }
+    };
+
+    const getTagColor = (status: string) => {
+        switch(status) {
+            case 'Đã tiêm': return 'success';
+            case 'Cho phép tiêm': return 'warning';
+            case 'Không cho phép tiêm': return 'error';
+            case 'Chờ xác nhận': return 'processing';
+            default: return 'default';
+        }
+    };
 
     return (
         <div style={{ padding: '24px' }}>
-            {/* Header */}
             <Card>
                 <Row justify="space-between" align="middle">
                     <Col>
@@ -221,24 +248,13 @@ const Vaccine: React.FC = () => {
                 </Row>
             </Card>
 
-
-            {/* Crad danh sách học sinh */}
-
-
             <Row className='mt-4' gutter={[16, 16]}>
-                {students.map(student => {
-                    const percentage = (student.totalVaccinated / 14) * 100;
-                    const requiredVaccines = vaccineTypes.filter(v => v.isRequired).length;
-                    const vaccinatedRequired = student.vaccineRecords.filter(r => {
-                        const v = vaccineTypes.find(vac => vac.id === r.vaccineId);
-                        return r.isVaccinated && v?.isRequired;
-                    }).length;
-
+                {students.map(student => {             
                     return (
                         <Col xs={24} md={12} lg={8} key={student.id}>
                             <Card
                                 title={<Text strong>{student.name}</Text>}
-                                extra={<Text type="secondary">Mã HS: {student.studentCode}</Text>}
+                                extra={<Text type="secondary">Mã sổ sức khỏe: {student.studentCode}</Text>}
                                 actions={[
                                     <Button type="link" onClick={() => handleViewDetail(student)}>
                                         Chi tiết
@@ -247,35 +263,14 @@ const Vaccine: React.FC = () => {
                             >
                                 <p><Text type="secondary">Lớp:</Text> {student.class}</p>
                                 <p><Text type="secondary">Ngày sinh:</Text> {dayjs(student.dateOfBirth).format('DD/MM/YYYY')}</p>
-                                <p><Text type="secondary">Tổng vaccine đã tiêm:</Text> {student.totalVaccinated}/14</p>
-                                <p><Text type="secondary">Vaccine bắt buộc:</Text> {vaccinatedRequired}/{requiredVaccines}</p>
-
-                                <Progress
-                                    percent={Math.round(percentage)}
-                                    status={
-                                        percentage >= 90 ? 'success' :
-                                            percentage >= 70 ? 'active' :
-                                                percentage >= 50 ? 'normal' : 'exception'
-                                    }
-                                    size="small"
-                                />
-
-                                <div style={{ marginTop: 12 }}>
-                                    {
-                                        percentage >= 90 ? <Tag color="green" icon={<CheckCircleOutlined />}>Hoàn thành</Tag> :
-                                            percentage >= 70 ? <Tag color="blue" icon={<ExclamationCircleOutlined />}>Gần hoàn thành</Tag> :
-                                                percentage >= 50 ? <Tag color="orange" icon={<ExclamationCircleOutlined />}>Đang tiêm</Tag> :
-                                                    <Tag color="red" icon={<CloseCircleOutlined />}>Chưa đầy đủ</Tag>
-                                    }
-                                </div>
+                                <p><Text type="secondary">Tổng vaccine đã tiêm:</Text> {student.totalVaccinated}</p>
+                                <p><Text type="secondary">Vaccine đang chờ xác nhận:</Text> {student.totalNeedConfirm}</p>                             
                             </Card>
                         </Col>
                     );
                 })}
             </Row>
 
-
-            {/* Modal chi tiết vaccine */}
             <Modal
                 title={
                     <Space>
@@ -297,7 +292,7 @@ const Vaccine: React.FC = () => {
                         <Card size="small" style={{ marginBottom: 16 }}>
                             <Row gutter={16}>
                                 <Col span={6}>
-                                    <Text strong>Mã HS:</Text> {selectedStudent.studentCode}
+                                    <Text strong>Mã sổ sức khỏe:</Text> {selectedStudent.studentCode}
                                 </Col>
                                 <Col span={6}>
                                     <Text strong>Lớp:</Text> {selectedStudent.class}
@@ -306,135 +301,87 @@ const Vaccine: React.FC = () => {
                                     <Text strong>Ngày sinh:</Text> {dayjs(selectedStudent.dateOfBirth).format('DD/MM/YYYY')}
                                 </Col>
                                 <Col span={6}>
-                                    <Text strong>Tiến độ:</Text> {selectedStudent.totalVaccinated}/14
+                                    <Text strong>Số vaccine đã tiêm:</Text> {selectedStudent.totalVaccinated}
                                 </Col>
                             </Row>
                         </Card>
-
-                        {/* Danh sách vaccine */}
                         <List
                             itemLayout="horizontal"
-                            dataSource={vaccineTypes}
-                            renderItem={(vaccine) => {
-                                const record = selectedStudent.vaccineRecords.find(r => r.vaccineId === vaccine.id);
-                                const isEditing = editMode === vaccine.id;
+                            dataSource={selectedStudent.vaccineRecords}
+                            renderItem={(vaccineRecord) => {
+                                const getBackgroundColor = () => {
+                                    switch(vaccineRecord.status) {
+                                        case 'Đã tiêm': return '#f6ffed';
+                                        case 'Chờ xác nhận': return '#fff2e8';
+                                        case 'Cho phép tiêm': return '#fffbe6';
+                                        case 'Không cho phép tiêm': return '#fff1f0';
+                                        default: return '#fafafa';
+                                    }
+                                };
+
+                                const getBorderColor = () => {
+                                    switch(vaccineRecord.status) {
+                                        case 'Đã tiêm': return '#b7eb8f';
+                                        case 'Chờ xác nhận': return '#ffbb96';
+                                        case 'Cho phép tiêm': return '#ffd591';
+                                        case 'Không cho phép tiêm': return '#ffa39e';
+                                        default: return '#d9d9d9';
+                                    }
+                                };
 
                                 return (
                                     <List.Item
                                         style={{
-                                            backgroundColor: record?.isVaccinated ? '#f6ffed' : '#fafafa',
+                                            backgroundColor: getBackgroundColor(),
                                             marginBottom: 8,
                                             padding: 16,
                                             borderRadius: 8,
-                                            border: `1px solid ${record?.isVaccinated ? '#b7eb8f' : '#d9d9d9'}`
+                                            border: `1px solid ${getBorderColor()}`,
+                                            cursor: 'pointer'
                                         }}
-                                        actions={[
-                                            <Button
-                                                key="edit"
-                                                type={isEditing ? "primary" : "default"}
-                                                icon={isEditing ? <SaveOutlined /> : <EditOutlined />}
-                                                size="small"
-                                                loading={loading && isEditing}
-                                                onClick={() => {
-                                                    if (isEditing) {
-                                                        form.submit();
-                                                    } else {
-                                                        setEditMode(vaccine.id);
-                                                        form.setFieldsValue({
-                                                            isVaccinated: record?.isVaccinated || false,
-                                                            vaccinatedDate: record?.vaccinatedDate ? dayjs(record.vaccinatedDate) : null,
-                                                            location: record?.location || '',
-                                                            notes: record?.notes || '',
-                                                            batchNumber: record?.batchNumber || ''
-                                                        });
-                                                    }
-                                                }}
-                                            >
-                                                {isEditing ? 'Lưu' : 'Sửa'}
-                                            </Button>
-                                        ]}
+                                        onClick={() => handleVaccineClick(vaccineRecord)}
                                     >
                                         <List.Item.Meta
                                             avatar={
                                                 <Badge
-                                                    count={record?.isVaccinated ? <CheckCircleOutlined style={{ color: '#52c41a' }} /> : <CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+                                                    count={
+                                                        vaccineRecord.status === 'Đã tiêm' ? 
+                                                            <CheckCircleOutlined style={{ color: '#52c41a' }} /> :
+                                                        vaccineRecord.status === 'Chờ xác nhận' || vaccineRecord.status === 'Cho phép tiêm' ?
+                                                            <ExclamationCircleOutlined style={{ color: '#fa8c16' }} /> :
+                                                            <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+                                                    }
                                                 >
                                                     <Avatar
-                                                        style={{ backgroundColor: record?.isVaccinated ? '#52c41a' : '#d9d9d9' }}
+                                                        style={{ 
+                                                            backgroundColor: vaccineRecord.status === 'Đã tiêm' ? '#52c41a' : 
+                                                                           vaccineRecord.status === 'Chờ xác nhận' || vaccineRecord.status === 'Cho phép tiêm' ? '#fa8c16' : '#d9d9d9'
+                                                        }}
                                                         icon={<MedicineBoxOutlined />}
                                                     />
                                                 </Badge>
                                             }
                                             title={
-                                                <Space>
-                                                    <Text strong style={{ color: record?.isVaccinated ? '#52c41a' : '#8c8c8c' }}>
-                                                        {vaccine.name}
+                                                <Space align="center">
+                                                    <Text strong style={{ 
+                                                        color: getStatusColor(vaccineRecord.status)
+                                                    }}>
+                                                        {vaccineRecord.vaccineName}
                                                     </Text>
-                                                    {vaccine.isRequired && <Tag color="red" >Bắt buộc</Tag>}
+                                                    <Tag color={getTagColor(vaccineRecord.status)}>
+                                                        {vaccineRecord.status}
+                                                    </Tag>
                                                 </Space>
                                             }
                                             description={
                                                 <div>
-                                                    <Text type="secondary">{vaccine.description}</Text>
-                                                    <br />
-                                                    <Text type="secondary" style={{ fontSize: 12 }}>
-                                                        Độ tuổi khuyến nghị: {vaccine.recommendedAge}
-                                                    </Text>
-                                                    {record?.isVaccinated && record.vaccinatedDate && (
-                                                        <>
-                                                            <br />
-                                                            <Space size="small">
-                                                                <CalendarOutlined style={{ color: '#52c41a' }} />
-                                                                <Text style={{ color: '#52c41a', fontSize: 12 }}>
-                                                                    Đã tiêm: {dayjs(record.vaccinatedDate).format('DD/MM/YYYY')}
-                                                                </Text>
-                                                                {record.location && <Text type="secondary" style={{ fontSize: 12 }}>• {record.location}</Text>}
-                                                            </Space>
-                                                        </>
-                                                    )}
-
-                                                    {isEditing && (
-                                                        <Form
-                                                            form={form}
-                                                            onFinish={(values) => handleUpdateVaccine(vaccine.id, values)}
-                                                            style={{ marginTop: 12 }}
-                                                        >
-                                                            <Row gutter={8}>
-                                                                <Col span={6}>
-                                                                    <Form.Item name="isVaccinated" valuePropName="checked" style={{ marginBottom: 8 }}>
-                                                                        <Switch checkedChildren="Đã tiêm" unCheckedChildren="Chưa tiêm" />
-                                                                    </Form.Item>
-                                                                </Col>
-                                                                <Col span={6}>
-                                                                    <Form.Item name="vaccinatedDate" style={{ marginBottom: 8 }}>
-                                                                        <DatePicker size="small" placeholder="Ngày tiêm" style={{ width: '100%' }} />
-                                                                    </Form.Item>
-                                                                </Col>
-                                                                <Col span={12}>
-                                                                    <Form.Item name="location" style={{ marginBottom: 8 }}>
-                                                                        <Select size="small" placeholder="Nơi tiêm" allowClear>
-                                                                            <Option value="Trường học">Trường học</Option>
-                                                                            <Option value="Trạm y tế phường">Trạm y tế phường</Option>
-                                                                            <Option value="Bệnh viện tư">Bệnh viện tư</Option>
-                                                                            <Option value="Bệnh viện công">Bệnh viện công</Option>
-                                                                            <Option value="Khác">Khác</Option>
-                                                                        </Select>
-                                                                    </Form.Item>
-                                                                </Col>
-                                                            </Row>
-                                                            <Row gutter={8}>
-                                                                <Col span={12}>
-                                                                    <Form.Item name="batchNumber" style={{ marginBottom: 8 }}>
-                                                                        <Input size="small" placeholder="Số lô vaccine" />
-                                                                    </Form.Item>
-                                                                </Col>
-                                                                <Col span={12}>
-                                                                    <Form.Item name="notes" style={{ marginBottom: 0 }}>
-                                                                        <Input size="small" placeholder="Ghi chú" />
-                                                                    </Form.Item>
-                                                                </Col>
-                                                            </Row>
-                                                        </Form>
+                                                    <Tag color="blue" style={{ marginBottom: 8 }}>{vaccineRecord.vaccineType}</Tag>
+                                                    {vaccineRecord.vaccinatedDate && (
+                                                        <div>
+                                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                                Ngày tiêm: {dayjs(vaccineRecord.vaccinatedDate).format('DD/MM/YYYY')}
+                                                            </Text>
+                                                        </div>
                                                     )}
                                                 </div>
                                             }
@@ -443,6 +390,105 @@ const Vaccine: React.FC = () => {
                                 );
                             }}
                         />
+                    </div>
+                )}
+            </Modal>
+
+            <Modal
+                title={
+                    <Space>
+                        <MedicineBoxOutlined />
+                        {selectedVaccine?.status === 'Chờ xác nhận' ? 'Xác nhận tiêm vaccine' : 'Chi tiết vaccine'}
+                    </Space>
+                }
+                open={confirmModalVisible}
+                onCancel={() => setConfirmModalVisible(false)}
+                footer={
+                    selectedVaccine?.status === 'Chờ xác nhận' ? (
+                        <Space>
+                            <Button 
+                                onClick={() => handleConfirmVaccine(false)} 
+                                danger
+                                loading={loading}
+                            >
+                                Không cho phép tiêm
+                            </Button>
+                            <Button 
+                                type="primary" 
+                                onClick={() => handleConfirmVaccine(true)}
+                                loading={loading}
+                            >
+                                Cho phép tiêm
+                            </Button>
+                        </Space>
+                    ) : null
+                }
+                width={600}
+            >
+                {selectedVaccine && (
+                    <div>
+                        <Row gutter={[0, 16]}>
+                            <Col span={24}>
+                                <Card 
+                                    size="small"
+                                    title={
+                                        <Space>
+                                            <Text strong>{selectedVaccine.vaccineName}</Text>
+                                            <Tag color="blue">{selectedVaccine.vaccineType}</Tag>
+                                        </Space>
+                                    }
+                                >
+                                    <Row gutter={[16, 8]}>
+                                        <Col span={12}>
+                                            <Text type="secondary">Trạng thái:</Text>
+                                            <br />
+                                            <Tag color={
+                                                selectedVaccine.status === 'Đã tiêm' ? 'success' :
+                                                selectedVaccine.status === 'Chờ xác nhận' ? 'warning' : 'default'
+                                            }>
+                                                {selectedVaccine.status}
+                                            </Tag>
+                                        </Col>
+                                        <Col span={12}>
+                                            <Text type="secondary">Ngày tiêm:</Text>
+                                            <br />
+                                            <Text>{selectedVaccine.vaccinatedDate ? 
+                                                dayjs(selectedVaccine.vaccinatedDate).format('DD/MM/YYYY') : 
+                                                'Chưa có'}</Text>
+                                        </Col>
+                                        {selectedVaccine.status === 'Đã tiêm' && (
+                                            <>
+                                                <Col span={24}>
+                                                    <Divider style={{ margin: '12px 0' }} />
+                                                    <Text type="secondary">Ghi chú sau tiêm:</Text>
+                                                    <br />
+                                                    <Text>{selectedVaccine.notes || 'Không có ghi chú'}</Text>
+                                                </Col>
+                                                {selectedVaccine.location && (
+                                                    <Col span={24}>
+                                                        <Text type="secondary">Địa điểm tiêm:</Text>
+                                                        <br />
+                                                        <Text>{selectedVaccine.location}</Text>
+                                                    </Col>
+                                                )}
+                                            </>
+                                        )}
+                                    </Row>
+                                </Card>
+                            </Col>
+                            
+                            {selectedVaccine.status === 'Chờ xác nhận' && (
+                                <Col span={24}>
+                                    <Alert
+                                        message="Xác nhận tiêm vaccine"
+                                        description="Vui lòng xem xét thông tin và quyết định cho phép tiêm vaccine này."
+                                        type="warning"
+                                        showIcon
+                                        icon={<ExclamationCircleFilled />}
+                                    />
+                                </Col>
+                            )}
+                        </Row>
                     </div>
                 )}
             </Modal>

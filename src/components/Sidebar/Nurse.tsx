@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import {
-  Heart,
-  Activity,
-  Menu,
+import { 
+  Heart, 
+  Activity, 
+  Menu, 
   UserCircle,
   Bell,
   Pill,
@@ -72,7 +72,15 @@ function Nurse() {
     { title: 'Thông báo', icon: Bell },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/nurse' && location.pathname === '/nurse') {
+      return true;
+    }
+    if (path === '/nurse/medical') {
+      return location.pathname.startsWith(path) && !location.pathname.includes('medical-events');
+    }
+    return location.pathname.startsWith(path) && path !== '/nurse';
+  };
 
   const handleLogout = async () => {
     try {

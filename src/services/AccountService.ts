@@ -8,6 +8,18 @@ export interface User {
     Role?: {
         name: string;
     };
+    students?: Student[];
+    obId?: number;
+    roleInFamily?: string;
+}
+
+export interface Student {
+    id: number;
+    fullname: string;
+    username: string;
+    email: string;
+    password?: string;
+    roleId: number;
 }
 
 export interface UpdateUserDto {
@@ -23,6 +35,42 @@ export interface RegisterUserDto {
     email: string;
     password: string;
     phoneNumber: string;
+    roleId?: number;
+}
+
+export interface StudentRegisterDto {
+    fullname: string;
+    username: string;
+    email: string;
+    password: string;
+    roleId?: number;
+}
+
+export interface GuardianRegisterDto {
+    fullname: string;
+    username: string;
+    email: string;
+    password: string;
+    phoneNumber: string;
+    roleInFamily: string;
+    isCallFirst: boolean;
+    students: StudentRegisterDto[];
+    roleId?: number;
+}
+
+export interface Guardian {
+    obId: number;
+    phoneNumber: string;
+    roleInFamily: string;
+    isCallFirst: boolean;
+    userId: number;
+    fullname: string;
+    students: Student[];
+}
+
+export interface StudentsByGuardianResponse {
+    guardianObId: number;
+    students: Student[];
 }
 
 const API_URL = 'http://localhost:3333/api/v1';
@@ -30,7 +78,7 @@ const API_URL = 'http://localhost:3333/api/v1';
 export async function getAllUsers(token: string): Promise<User[]> {
     const res = await fetch(`${API_URL}/users`, {
         headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
         }
     });
@@ -54,7 +102,7 @@ export const getRoleName = (roleId: number): string => {
             return 'Student';
         case 4:
             return 'Guardian';
-    
+
         default:
             return 'Unknown';
     }
@@ -63,7 +111,7 @@ export const getRoleName = (roleId: number): string => {
 export async function getUserById(id: number, token: string): Promise<User> {
     const res = await fetch(`${API_URL}/users/${id}`, {
         headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
         }
     });
@@ -81,7 +129,7 @@ export async function updateUser(id: number, updateData: UpdateUserDto, token: s
     const res = await fetch(`${API_URL}/users/edit/${id}`, {
         method: 'PUT',
         headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(updateData)
@@ -100,7 +148,7 @@ export async function deleteUser(id: number, token: string): Promise<void> {
     const res = await fetch(`${API_URL}/users/delete/${id}`, {
         method: 'DELETE',
         headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
         }
     });
@@ -112,13 +160,14 @@ export async function deleteUser(id: number, token: string): Promise<void> {
 }
 
 export async function registerUser(registerData: RegisterUserDto, token: string): Promise<User> {
+    const dataToSend = { ...registerData, roleId: 2 };
     const res = await fetch(`${API_URL}/users/register`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(registerData)
+        body: JSON.stringify(dataToSend)
     });
 
     if (!res.ok) {
@@ -128,4 +177,115 @@ export async function registerUser(registerData: RegisterUserDto, token: string)
 
     const data = await res.json();
     return data;
+}
+
+export async function createGuardianWithStudents(guardianData: GuardianRegisterDto, token: string): Promise<User> {
+    const studentsWithRole = guardianData.students.map((student) => ({ ...student, roleId: 3 })); // Default to Student (roleId: 3)
+    const guardianDataWithRole = { ...guardianData, roleId: 4, students: studentsWithRole }; // Default to Guardian (roleId: 4)
+
+    const res = await fetch(`${API_URL}/guardians`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ guardian: guardianDataWithRole })
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Lỗi khi đăng ký phụ huynh và học sinh');
+    }
+
+    const data = await res.json();
+    return data;
+}
+
+export async function deleteGuardianByObId(obId: number, token: string): Promise<void> {
+    const res = await fetch(`${API_URL}/guardians/${obId}`, {
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Lỗi khi xóa phụ huynh');
+    }
+}
+
+export async function getAllGuardians(token: string): Promise<Guardian[]> {
+    const res = await fetch(`${API_URL}/guardians`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Lỗi khi lấy danh sách phụ huynh');
+    }
+
+    const data = await res.json();
+    return data;
+}
+
+export async function getStudentsByGuardianUserId(userId: number, token: string): Promise<StudentsByGuardianResponse> {
+    const res = await fetch(`${API_URL}/guardians/${userId}/students`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Lỗi khi lấy danh sách học sinh theo userId');
+    }
+
+    const data = await res.json();
+    return data;
+}
+
+
+export async function addStudentToGuardian(
+    guardianId: number,
+    studentData: StudentRegisterDto,
+    token: string
+): Promise<Student> {
+    const studentDataWithRole = { ...studentData, roleId: 3 }; // Default to Student (roleId: 3)
+    const res = await fetch(`${API_URL}/guardians/${guardianId}/add-student`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(studentDataWithRole)
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Lỗi khi thêm học sinh mới');
+    }
+
+    const data = await res.json();
+    return data;
+}
+
+export async function deleteStudent(guardianId: number, studentId: number, token: string): Promise<void> {
+    const res = await fetch(`${API_URL}/guardians/${guardianId}/student/${studentId}`, {
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Lỗi khi xóa học sinh');
+    }
 }

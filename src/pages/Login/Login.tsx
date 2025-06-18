@@ -13,16 +13,12 @@ const getRedirectPath = (role: string) => {
     switch (role) {
         case "Admin":
             return "/admin";
-        case "Manager":
-            return "/manager";
         case "Nurse":
             return "/nurse";
         case "Guardian":
             return "/guardian";
-        case "Student":
-            return "/student";
         default:
-            return "/";
+            return null;
     }
 };
 export interface LoginResponse {
@@ -39,7 +35,7 @@ const Login = () => {
     const [password, setPassword] = useState<string>("");
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-    const [submitError, setSubmitError] = useState<string>("");
+
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
@@ -59,18 +55,21 @@ const Login = () => {
     };
 
     const handleLogin = async () => {
-        setSubmitError("");
+
         if (!validate()) return;
 
         try {
             dispatch(toggleLoading(true));
             const payload = { email, password };
             const res = await login(payload);
-
+            console.log("Login response:", res.user);
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             // Lưu thông tin user vào localStorage
             const userData = {
+                email: res.user.email,
+                phone: res.user.phone,
+                id: res.user.id,
                 username: res.user.username,
                 role: res.user.role.charAt(0).toUpperCase() + res.user.role.slice(1),
             };
@@ -80,13 +79,17 @@ const Login = () => {
 
             // Hiển thị thông báo thành công dựa trên role
             const role = userData.role;
+            const redirectPath = getRedirectPath(role);
+            if (!redirectPath) {
+                notificationService.error("Tài khoản không hợp lệ hoặc không được phép đăng nhập.");
+                localStorage.clear();
+                return;
+            }
             notificationService.success(`Đăng nhập thành công `);
-
-            // Chuyển hướng theo role
-            navigate(getRedirectPath(role), { replace: true });
+            navigate(redirectPath, { replace: true });
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || err.message;
-            
+
             // Xử lý các loại lỗi cụ thể
             if (errorMessage.includes('credentials')) {
                 notificationService.error('Tên đăng nhập hoặc mật khẩu không chính xác');
@@ -97,8 +100,8 @@ const Login = () => {
             } else {
                 notificationService.error(errorMessage || 'Đã có lỗi xảy ra khi đăng nhập');
             }
-            
-            setSubmitError(errorMessage || "Đã có lỗi xảy ra");
+
+
         } finally {
             dispatch(toggleLoading(false));
         }
@@ -181,7 +184,7 @@ const Login = () => {
                             {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                         </div>
 
-                        {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+
 
                         <button
                             type="submit"

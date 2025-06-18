@@ -1,7 +1,10 @@
+import React, { useState, useEffect } from 'react';
 import { UserOutlined } from "@ant-design/icons";
-import { Avatar, Dropdown, Menu } from "antd";
-import { NavLink } from "react-router-dom";
+import { Avatar, Dropdown, Menu, Badge } from "antd";
+import { NavLink, useNavigate } from "react-router-dom";
 import Noti from "../../pages/Noti/Noti";
+import { logout } from "../../services/AuthServices";
+import { notificationService } from "../../services/NotificationService";
 
 const Header = () => {
   // Class chung cho tất cả link
@@ -10,6 +13,34 @@ const Header = () => {
   const activeClass = "text-blue-600";
   const inactiveClass = "text-gray-700 hover:text-blue-600";
   const userInfo = localStorage.getItem("user");
+  const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await notificationService.getNotificationsForCurrentUser();
+        setUnreadCount(response.unreadCount);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      localStorage.removeItem("user");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      notificationService.success('Đăng xuất thành công');
+      navigate('/login');
+    } catch (error: any) {
+      notificationService.error(error.message || 'Có lỗi xảy ra khi đăng xuất');
+    }
+  };
 
   const menu = (
     <Menu>
@@ -17,7 +48,7 @@ const Header = () => {
         <button className="w-full text-left">Hồ sơ</button>
       </Menu.Item>
       <Menu.Item key="logout">
-        <button className="w-full text-left">Đăng xuất</button>
+        <button onClick={handleLogout} className="w-full text-left">Đăng xuất</button>
       </Menu.Item>
     </Menu>
   );
@@ -42,7 +73,6 @@ const Header = () => {
             { to: "/guardian/vaccines", label: "Tiêm chủng" },
             { to: "/guardian/checkups", label: "Khám sức khỏe" },
             { to: "/guardian/events", label: "Sự kiện" },
-            // { to: "/guardian/notifications", label: "Thông báo" },
           ].map(({ to, label }) => (
             <NavLink
               key={to}
@@ -59,7 +89,9 @@ const Header = () => {
 
         <div className="flex items-center space-x-4 -mr-20">
           <div className="ml-4">
-            <Noti />
+            <Badge count={unreadCount}>
+              <Noti />
+            </Badge>
           </div>
 
           <Dropdown overlay={menu} trigger={['hover']} arrow placement="bottomRight">
@@ -68,7 +100,9 @@ const Header = () => {
                 <p className="font-bold">
                   {userInfo ? JSON.parse(userInfo).username : 'Người dùng'}
                 </p>
-                <p className="text-sm">parent@gmail.com</p>
+                <p className="text-sm">
+                  {userInfo ? JSON.parse(userInfo).email : 'Người dùng'}
+                </p>
               </div>
               <Avatar style={{ backgroundColor: '#155dfc', width: 40, height: 40 }} icon={<UserOutlined />} />
             </div>
