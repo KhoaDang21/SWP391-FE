@@ -13,16 +13,12 @@ const getRedirectPath = (role: string) => {
     switch (role) {
         case "Admin":
             return "/admin";
-        case "Manager":
-            return "/manager";
         case "Nurse":
             return "/nurse";
         case "Guardian":
             return "/guardian";
-        case "Student":
-            return "/student";
         default:
-            return "/";
+            return null;
     }
 };
 export interface LoginResponse {
@@ -59,7 +55,7 @@ const Login = () => {
     };
 
     const handleLogin = async () => {
-       
+
         if (!validate()) return;
 
         try {
@@ -83,10 +79,14 @@ const Login = () => {
 
             // Hiển thị thông báo thành công dựa trên role
             const role = userData.role;
+            const redirectPath = getRedirectPath(role);
+            if (!redirectPath) {
+                notificationService.error("Tài khoản không hợp lệ hoặc không được phép đăng nhập.");
+                localStorage.clear();
+                return;
+            }
             notificationService.success(`Đăng nhập thành công `);
-
-            // Chuyển hướng theo role
-            navigate(getRedirectPath(role), { replace: true });
+            navigate(redirectPath, { replace: true });
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || err.message;
 
@@ -101,7 +101,7 @@ const Login = () => {
                 notificationService.error(errorMessage || 'Đã có lỗi xảy ra khi đăng nhập');
             }
 
-         
+
         } finally {
             dispatch(toggleLoading(false));
         }
