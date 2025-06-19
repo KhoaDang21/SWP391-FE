@@ -280,6 +280,7 @@ const UserManagement: React.FC = () => {
                 return;
             }
 
+            // Truyền đúng kiểu dữ liệu, không bọc guardian ở đây
             await createGuardianWithStudents(values, token);
             notificationService.success('Đăng ký phụ huynh và học sinh thành công');
             setIsGuardianRegisterModalVisible(false);
@@ -417,6 +418,14 @@ const UserManagement: React.FC = () => {
                         <Input prefix={<PhoneOutlined />} />
                     </Form.Item>
 
+                    <Form.Item
+                        name="address"
+                        label="Địa chỉ liên hệ"
+                        rules={[]}
+                    >
+                        <Input />
+                    </Form.Item>
+
                     <Form.Item className="mb-0 text-right">
                         <Button
                             onClick={() => {
@@ -495,6 +504,34 @@ const UserManagement: React.FC = () => {
                         rules={[{ required: true, message: 'Vui lòng nhập số điện thoại phụ huynh' }, { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ' }]}
                     >
                         <Input prefix={<PhoneOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="roleInFamily"
+                        label="Vai trò trong gia đình"
+                        rules={[{ required: true, message: 'Vui lòng nhập vai trò trong gia đình' }]}
+                    >
+                        <Input placeholder="VD: Bố, Mẹ, Ông, Bà..." />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="isCallFirst"
+                        label="Là người gọi đầu tiên khi khẩn cấp?"
+                        valuePropName="checked"
+                        initialValue={false}
+                    >
+                        <Select>
+                            <Select.Option value={true}>Có</Select.Option>
+                            <Select.Option value={false}>Không</Select.Option>
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        name="address"
+                        label="Địa chỉ liên hệ"
+                        rules={[{ required: true, message: 'Vui lòng nhập địa chỉ liên hệ' }]}
+                    >
+                        <Input />
                     </Form.Item>
 
                     <Form.Item className="mb-0 text-right">
