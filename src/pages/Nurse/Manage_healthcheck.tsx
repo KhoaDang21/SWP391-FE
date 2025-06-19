@@ -1,13 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Select, Space, Modal, Form, Input, DatePicker } from 'antd';
-import moment from 'moment';
+import { Button, Select, Space, Modal, Form, Input } from 'antd';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate } from 'react-router-dom';
 import { healthCheckService, HealthCheckEvent, CreateHealthCheckRequest } from '../../services/Healthcheck';
 import { notificationService } from '../../services/NotificationService';
-import { Send, Check } from 'lucide-react';
+import { Send, Check, Edit, Trash2 } from 'lucide-react';
 
 const { Option } = Select;
 const { TextArea } = Input;
+
+function formatDate(date: Date | null) {
+  if (!date) return '';
+  const d = new Date(date);
+  const month = '' + (d.getMonth() + 1);
+  const day = '' + d.getDate();
+  const year = d.getFullYear();
+  return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
+}
 
 const ManageHealthcheck: React.FC = () => {
   const [healthEvents, setHealthEvents] = useState<HealthCheckEvent[]>([]);
@@ -41,6 +51,15 @@ const ManageHealthcheck: React.FC = () => {
   };
 
   const [form] = Form.useForm();
+  const [editForm] = Form.useForm();
+  const [editingEvent, setEditingEvent] = useState<HealthCheckEvent | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [deletingEvent, setDeletingEvent] = useState<HealthCheckEvent | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [createDate, setCreateDate] = useState<Date | null>(null);
+  const [editDate, setEditDate] = useState<Date | null>(null);
+
   const fetchEvents = async () => {
     setLoading(true);
     try {
@@ -64,6 +83,7 @@ const ManageHealthcheck: React.FC = () => {
 
   const handleCreatePhase = () => {
     form.resetFields();
+    setCreateDate(null);
     setIsModalOpen(true);
   };
 
@@ -72,7 +92,7 @@ const ManageHealthcheck: React.FC = () => {
       title: values.title,
       type: values.type,
       description: values.description,
-      dateEvent: values.dateEvent.format('YYYY-MM-DD'),
+      dateEvent: formatDate(createDate),
       schoolYear: values.schoolYear,
     };
     setIsLoading(true);
@@ -114,6 +134,63 @@ const ManageHealthcheck: React.FC = () => {
 
   const handleRowClick = (event: HealthCheckEvent) => {
     navigate(`/nurse/healthcheck/students/${event.HC_ID}`);
+  };
+
+  const showEditModal = (event: HealthCheckEvent) => {
+    setEditingEvent(event);
+    editForm.setFieldsValue({
+      title: event.title,
+      type: event.Event?.type,
+      description: event.description,
+      schoolYear: event.School_year,
+    });
+    setEditDate(event.Event?.dateEvent ? new Date(event.Event.dateEvent) : null);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (values: any) => {
+    if (!editingEvent) return;
+    setEditLoading(true);
+    try {
+      await healthCheckService.updateHealthCheck(editingEvent.HC_ID, {
+        title: values.title,
+        type: values.type,
+        description: values.description,
+        dateEvent: formatDate(editDate),
+        schoolYear: values.schoolYear,
+      });
+      await fetchEvents();
+      notificationService.success('Cập nhật đợt khám thành công!');
+      setIsEditModalOpen(false);
+      setEditingEvent(null);
+    } catch (error) {
+      notificationService.error('Có lỗi xảy ra khi cập nhật đợt khám');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDelete = (event: HealthCheckEvent) => {
+    setDeletingEvent(event);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingEvent) return;
+    setDeleteLoading(true);
+    try {
+      await healthCheckService.deleteHealthCheck(deletingEvent.HC_ID);
+      await fetchEvents();
+      notificationService.success('Xoá đợt khám thành công!');
+      setDeletingEvent(null);
+    } catch (error) {
+      notificationService.error('Có lỗi xảy ra khi xoá đợt khám');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeletingEvent(null);
   };
 
   const filteredEvents =
@@ -193,13 +270,32 @@ const ManageHealthcheck: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.School_year}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {event.Event?.dateEvent ? moment(event.Event.dateEvent).format('DD/MM/YYYY') : ''}
+                      {event.Event?.dateEvent ? new Date(event.Event.dateEvent).toLocaleDateString() : ''}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Event?.type}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.description}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <div className="flex items-center space-x-3">
-                       
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            showEditModal(event);
+                          }}
+                          className="inline-flex items-center px-3 py-1.5 bg-yellow-400 text-white text-sm rounded-lg hover:bg-yellow-500 transition-colors duration-200"
+                          title="Sửa đợt khám"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(event);
+                          }}
+                          className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors duration-200"
+                          title="Xoá đợt khám"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                         {isSent ? (
                           <div className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-800 text-sm rounded-lg border border-green-200">
                             <Check className="h-4 w-4 mr-1" />
@@ -213,11 +309,10 @@ const ManageHealthcheck: React.FC = () => {
                             title="Gửi form xác nhận cho phụ huynh"
                           >
                             {isSending ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                             ) : (
-                              <Send className="h-4 w-4 mr-1" />
+                              <Send className="h-4 w-4" />
                             )}
-                            {isSending ? 'Đang gửi...' : ''}
                           </button>
                         )}
                       </div>
@@ -232,10 +327,9 @@ const ManageHealthcheck: React.FC = () => {
 
       <Modal
         title="Tạo đợt khám mới"
-        visible={isModalOpen}
+        open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={null}
-        destroyOnClose
       >
         <Form
           form={form}
@@ -272,7 +366,13 @@ const ManageHealthcheck: React.FC = () => {
             label="Ngày khám"
             rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}
           >
-            <DatePicker style={{ width: '100%' }} />
+            <DatePicker
+              selected={createDate}
+              onChange={date => setCreateDate(date)}
+              dateFormat="yyyy-MM-dd"
+              className="w-full border border-gray-300 rounded px-3 py-2"
+              placeholderText="Chọn ngày khám"
+            />
           </Form.Item>
 
           <Form.Item
@@ -301,6 +401,97 @@ const ManageHealthcheck: React.FC = () => {
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title="Chỉnh sửa đợt khám"
+        open={isEditModalOpen}
+        onCancel={() => setIsEditModalOpen(false)}
+        footer={null}
+      >
+        <Form
+          form={editForm}
+          layout="vertical"
+          onFinish={handleEditSubmit}
+          initialValues={{}}
+        >
+          <Form.Item
+            name="title"
+            label="Tên đợt khám"
+            rules={[{ required: true, message: 'Vui lòng nhập tên đợt khám' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="type"
+            label="Loại khám"
+            rules={[{ required: true, message: 'Vui lòng nhập loại khám' }]}
+          >
+            <Input placeholder="VD: Khám sức khỏe định kỳ" />
+          </Form.Item>
+          <Form.Item
+            name="description"
+            label="Mô tả"
+            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+          >
+            <TextArea rows={3} />
+          </Form.Item>
+          <Form.Item
+            name="dateEvent"
+            label="Ngày khám"
+            rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}
+          >
+            <DatePicker
+              selected={editDate}
+              onChange={date => setEditDate(date)}
+              dateFormat="yyyy-MM-dd"
+              className="w-full border border-gray-300 rounded px-3 py-2"
+              placeholderText="Chọn ngày khám"
+            />
+          </Form.Item>
+          <Form.Item
+            name="schoolYear"
+            label="Năm học"
+            rules={[{ required: true, message: 'Vui lòng nhập năm học' }]}
+          >
+            <Input placeholder="VD: 2025-2026" />
+          </Form.Item>
+          <Form.Item>
+            <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                onClick={() => setIsEditModalOpen(false)}
+                style={{ marginRight: 8 }}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={editLoading}
+              >
+                Lưu thay đổi
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        visible={!!deletingEvent}
+        title="Xác nhận xoá đợt khám"
+        onCancel={cancelDelete}
+        footer={null}
+        centered
+      >
+        <p>Bạn có chắc chắn muốn xoá đợt khám <b>{deletingEvent?.title}</b> không?</p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
+          <Button onClick={cancelDelete} style={{ marginRight: 8 }}>
+            Huỷ
+          </Button>
+          <Button type="primary" danger loading={deleteLoading} onClick={confirmDelete}>
+            Xoá
+          </Button>
+        </div>
       </Modal>
     </div>
   );

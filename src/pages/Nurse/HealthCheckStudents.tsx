@@ -4,7 +4,6 @@ import { Button, Table, Card, Row, Col, Statistic, Spin, Tag } from 'antd';
 import { ArrowLeft, Users, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { healthCheckService, HealthCheckForm, HealthCheckEvent } from '../../services/Healthcheck';
 import { notificationService } from '../../services/NotificationService';
-import moment from 'moment';
 
 const HealthCheckStudents: React.FC = () => {
   const { hcId } = useParams<{ hcId: string }>();
@@ -206,7 +205,7 @@ const HealthCheckStudents: React.FC = () => {
       key: 'createdAt',
       render: (record: HealthCheckForm) => (
         <div className="text-sm text-gray-500">
-          {moment(record.createdAt).format('DD/MM/YYYY HH:mm')}
+          {record.createdAt ? new Date(record.createdAt).toLocaleDateString() : ''}
         </div>
       ),
     },
@@ -237,7 +236,7 @@ const HealthCheckStudents: React.FC = () => {
               Danh sách học sinh - {healthEvent?.title}
             </h1>
             <p className="text-gray-600">
-              Năm học: {healthEvent?.School_year} | Ngày khám: {healthEvent?.Event?.dateEvent ? moment(healthEvent.Event.dateEvent).format('DD/MM/YYYY') : 'N/A'}
+              Năm học: {healthEvent?.School_year} | Ngày khám: {healthEvent?.Event?.dateEvent ? new Date(healthEvent.Event.dateEvent).toLocaleDateString() : 'N/A'}
             </p>
           </div>
         </div>

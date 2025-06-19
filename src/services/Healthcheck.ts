@@ -190,5 +190,45 @@ export const healthCheckService = {
     }
 
     return response.json();
+  },
+
+  // Update a health check event
+  updateHealthCheck: async (hcId: number, data: Partial<CreateHealthCheckRequest>): Promise<CreateHealthCheckResponse> => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Access token is missing");
+    }
+    const response = await fetch(`${API_URL}/health-check?id=${hcId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': '*/*',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  // Delete a health check event
+  deleteHealthCheck: async (hcId: number): Promise<{ success: boolean; message: string }> => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Access token is missing");
+    }
+    const response = await fetch(`${API_URL}/health-check?id=${hcId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': '*/*',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
   }
 };
