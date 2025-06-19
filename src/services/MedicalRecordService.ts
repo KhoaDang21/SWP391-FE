@@ -19,7 +19,7 @@ export interface PastIllness {
 }
 
 export interface MedicalRecord {
-    ID: number;
+    MR_ID: number;
     userId: number;
     fullname: string;
     height: number;

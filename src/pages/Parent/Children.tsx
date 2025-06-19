@@ -39,29 +39,9 @@ const { Title, Text } = Typography;
 
 const Children = () => {
     const token = localStorage.getItem('accessToken') as string;
-    // const [children, setChildren] = useState([
-    //     {
-    //         id: 1,
-    //         name: 'Nguyễn Văn A',
-    //         dateOfBirth: '2018-05-15',
-    //         gender: 'Nam',
-    //         bloodType: 'O+',
-    //         height: 120,
-    //         weight: 30,
-    //         vaccines: [
-    //             { name: 'BCG', date: '2018-06-01', status: 'Đã tiêm' },
-    //             { name: 'Viêm gan B', date: '2018-07-15', status: 'Đã tiêm' },
-    //             { name: 'DPT', date: '2018-08-20', status: 'Đã tiêm' }
-    //         ],
-    //         chronicDiseases: ['Hen suyễn nhẹ'],
-    //         allergies: ['Phấn hoa', 'Tôm cua'],
-    //         pastIllnesses: [
-    //             { disease: 'Viêm phổi', date: '2020-12-10', treatment: 'Kháng sinh' },
-    //             { disease: 'Sốt xuất huyết', date: '2021-06-20', treatment: 'Nhập viện 5 ngày' }
-    //         ]
-    //     }
-    // ]);
 
+
+    const [loading, setLoading] = useState(false);
     const [children, setChildren] = useState<MedicalRecord[]>([]);
 
     useEffect(() => {
@@ -129,6 +109,12 @@ const Children = () => {
 
     const [childrenList, setChildrenList] = useState<{ id: number; name: string }[]>([]);
 
+    const availableChildren = childrenList.filter(child => {
+        const alreadyUsed = children.some(record =>
+            record.userId === child.id && record.userId !== editingChild?.userId
+        );
+        return !alreadyUsed;
+    });
 
 
     const vaccineOptions = [
@@ -191,29 +177,37 @@ const Children = () => {
             console.error('Không tìm thấy token');
             return;
         }
-        const newChild = {
-            ...values,
-            // userId: editingChild ? editingChild.userId : Date.now(),
-            height: Number(values.height),
-            weight: Number(values.weight),
-            chronicDiseases: values.chronicDiseases?.map((d: string) => ({ name: d })) || [],
-            allergies: values.allergies?.map((a: string) => ({ name: a })) || [],
-        };
 
-        console.log('Submitted values:', newChild);
+        setLoading(true);
 
-        if (editingChild) {
-            await updateMedicalRecord(editingChild.ID!, newChild, token);
-        } else {
-            await createMedicalRecord(newChild, token);
+        try {
+            const newChild = {
+                ...values,
+                height: Number(values.height),
+                weight: Number(values.weight),
+                chronicDiseases: values.chronicDiseases?.map((d: string) => ({ name: d })) || [],
+                allergies: values.allergies?.map((a: string) => ({ name: a })) || [],
+            };
+
+            console.log('Submitted values:', newChild);
+
+            if (editingChild) {
+                await updateMedicalRecord(editingChild.MR_ID!, newChild, token);
+            } else {
+                await createMedicalRecord(newChild, token);
+            }
+
+            const updatedRecords = await getMedicalRecordsByGuardian(token);
+            setChildren(updatedRecords);
+
+            setIsModalVisible(false);
+            setEditingChild(null);
+            form.resetFields();
+            setLoading(false);
+        } catch (error) {
+            console.error('Lỗi khi gửi form:', error);
+            setLoading(false);
         }
-
-        const updatedRecords = await getMedicalRecordsByGuardian(token);
-        setChildren(updatedRecords);
-
-        setIsModalVisible(false);
-        setEditingChild(null);
-        form.resetFields();
     };
 
 
@@ -223,8 +217,6 @@ const Children = () => {
 
         try {
             await deleteMedicalRecord(id, token);
-
-            // Fetch lại danh sách sau khi xóa
             const updatedRecords = await getMedicalRecordsByGuardian(token);
             setChildren(updatedRecords);
         } catch (error) {
@@ -275,16 +267,19 @@ const Children = () => {
 
                 <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
                     <div style={{ marginBottom: '24px' }}>
-                        <div style={{ marginBottom: '24px' }}>
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => showModal()}
-                                size="large"
-                            >
-                                Thêm Hồ Sơ Con Em
-                            </Button>
-                        </div>
+                        {availableChildren.length > 0 && (
+                            <div style={{ marginBottom: '24px' }}>
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={() => showModal()}
+                                    size="large"
+                                >
+                                    Thêm Hồ Sơ Con Em
+                                </Button>
+                            </div>
+                        )}
+
 
 
 
@@ -295,7 +290,7 @@ const Children = () => {
                                         style={{ height: '100%' }}
                                         actions={[
                                             <EditOutlined key="edit" onClick={() => showModal(child)} />,
-                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.ID)} />
+                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.MR_ID)} />
                                         ]}
                                     >
                                         <div style={{ marginBottom: '16px' }}>
@@ -401,20 +396,14 @@ const Children = () => {
                             rules={[{ required: true, message: 'Vui lòng chọn con!' }]}
                         >
                             <Select placeholder="Chọn tên con">
-                                {childrenList
-                                    .filter(child => {
-                                        const alreadyUsed = children.some(record =>
-                                            record.userId === child.id && record.userId !== editingChild?.userId
-                                        );
-                                        return !alreadyUsed;
-                                    })
-                                    .map(child => (
-                                        <Select.Option key={child.id} value={child.id}>
-                                            {child.name}
-                                        </Select.Option>
-                                    ))}
+                                {availableChildren.map(child => (
+                                    <Select.Option key={child.id} value={child.id}>
+                                        {child.name}
+                                    </Select.Option>
+                                ))}
                             </Select>
                         </Form.Item>
+
 
                         <Form.Item
                             name="class"
@@ -625,7 +614,7 @@ const Children = () => {
                                 <Button onClick={handleCancel}>
                                     Hủy
                                 </Button>
-                                <Button type="primary" htmlType="submit">
+                                <Button type="primary" htmlType="submit" loading={loading}>
                                     {editingChild ? 'Cập Nhật' : 'Thêm Mới'}
                                 </Button>
                             </Space>
