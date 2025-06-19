@@ -192,7 +192,7 @@ const Children = () => {
             console.log('Submitted values:', newChild);
 
             if (editingChild) {
-                await updateMedicalRecord(editingChild.ID!, newChild, token);
+                await updateMedicalRecord(editingChild.MR_ID!, newChild, token);
             } else {
                 await createMedicalRecord(newChild, token);
             }
@@ -290,7 +290,7 @@ const Children = () => {
                                         style={{ height: '100%' }}
                                         actions={[
                                             <EditOutlined key="edit" onClick={() => showModal(child)} />,
-                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.ID)} />
+                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.MR_ID)} />
                                         ]}
                                     >
                                         <div style={{ marginBottom: '16px' }}>
