@@ -30,7 +30,7 @@ import {
     SafetyOutlined
 } from '@ant-design/icons';
 import { getStudentsByGuardianUserId } from '../../services/AccountService';
-import { createMedicalRecord, deleteMedicalRecord, getAllMedicalRecords, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
+import { createStudentWithMedicalRecord, deleteMedicalRecord, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
 import type { MedicalRecord } from '../../services/MedicalRecordService';
 const { Option } = Select;
 const { TextArea } = Input;
@@ -109,12 +109,12 @@ const Children = () => {
 
     const [childrenList, setChildrenList] = useState<{ id: number; name: string }[]>([]);
 
-    const availableChildren = childrenList.filter(child => {
-        const alreadyUsed = children.some(record =>
-            record.userId === child.id && record.userId !== editingChild?.userId
-        );
-        return !alreadyUsed;
-    });
+    // const availableChildren = childrenList.filter(child => {
+    //     const alreadyUsed = children.some(record =>
+    //         record.userId === child.id && record.userId !== editingChild?.userId
+    //     );
+    //     return !alreadyUsed;
+    // });
 
 
     const vaccineOptions = [
@@ -132,9 +132,11 @@ const Children = () => {
         'Phấn hoa', 'Bụi nhà', 'Lông động vật', 'Tôm cua', 'Sữa',
         'Trứng', 'Đậu phộng', 'Kháng sinh Penicillin', 'Aspirin'
     ];
+    const genderOptions = ['Nam', 'Nữ', 'Khác'];
     const showModal = (child: MedicalRecord | null = null) => {
         setEditingChild(child);
         setIsModalVisible(true);
+        console.log('Editing child:', child);
         if (child) {
             form.setFieldsValue({
                 ...child,
@@ -178,24 +180,39 @@ const Children = () => {
             return;
         }
 
+        const user = localStorage.getItem('user');
+
+        const userIdStr = user ? JSON.parse(user).id : null;
+        console.log('User ID String:', userIdStr);
+
         setLoading(true);
 
         try {
             const newChild = {
-                ...values,
-                height: Number(values.height),
-                weight: Number(values.weight),
-                chronicDiseases: values.chronicDiseases?.map((d: string) => ({ name: d })) || [],
-                allergies: values.allergies?.map((a: string) => ({ name: a })) || [],
+                guardianUserId: userIdStr,
+                student: {
+                    fullname: values.fullname,
+                    dateOfBirth: values.dateOfBirth,
+                    gender: values.gender
+                },
+                medicalRecord: {
+                    class: values.class,
+                    height: Number(values.height),
+                    weight: Number(values.weight),
+                    bloodType: values.bloodType,
+                    chronicDiseases: values.chronicDiseases?.map((d: string) => ({ name: d })) || [],
+                    allergies: values.allergies?.map((a: string) => ({ name: a })) || [],
+                    pastIllnesses: values.pastIllnesses || []
+                }
             };
 
-            console.log('Submitted values:', newChild);
+            console.log('Payload gửi BE:', newChild);
 
-            if (editingChild) {
-                await updateMedicalRecord(editingChild.MR_ID!, newChild, token);
-            } else {
-                await createMedicalRecord(newChild, token);
-            }
+            // if (editingChild) {
+            //     await updateMedicalRecord(editingChild.MR_ID!, newChild, token);
+            // } else {
+            await createStudentWithMedicalRecord(newChild, token);
+            // }
 
             const updatedRecords = await getMedicalRecordsByGuardian(token);
             setChildren(updatedRecords);
@@ -267,20 +284,16 @@ const Children = () => {
 
                 <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
                     <div style={{ marginBottom: '24px' }}>
-                        {availableChildren.length > 0 && (
-                            <div style={{ marginBottom: '24px' }}>
-                                <Button
-                                    type="primary"
-                                    icon={<PlusOutlined />}
-                                    onClick={() => showModal()}
-                                    size="large"
-                                >
-                                    Thêm Hồ Sơ Con Em
-                                </Button>
-                            </div>
-                        )}
-
-
+                        <div style={{ marginBottom: '24px' }}>
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => showModal()}
+                                size="large"
+                            >
+                                Thêm Hồ Sơ Con Em
+                            </Button>
+                        </div>
 
 
                         <Row gutter={[16, 16]}>
@@ -290,7 +303,7 @@ const Children = () => {
                                         style={{ height: '100%' }}
                                         actions={[
                                             <EditOutlined key="edit" onClick={() => showModal(child)} />,
-                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.MR_ID)} />
+                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.ID)} />
                                         ]}
                                     >
                                         <div style={{ marginBottom: '16px' }}>
@@ -391,18 +404,13 @@ const Children = () => {
                         />
 
                         <Form.Item
-                            name="userId"
-                            label="Chọn con"
-                            rules={[{ required: true, message: 'Vui lòng chọn con!' }]}
+                            name="fullname"
+                            label="Họ và tên"
+                            rules={[{ required: true, message: 'Vui lòng nhập họ và tên!' }]}
                         >
-                            <Select placeholder="Chọn tên con">
-                                {availableChildren.map(child => (
-                                    <Select.Option key={child.id} value={child.id}>
-                                        {child.name}
-                                    </Select.Option>
-                                ))}
-                            </Select>
+                            <Input placeholder="Nhập họ và tên" />
                         </Form.Item>
+
 
 
                         <Form.Item
@@ -411,6 +419,29 @@ const Children = () => {
                             rules={[{ required: true, message: 'Vui lòng nhập lớp!' }]}
                         >
                             <Input placeholder="Nhập lớp" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="gender"
+                            label="Giới tính"
+                            rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
+                        >
+                            <Select placeholder="Chọn giới tính">
+                                {genderOptions.map(gender => (
+                                    <Select.Option key={gender} value={gender}>{gender}</Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                            name="dateOfBirth"
+                            label="Ngày sinh"
+                            rules={[{ required: true, message: 'Vui lòng chọn ngày sinh!' }]}
+                        >
+                            <Input
+                                type="date"
+                                max={new Date().toISOString().split("T")[0]}
+                            />
                         </Form.Item>
 
                         <Form.Item
