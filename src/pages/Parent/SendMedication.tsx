@@ -140,18 +140,41 @@ const SendMedication: React.FC = () => {
         try {
             const student = students.find((s) => s.id === values.studentId);
             if (!student) throw new Error('Không tìm thấy học sinh');
+            const fileObj = values.prescriptionImage?.file?.originFileObj;
+            if (!fileObj) throw new Error('Vui lòng upload hình ảnh toa thuốc hợp lệ!');
             const formData = new FormData();
             formData.append('userId', String(values.studentId));
             formData.append('guardianPhone', student.phone);
             formData.append('class', student.className);
-            formData.append('prescriptionImage', values.prescriptionImage.file.originFileObj);
+            formData.append('prescriptionImage', fileObj);
             formData.append('medications', values.medications);
             const deliveryTime = `${values.deliveryDate.format('YYYY-MM-DD')} - ${values.deliveryTimeNote}`;
             formData.append('deliveryTime', deliveryTime);
+            formData.append('status', 'pending');
             if (values.notes) formData.append('notes', values.notes);
-            if (values.deliveryFee) formData.append('deliveryFee', String(values.deliveryFee));
 
-            await createMedicalSent(formData, token);
+            // Log FormData for debugging
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ':', pair[1]);
+            }
+
+            const res = await fetch('http://localhost:3333/api/v1/medical-sents', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData
+            });
+
+            if (!res.ok) {
+                let errorMsg = 'Lỗi tạo đơn thuốc';
+                try {
+                    const errData = await res.json();
+                    errorMsg = errData.message || errorMsg;
+                } catch { }
+                throw new Error(errorMsg);
+            }
+
             message.success('Tạo đơn gửi thuốc thành công!');
             setIsModalVisible(false);
             form.resetFields();

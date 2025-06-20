@@ -70,19 +70,18 @@ const UserManagement: React.FC = () => {
     useEffect(() => {
         const filtered = users.filter(user => {
             const matchesSearchText = (
-                user.username.toLowerCase().includes(searchText.toLowerCase()) ||
-                user.fullname.toLowerCase().includes(searchText.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchText.toLowerCase()) ||
-                (user.phoneNumber && user.phoneNumber.includes(searchText)) ||
-                (user.roleId === 4 && user.students && user.students.some(student =>
-                    student.fullname.toLowerCase().includes(searchText.toLowerCase()) ||
-                    student.username.toLowerCase().includes(searchText.toLowerCase())
+                (user?.username?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+                (user?.fullname?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+                (user?.email?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+                (user?.phoneNumber && user.phoneNumber.includes(searchText)) ||
+                (user?.roleId === 4 && user.students && user.students.some(student =>
+                    (student.fullname?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+                    (student.username?.toLowerCase() || '').includes(searchText.toLowerCase())
                 ))
             );
 
             let matchesRole = false;
             if (selectedRole === 'All') {
-                // For 'All', show everyone except students (roleId 3) as top-level users
                 matchesRole = user.roleId !== 3;
             } else {
                 matchesRole = getRoleName(user.roleId) === selectedRole;
@@ -279,15 +278,25 @@ const UserManagement: React.FC = () => {
                 notificationService.error('Vui lòng đăng nhập để tiếp tục');
                 return;
             }
-
-            // Truyền đúng kiểu dữ liệu, không bọc guardian ở đây
-            await createGuardianWithStudents(values, token);
-            notificationService.success('Đăng ký phụ huynh và học sinh thành công');
+            // Không gửi password lên BE
+            const { password, ...guardianData } = values;
+            // 1. Tạo phụ huynh
+            await createGuardianWithStudents(guardianData, token);
+            // 2. Gửi password ngẫu nhiên qua mail
+            await fetch('http://localhost:3333/api/v1/auth/send-random-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ email: guardianData.email }),
+            });
+            notificationService.success('Đăng ký phụ huynh thành công, mật khẩu đã gửi qua email');
             setIsGuardianRegisterModalVisible(false);
             guardianRegisterForm.resetFields();
             fetchUsers();
         } catch (error: any) {
-            notificationService.error(error.message || 'Có lỗi xảy ra khi đăng ký phụ huynh và học sinh');
+            notificationService.error(error.message || 'Có lỗi xảy ra khi đăng ký phụ huynh');
         } finally {
             setGuardianRegisterLoading(false);
         }
@@ -484,18 +493,6 @@ const UserManagement: React.FC = () => {
                         rules={[{ required: true, message: 'Vui lòng nhập email phụ huynh' }, { type: 'email', message: 'Email không hợp lệ' }]}
                     >
                         <Input prefix={<MailOutlined />} />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="password"
-                        label="Mật khẩu phụ huynh"
-                        rules={[
-                            { required: true, message: 'Vui lòng nhập mật khẩu phụ huynh' },
-                            { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
-                            { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/, message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt' }
-                        ]}
-                    >
-                        <Input.Password prefix={<LockOutlined />} />
                     </Form.Item>
 
                     <Form.Item

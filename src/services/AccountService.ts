@@ -28,6 +28,7 @@ export interface UpdateUserDto {
   fullname: string;
   email: string;
   phoneNumber: string;
+  address?: string;
 }
 
 export interface RegisterUserDto {
