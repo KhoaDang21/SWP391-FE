@@ -30,7 +30,7 @@ import {
     SafetyOutlined
 } from '@ant-design/icons';
 import { getStudentsByGuardianUserId } from '../../services/AccountService';
-import { createMedicalRecord, deleteMedicalRecord, getAllMedicalRecords, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
+import { createStudentWithMedicalRecord, deleteMedicalRecord, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
 import type { MedicalRecord } from '../../services/MedicalRecordService';
 const { Option } = Select;
 const { TextArea } = Input;
@@ -39,29 +39,9 @@ const { Title, Text } = Typography;
 
 const Children = () => {
     const token = localStorage.getItem('accessToken') as string;
-    // const [children, setChildren] = useState([
-    //     {
-    //         id: 1,
-    //         name: 'Nguyễn Văn A',
-    //         dateOfBirth: '2018-05-15',
-    //         gender: 'Nam',
-    //         bloodType: 'O+',
-    //         height: 120,
-    //         weight: 30,
-    //         vaccines: [
-    //             { name: 'BCG', date: '2018-06-01', status: 'Đã tiêm' },
-    //             { name: 'Viêm gan B', date: '2018-07-15', status: 'Đã tiêm' },
-    //             { name: 'DPT', date: '2018-08-20', status: 'Đã tiêm' }
-    //         ],
-    //         chronicDiseases: ['Hen suyễn nhẹ'],
-    //         allergies: ['Phấn hoa', 'Tôm cua'],
-    //         pastIllnesses: [
-    //             { disease: 'Viêm phổi', date: '2020-12-10', treatment: 'Kháng sinh' },
-    //             { disease: 'Sốt xuất huyết', date: '2021-06-20', treatment: 'Nhập viện 5 ngày' }
-    //         ]
-    //     }
-    // ]);
 
+
+    const [loading, setLoading] = useState(false);
     const [children, setChildren] = useState<MedicalRecord[]>([]);
 
     useEffect(() => {
@@ -129,6 +109,12 @@ const Children = () => {
 
     const [childrenList, setChildrenList] = useState<{ id: number; name: string }[]>([]);
 
+    // const availableChildren = childrenList.filter(child => {
+    //     const alreadyUsed = children.some(record =>
+    //         record.userId === child.id && record.userId !== editingChild?.userId
+    //     );
+    //     return !alreadyUsed;
+    // });
 
 
     const vaccineOptions = [
@@ -146,9 +132,11 @@ const Children = () => {
         'Phấn hoa', 'Bụi nhà', 'Lông động vật', 'Tôm cua', 'Sữa',
         'Trứng', 'Đậu phộng', 'Kháng sinh Penicillin', 'Aspirin'
     ];
+    const genderOptions = ['Nam', 'Nữ', 'Khác'];
     const showModal = (child: MedicalRecord | null = null) => {
         setEditingChild(child);
         setIsModalVisible(true);
+        console.log('Editing child:', child);
         if (child) {
             form.setFieldsValue({
                 ...child,
@@ -191,29 +179,52 @@ const Children = () => {
             console.error('Không tìm thấy token');
             return;
         }
-        const newChild = {
-            ...values,
-            // userId: editingChild ? editingChild.userId : Date.now(),
-            height: Number(values.height),
-            weight: Number(values.weight),
-            chronicDiseases: values.chronicDiseases?.map((d: string) => ({ name: d })) || [],
-            allergies: values.allergies?.map((a: string) => ({ name: a })) || [],
-        };
 
-        console.log('Submitted values:', newChild);
+        const user = localStorage.getItem('user');
 
-        if (editingChild) {
-            await updateMedicalRecord(editingChild.ID!, newChild, token);
-        } else {
-            await createMedicalRecord(newChild, token);
+        const userIdStr = user ? JSON.parse(user).id : null;
+        console.log('User ID String:', userIdStr);
+
+        setLoading(true);
+
+        try {
+            const newChild = {
+                guardianUserId: userIdStr,
+                student: {
+                    fullname: values.fullname,
+                    dateOfBirth: values.dateOfBirth,
+                    gender: values.gender
+                },
+                medicalRecord: {
+                    class: values.class,
+                    height: Number(values.height),
+                    weight: Number(values.weight),
+                    bloodType: values.bloodType,
+                    chronicDiseases: values.chronicDiseases?.map((d: string) => ({ name: d })) || [],
+                    allergies: values.allergies?.map((a: string) => ({ name: a })) || [],
+                    pastIllnesses: values.pastIllnesses || []
+                }
+            };
+
+            console.log('Payload gửi BE:', newChild);
+
+            // if (editingChild) {
+            //     await updateMedicalRecord(editingChild.MR_ID!, newChild, token);
+            // } else {
+            await createStudentWithMedicalRecord(newChild, token);
+            // }
+
+            const updatedRecords = await getMedicalRecordsByGuardian(token);
+            setChildren(updatedRecords);
+
+            setIsModalVisible(false);
+            setEditingChild(null);
+            form.resetFields();
+            setLoading(false);
+        } catch (error) {
+            console.error('Lỗi khi gửi form:', error);
+            setLoading(false);
         }
-
-        const updatedRecords = await getMedicalRecordsByGuardian(token);
-        setChildren(updatedRecords);
-
-        setIsModalVisible(false);
-        setEditingChild(null);
-        form.resetFields();
     };
 
 
@@ -223,8 +234,6 @@ const Children = () => {
 
         try {
             await deleteMedicalRecord(id, token);
-
-            // Fetch lại danh sách sau khi xóa
             const updatedRecords = await getMedicalRecordsByGuardian(token);
             setChildren(updatedRecords);
         } catch (error) {
@@ -285,7 +294,6 @@ const Children = () => {
                                 Thêm Hồ Sơ Con Em
                             </Button>
                         </div>
-
 
 
                         <Row gutter={[16, 16]}>
@@ -396,25 +404,14 @@ const Children = () => {
                         />
 
                         <Form.Item
-                            name="userId"
-                            label="Chọn con"
-                            rules={[{ required: true, message: 'Vui lòng chọn con!' }]}
+                            name="fullname"
+                            label="Họ và tên"
+                            rules={[{ required: true, message: 'Vui lòng nhập họ và tên!' }]}
                         >
-                            <Select placeholder="Chọn tên con">
-                                {childrenList
-                                    .filter(child => {
-                                        const alreadyUsed = children.some(record =>
-                                            record.userId === child.id && record.userId !== editingChild?.userId
-                                        );
-                                        return !alreadyUsed;
-                                    })
-                                    .map(child => (
-                                        <Select.Option key={child.id} value={child.id}>
-                                            {child.name}
-                                        </Select.Option>
-                                    ))}
-                            </Select>
+                            <Input placeholder="Nhập họ và tên" />
                         </Form.Item>
+
+
 
                         <Form.Item
                             name="class"
@@ -422,6 +419,29 @@ const Children = () => {
                             rules={[{ required: true, message: 'Vui lòng nhập lớp!' }]}
                         >
                             <Input placeholder="Nhập lớp" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="gender"
+                            label="Giới tính"
+                            rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
+                        >
+                            <Select placeholder="Chọn giới tính">
+                                {genderOptions.map(gender => (
+                                    <Select.Option key={gender} value={gender}>{gender}</Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                            name="dateOfBirth"
+                            label="Ngày sinh"
+                            rules={[{ required: true, message: 'Vui lòng chọn ngày sinh!' }]}
+                        >
+                            <Input
+                                type="date"
+                                max={new Date().toISOString().split("T")[0]}
+                            />
                         </Form.Item>
 
                         <Form.Item
@@ -625,7 +645,7 @@ const Children = () => {
                                 <Button onClick={handleCancel}>
                                     Hủy
                                 </Button>
-                                <Button type="primary" htmlType="submit">
+                                <Button type="primary" htmlType="submit" loading={loading}>
                                     {editingChild ? 'Cập Nhật' : 'Thêm Mới'}
                                 </Button>
                             </Space>
