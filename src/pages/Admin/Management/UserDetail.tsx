@@ -33,6 +33,7 @@ const UserDetail: React.FC = () => {
                 fullname: userData.fullname,
                 email: userData.email,
                 phoneNumber: userData.phoneNumber,
+                address: userData.address || '',
             });
         } catch (error: any) {
             notificationService.error(error.message || 'Có lỗi xảy ra khi tải thông tin người dùng');
@@ -58,11 +59,12 @@ const UserDetail: React.FC = () => {
                 fullname: user.fullname,
                 email: user.email,
                 phoneNumber: user.phoneNumber,
+                address: user.address || '',
             });
         }
     };
 
-    const handleUpdate = async (values: UpdateUserDto) => {
+    const handleUpdate = async (values: UpdateUserDto & { address?: string }) => {
         try {
             setUpdateLoading(true);
             const token = localStorage.getItem('accessToken');
@@ -196,6 +198,16 @@ const UserDetail: React.FC = () => {
                                 {user.phoneNumber}
                             </Descriptions.Item>
                         )}
+
+                        <Descriptions.Item
+                            label={
+                                <span className="flex items-center gap-2">
+                                    Địa chỉ liên hệ
+                                </span>
+                            }
+                        >
+                            {user.address || 'Chưa cập nhật'}
+                        </Descriptions.Item>
                     </Descriptions>
                 </div>
             </Card>
@@ -215,6 +227,7 @@ const UserDetail: React.FC = () => {
                         fullname: user.fullname,
                         email: user.email,
                         phoneNumber: user.phoneNumber,
+                        address: user.address || '',
                     }}
                 >
                     <Form.Item
@@ -259,6 +272,14 @@ const UserDetail: React.FC = () => {
                         ]}
                     >
                         <Input prefix={<PhoneOutlined />} />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="address"
+                        label="Địa chỉ liên hệ"
+                        rules={[]}
+                    >
+                        <Input />
                     </Form.Item>
 
                     <Form.Item className="mb-0 text-right">

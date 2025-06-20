@@ -1,4 +1,8 @@
 import { NavLink } from "react-router-dom";
+import { Modal, Form, Input, Button } from 'antd';
+import { changePassword } from '../../services/AuthServices';
+import { notificationService } from '../../services/NotificationService';
+import { useState } from 'react';
 
 const Header = () => {
   // Class chung cho tất cả link
@@ -6,6 +10,10 @@ const Header = () => {
   // Class khi active (xanh) và khi không active (xám)
   const activeClass = "text-blue-600";
   const inactiveClass = "text-gray-700 hover:text-blue-600";
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
   return (
     <header className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
@@ -43,17 +51,75 @@ const Header = () => {
           <NavLink
             to="/login"
             className={({ isActive }) =>
-              `px-4 py-2 rounded transition ${
-                isActive
-                  ? "bg-blue-700 text-white"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
+              `px-4 py-2 rounded transition ${isActive
+                ? "bg-blue-700 text-white"
+                : "bg-blue-600 text-white hover:bg-blue-700"
               }`
             }
           >
             Đăng nhập
           </NavLink>
         </div>
+
+        {localStorage.getItem('accessToken') && (
+          <Button onClick={() => setIsModalVisible(true)}>
+            Đổi mật khẩu
+          </Button>
+        )}
       </div>
+
+      <Modal
+        title="Đổi mật khẩu"
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={async (values) => {
+            try {
+              setLoading(true);
+              const token = localStorage.getItem('accessToken');
+              if (!token) {
+                notificationService.error('Vui lòng đăng nhập lại');
+                return;
+              }
+              await changePassword(values.currentPassword, values.newPassword, token);
+              notificationService.success('Đổi mật khẩu thành công');
+              setIsModalVisible(false);
+              form.resetFields();
+            } catch (error: any) {
+              notificationService.error(error.message || 'Đổi mật khẩu thất bại');
+            } finally {
+              setLoading(false);
+            }
+          }}
+        >
+          <Form.Item
+            name="currentPassword"
+            label="Mật khẩu hiện tại"
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="newPassword"
+            label="Mật khẩu mới"
+            rules={[
+              { required: true, message: 'Vui lòng nhập mật khẩu mới' },
+              { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={loading}>
+              Đổi mật khẩu
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </header>
   );
 };
