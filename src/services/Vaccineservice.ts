@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3333/api/v1";
+const API_URL = 'http://localhost:3333/api/v1';
 
 export interface VaccinePayload {
   VH_ID: number;
@@ -12,7 +12,7 @@ export interface VaccinePayload {
   MedicalRecord: {
     ID: number;
     userId: number;
-    class: string;
+    Class: string;
     height: number | null;
     weight: number | null;
     bloodType: string | null;
@@ -28,7 +28,7 @@ export interface GuardianVaccineHistory {
   medicalRecord: {
     ID: number;
     userId: number;
-    class: string;
+    Class: string;
     height: number | null;
     weight: number | null;
     bloodType: string | null;
@@ -59,7 +59,6 @@ export interface GuardianVaccineResponse {
   histories: GuardianVaccineHistory[];
 }
 
-
 export interface VaccineTypeResponse {
   id: number;
   name: string;
@@ -74,7 +73,6 @@ export interface VaccineTypeResponse {
   createdAt: string;
   updatedAt: string;
 }
-
 
 export interface VaccineCreateRequest {
   Vaccine_name: string;
@@ -108,130 +106,130 @@ const decodeToken = (token: string) => {
 
 export const vaccineService = {
   postVaccine: async (payload: VaccinePayload): Promise<any> => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/vaccine`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(payload)
     });
     if (!response.ok) {
-      throw new Error("Failed to post vaccine data");
+      throw new Error('Failed to post vaccine data');
     }
     return response.json();
   },
 
   getAllVaccines: async (): Promise<VaccinePayload[]> => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/vaccine`, {
       headers: {
-        "Authorization": `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch vaccine data");
+      throw new Error('Failed to fetch vaccine data');
     }
     const result = await response.json();
     return Array.isArray(result.data) ? result.data : [];
   },
 
   getVaccineTypes: async (): Promise<string[]> => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/vaccine/types`, {
       headers: {
-        "Authorization": `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch vaccine types");
+      throw new Error('Failed to fetch vaccine types');
     }
     const data = await response.json();
-    return data.data; 
+    return data.data;
   },
 
   getVaccineByName: async (vaccineName: string): Promise<VaccinePayload[]> => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/vaccine/by-name/${encodeURIComponent(vaccineName)}`, {
       headers: {
-        "Authorization": `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch vaccine histories by name");
+      throw new Error('Failed to fetch vaccine histories by name');
     }
     const result = await response.json();
     return Array.isArray(result.data) ? result.data : [];
   },
 
   getVaccinesByGuardian: async (): Promise<GuardianVaccineResponse> => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) throw new Error("No access token found");
-    
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+
     const decodedToken = decodeToken(token);
     if (!decodedToken?.id) {
       console.error('Token payload:', decodedToken);
-      throw new Error("Could not extract user ID from token");
+      throw new Error('Could not extract user ID from token');
     }
-    
+
     const response = await fetch(`${API_URL}/vaccine/guardian/${decodedToken.id}`, {
       headers: {
-        "Authorization": `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch guardian vaccine histories");
+      throw new Error('Failed to fetch guardian vaccine histories');
     }
     const result = await response.json();
     return result.data;
   },
 
   confirmVaccine: async (id: string, isConfirmed: boolean) => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) throw new Error("No access token found");
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
 
     try {
-        const response = await fetch(`${API_URL}/vaccine/${id}/confirm`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                isConfirmed,
-                vh_id: parseInt(id)
-            })
-        });
+      const response = await fetch(`${API_URL}/vaccine/${id}/confirm`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          isConfirmed,
+          vh_id: parseInt(id)
+        })
+      });
 
-        if (response.ok) {
-            return { success: true };
-        }
-        const errorData = await response.json();
-        if (errorData.message !== "Validation error") {
-            throw new Error(errorData.message || "Failed to confirm vaccine status");
-        }
+      if (response.ok) {
+        return { success: true };
+      }
+      const errorData = await response.json();
+      if (errorData.message !== 'Validation error') {
+        throw new Error(errorData.message || 'Failed to confirm vaccine status');
+      }
 
-        return { success: true }; 
+      return { success: true };
     } catch (error) {
-        console.error('Confirm vaccine error:', error);
-        throw error;
+      console.error('Confirm vaccine error:', error);
+      throw error;
     }
   },
 
   getAllVaccinesForChild: async (): Promise<VaccineTypeResponse[]> => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) throw new Error("No access token found");
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
 
     try {
       const response = await fetch(`${API_URL}/vaccine`, {
         headers: {
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`
         }
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch vaccines");
+        throw new Error('Failed to fetch vaccines');
       }
 
       const result = await response.json();
@@ -243,21 +241,21 @@ export const vaccineService = {
   },
 
   createVaccine: async (vaccineData: VaccineCreateRequest): Promise<any> => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) throw new Error("No access token found");
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
 
     try {
       const response = await fetch(`${API_URL}/vaccine`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(vaccineData)
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create vaccine");
+        throw new Error('Failed to create vaccine');
       }
 
       return response.json();
@@ -268,17 +266,17 @@ export const vaccineService = {
   },
 
   updateVaccineStatus: async (data: UpdateVaccineStatusRequest): Promise<any> => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) throw new Error("No access token found");
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
 
     try {
       console.log('Service - Request Body:', data);
 
       const response = await fetch(`${API_URL}/vaccine/vaccine-history/status`, {
-        method: "PUT",
+        method: 'PUT',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(data)
       });
@@ -287,7 +285,7 @@ export const vaccineService = {
       console.log('Service - Response:', responseData);
 
       if (!response.ok) {
-        throw new Error(responseData.message || "Failed to update vaccine status");
+        throw new Error(responseData.message || 'Failed to update vaccine status');
       }
 
       return responseData;
@@ -295,6 +293,5 @@ export const vaccineService = {
       console.error('Service - Error Details:', error);
       throw error;
     }
-  },
+  }
 };
- 

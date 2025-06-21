@@ -14,7 +14,7 @@ interface MedicalEventApi {
   Medical_record: {
     ID: number;
     userId: number;
-    class: string;
+    Class: string;
     historyHealth: string;
   };
   UserFullname?: string;
@@ -33,10 +33,10 @@ const API_URL = 'http://localhost:3333/api/v1';
 export const medicalEventService = {
   // Get all medical events
   getAllMedicalEvents: async (): Promise<MedicalEventApi[]> => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/other-medical`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
     const data = await response.json();
@@ -45,10 +45,10 @@ export const medicalEventService = {
 
   // Get medical event by ID
   getMedicalEventById: async (id: string): Promise<MedicalEventApi> => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/other-medical/${id}`, {
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
     const data = await response.json();
@@ -57,7 +57,7 @@ export const medicalEventService = {
 
   // Create medical event
   createMedicalEvent: async (formData: CreateMedicalEventData): Promise<any> => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken');
     const submitData = new FormData();
     submitData.append('MR_ID', formData.MR_ID);
     submitData.append('Decription', formData.Decription);
@@ -70,7 +70,7 @@ export const medicalEventService = {
     const response = await fetch(`${API_URL}/other-medical`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       },
       body: submitData
     });
@@ -79,7 +79,7 @@ export const medicalEventService = {
 
   // Update medical event
   updateMedicalEvent: async (id: string, formData: CreateMedicalEventData): Promise<any> => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken');
     const form = new FormData();
     form.append('MR_ID', formData.MR_ID);
     form.append('Decription', formData.Decription);
@@ -92,7 +92,7 @@ export const medicalEventService = {
     const response = await fetch(`${API_URL}/other-medical/${id}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       },
       body: form
     });
@@ -101,13 +101,13 @@ export const medicalEventService = {
 
   // Delete medical event
   deleteMedicalEvent: async (id: number): Promise<any> => {
-    const token = localStorage.getItem("accessToken");
+    const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/other-medical/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       }
     });
     return response.json();
   }
-}; 
+};

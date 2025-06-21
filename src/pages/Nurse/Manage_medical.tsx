@@ -126,7 +126,7 @@ const MedicineManagement: React.FC = () => {
     {
       title: 'Lớp',
       dataIndex: 'Class',
-      key: 'class',
+      key: 'Class',
     },
     {
       title: 'SĐT Phụ huynh',

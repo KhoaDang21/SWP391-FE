@@ -39,7 +39,7 @@ import {
     deleteMedicalSent,
     MedicalSent
 } from '../../services/MedicalSentService';
-import { getStudentsByGuardianUserId } from '../../services/AccountService';
+import { getMedicalRecordsByGuardian } from '../../services/MedicalRecordService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -78,15 +78,13 @@ const SendMedication: React.FC = () => {
         if (!userId || !token) return;
         setFetching(true);
         try {
-            const [studentRes, medicalSentsData] = await Promise.all([
-                getStudentsByGuardianUserId(userId, token),
-                getMedicalSentsByGuardian(token)
-            ]);
+            const medicalRecords = await getMedicalRecordsByGuardian(token);
+            const medicalSentsData = await getMedicalSentsByGuardian(token);
 
-            const fetchedStudents = studentRes.students.map((s: any) => ({
-                id: s.id,
+            const fetchedStudents = medicalRecords.map((s: any) => ({
+                id: s.userId,
                 name: s.fullname,
-                className: s.className || '',
+                className: s.Class || '',
                 phone: s.phoneNumber || ''
             }));
             setStudents(fetchedStudents);
@@ -170,10 +168,9 @@ const SendMedication: React.FC = () => {
             const deliveryTime = `${dayjs().format('YYYY-MM-DD')} - ${values.deliveryTimeNote}`;
 
             if (isCreate) {
-                // CREATE uses camelCase
                 formData.append('userId', String(student.id));
                 formData.append('guardianPhone', student.phone);
-                formData.append('class', student.className);
+                formData.append('Class', student.className || '');
                 if (fileObj) formData.append('prescriptionImage', fileObj);
                 formData.append('medications', values.medications);
                 formData.append('deliveryTime', deliveryTime);
@@ -183,19 +180,19 @@ const SendMedication: React.FC = () => {
                 await createMedicalSent(formData, token);
                 message.success('Tạo đơn gửi thuốc thành công!');
             } else if (modalState.record) {
-                formData.append('User_ID', String(student.id));
-                formData.append('Guardian_phone', student.phone);
-                formData.append('Class', student.className);
+                formData.append('userId', String(student.id));
+                formData.append('guardianPhone', student.phone);
+                formData.append('Class', student.className || modalState.record.Class || '');
                 if (fileObj) {
                     formData.append('prescriptionImage', fileObj);
                 }
-                formData.append('Medications', values.medications);
-                formData.append('Delivery_time', deliveryTime);
-                formData.append('Status', modalState.record.Status);
+                formData.append('medications', values.medications);
+                formData.append('deliveryTime', deliveryTime);
+                formData.append('status', modalState.record.Status);
                 if (values.notes) {
-                    formData.append('Notes', values.notes);
+                    formData.append('notes', values.notes);
                 } else {
-                    formData.append('Notes', '');
+                    formData.append('notes', '');
                 }
                 await updateMedicalSent(modalState.record.id, formData, token);
                 message.success('Cập nhật đơn thuốc thành công!');
@@ -241,7 +238,8 @@ const SendMedication: React.FC = () => {
 
     const columns: ColumnsType<MedicalSent> = [
         { title: 'STT', key: 'stt', render: (_, __, index) => index + 1 },
-        { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt', render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm') },
+        { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt_date', render: (date: string) => dayjs(date).format('DD/MM/YYYY') },
+        { title: 'Thời gian tạo', dataIndex: 'createdAt', key: 'createdAt_time', render: (date: string) => dayjs(date).format('HH:mm') },
         { title: 'Học sinh', dataIndex: 'User_ID', key: 'User_ID', render: (userId: number) => studentInfoMap.get(userId)?.name || 'Không rõ' },
         { title: 'Lớp', dataIndex: 'User_ID', key: 'Class', render: (userId: number, record) => record.Class || studentInfoMap.get(userId)?.className || '' },
         { title: 'Thời gian uống thuốc', dataIndex: 'Delivery_time', key: 'Delivery_time', render: (time: string) => time ? time.split(' - ')[1] || time : '' },
@@ -303,12 +301,6 @@ const SendMedication: React.FC = () => {
                         </Select>
                     </Form.Item>
 
-                    {displayClassName &&
-                        <Form.Item label="Lớp">
-                            <Text>{displayClassName}</Text>
-                        </Form.Item>
-                    }
-
                     <Form.Item name="medications" label="Tên và liều lượng thuốc" rules={[{ required: true, message: 'Vui lòng nhập thông tin thuốc!' }]}>
                         <TextArea rows={3} placeholder="Ví dụ: Paracetamol 500mg, 1 viên" />
                     </Form.Item>
@@ -343,7 +335,7 @@ const SendMedication: React.FC = () => {
                 {selectedRecord && (
                     <Space direction="vertical" style={{ width: '100%' }}>
                         <Text><strong>Học sinh:</strong> {studentInfoMap.get(selectedRecord.User_ID)?.name || 'Không rõ'}</Text>
-                        <Text><strong>Lớp:</strong> {selectedRecord.Class}</Text>
+                        <Text><strong>Lớp:</strong> {selectedRecord.Class || studentInfoMap.get(selectedRecord.User_ID)?.className || ''}</Text>
                         <Text><strong>Thời gian uống:</strong> {selectedRecord.Delivery_time.split(' - ')[1]}</Text>
                         <Text><strong>Tình trạng:</strong> <Tag color={statusConfig[selectedRecord.Status]?.color}>{statusConfig[selectedRecord.Status]?.text}</Tag></Text>
                         <Divider style={{ margin: '12px 0' }} />
