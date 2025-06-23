@@ -208,11 +208,11 @@ const Children = () => {
 
             console.log('Payload gửi BE:', newChild);
 
-            // if (editingChild) {
-            //     await updateMedicalRecord(editingChild.MR_ID!, newChild, token);
-            // } else {
-            await createStudentWithMedicalRecord(newChild, token);
-            // }
+            if (editingChild) {
+                await updateMedicalRecord(editingChild.ID!, newChild, token);
+            } else {
+                await createStudentWithMedicalRecord(newChild, token);
+            }
 
             const updatedRecords = await getMedicalRecordsByGuardian(token);
             setChildren(updatedRecords);
@@ -228,18 +228,28 @@ const Children = () => {
     };
 
 
-    const deleteChild = async (id: number) => {
+    const deleteChild = (id: number) => {
         const token = localStorage.getItem('accessToken');
         if (!token) return;
 
-        try {
-            await deleteMedicalRecord(id, token);
-            const updatedRecords = await getMedicalRecordsByGuardian(token);
-            setChildren(updatedRecords);
-        } catch (error) {
-            console.error('Lỗi khi xóa hồ sơ y tế:', error);
-        }
+        Modal.confirm({
+            title: 'Xác nhận xóa',
+            content: 'Bạn có chắc chắn muốn xóa hồ sơ y tế của học sinh này không?',
+            okText: 'Xóa',
+            cancelText: 'Hủy',
+            okType: 'danger',
+            onOk: async () => {
+                try {
+                    await deleteMedicalRecord(id, token);
+                    const updatedRecords = await getMedicalRecordsByGuardian(token);
+                    setChildren(updatedRecords);
+                } catch (error) {
+                    console.error('Lỗi khi xóa hồ sơ y tế:', error);
+                }
+            }
+        });
     };
+
 
 
     const calculateAge = (dateOfBirth: string) => {

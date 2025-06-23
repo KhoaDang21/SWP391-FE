@@ -40,6 +40,7 @@ export interface GuardianVaccineHistory {
   user: {
     id: number;
     fullname: string;
+    dateOfBirth: string;
   };
   vaccineHistory: {
     VH_ID: number;
@@ -148,7 +149,7 @@ export const vaccineService = {
       throw new Error("Failed to fetch vaccine types");
     }
     const data = await response.json();
-    return data.data; 
+    return data.data;
   },
 
   getVaccineByName: async (vaccineName: string): Promise<VaccinePayload[]> => {
@@ -168,13 +169,13 @@ export const vaccineService = {
   getVaccinesByGuardian: async (): Promise<GuardianVaccineResponse> => {
     const token = localStorage.getItem("accessToken");
     if (!token) throw new Error("No access token found");
-    
+
     const decodedToken = decodeToken(token);
     if (!decodedToken?.id) {
       console.error('Token payload:', decodedToken);
       throw new Error("Could not extract user ID from token");
     }
-    
+
     const response = await fetch(`${API_URL}/vaccine/guardian/${decodedToken.id}`, {
       headers: {
         "Authorization": `Bearer ${token}`
@@ -192,30 +193,30 @@ export const vaccineService = {
     if (!token) throw new Error("No access token found");
 
     try {
-        const response = await fetch(`${API_URL}/vaccine/${id}/confirm`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                isConfirmed,
-                vh_id: parseInt(id)
-            })
-        });
+      const response = await fetch(`${API_URL}/vaccine/${id}/confirm`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          isConfirmed,
+          vh_id: parseInt(id)
+        })
+      });
 
-        if (response.ok) {
-            return { success: true };
-        }
-        const errorData = await response.json();
-        if (errorData.message !== "Validation error") {
-            throw new Error(errorData.message || "Failed to confirm vaccine status");
-        }
+      if (response.ok) {
+        return { success: true };
+      }
+      const errorData = await response.json();
+      if (errorData.message !== "Validation error") {
+        throw new Error(errorData.message || "Failed to confirm vaccine status");
+      }
 
-        return { success: true }; 
+      return { success: true };
     } catch (error) {
-        console.error('Confirm vaccine error:', error);
-        throw error;
+      console.error('Confirm vaccine error:', error);
+      throw error;
     }
   },
 
@@ -297,4 +298,4 @@ export const vaccineService = {
     }
   },
 };
- 
+

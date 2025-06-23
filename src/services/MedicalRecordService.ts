@@ -113,10 +113,10 @@ export async function createMedicalRecord(
 
 export async function updateMedicalRecord(
     id: number,
-    record: Partial<MedicalRecord>,
+    record: CreateStudentMedicalPayload,
     token: string
 ): Promise<MedicalRecord> {
-    const res = await fetch(`${API_URL}/${id}`, {
+    const res = await fetch(`${API_URL}/student/${id}`, {
         method: 'PUT',
         headers: {
             Authorization: `Bearer ${token}`,
