@@ -60,7 +60,6 @@ const SendMedication: React.FC = () => {
     const [deliveries, setDeliveries] = useState<MedicalSent[]>([]);
     const [students, setStudents] = useState<{ id: number; name: string; className: string; phone: string }[]>([]);
     const [fetching, setFetching] = useState(false);
-    const [displayClassName, setDisplayClassName] = useState('');
 
     const studentInfoMap = useMemo(() => {
         const map = new Map<number, { name: string; className: string }>();
@@ -103,15 +102,6 @@ const SendMedication: React.FC = () => {
         loadData();
     }, [userId, token]);
 
-    const handleStudentChange = (studentId: number) => {
-        const student = students.find((s) => s.id === studentId);
-        if (student) {
-            setDisplayClassName(student.className);
-        } else {
-            setDisplayClassName('');
-        }
-    };
-
     const showModal = (mode: 'create' | 'edit', record: MedicalSent | null = null) => {
         setModalState({ open: true, mode, record });
         if (mode === 'edit' && record) {
@@ -135,16 +125,13 @@ const SendMedication: React.FC = () => {
             }
 
             form.setFieldsValue(initialValues);
-            setDisplayClassName(record.Class);
         } else {
             form.resetFields();
-            setDisplayClassName('');
         }
     };
 
     const handleModalCancel = () => {
         setModalState({ open: false, mode: 'create', record: null });
-        setDisplayClassName('');
     };
 
     const handleFormSubmit = async (values: any) => {
@@ -239,7 +226,6 @@ const SendMedication: React.FC = () => {
     const columns: ColumnsType<MedicalSent> = [
         { title: 'STT', key: 'stt', render: (_, __, index) => index + 1 },
         { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt_date', render: (date: string) => dayjs(date).format('DD/MM/YYYY') },
-        { title: 'Thời gian tạo', dataIndex: 'createdAt', key: 'createdAt_time', render: (date: string) => dayjs(date).format('HH:mm') },
         { title: 'Học sinh', dataIndex: 'User_ID', key: 'User_ID', render: (userId: number) => studentInfoMap.get(userId)?.name || 'Không rõ' },
         { title: 'Lớp', dataIndex: 'User_ID', key: 'Class', render: (userId: number, record) => record.Class || studentInfoMap.get(userId)?.className || '' },
         { title: 'Thời gian uống thuốc', dataIndex: 'Delivery_time', key: 'Delivery_time', render: (time: string) => time ? time.split(' - ')[1] || time : '' },
@@ -295,7 +281,9 @@ const SendMedication: React.FC = () => {
                             loading={fetching}
                             placeholder="Chọn học sinh của bạn"
                             disabled={modalState.mode === 'edit'}
-                            onChange={handleStudentChange}
+                            onChange={() => {
+                                // Handle student change nếu cần
+                            }}
                         >
                             {students.map((s) => (<Select.Option key={s.id} value={s.id}>{s.name}</Select.Option>))}
                         </Select>

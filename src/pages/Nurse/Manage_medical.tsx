@@ -11,6 +11,8 @@ import {
 import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message } from 'antd';
 import dayjs from 'dayjs';
 import { DownOutlined } from '@ant-design/icons';
+import { getAllMedicalRecords, MedicalRecord } from '../../services/MedicalRecordService';
+import { getAllGuardians, Guardian } from '../../services/AccountService';
 
 const statusColor: Record<string, string> = {
   pending: 'orange',
@@ -29,30 +31,59 @@ const statusText: Record<string, string> = {
 const MedicineManagement: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [medicineRecords, setMedicineRecords] = useState<MedicalSent[]>([]);
+  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
+  const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [loading, setLoading] = useState(false);
   const [detailModal, setDetailModal] = useState<{ open: boolean; record: MedicalSent | null }>({ open: false, record: null });
   const token = localStorage.getItem('accessToken') || '';
 
-  const fetchAllMedicalSents = async () => {
-    setLoading(true);
-    try {
-      const data = await getAllMedicalSents(token);
-      setMedicineRecords(data);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Lỗi lấy danh sách đơn thuốc:', err);
-      message.error('Không thể tải danh sách đơn thuốc.');
-    } finally {
-      setLoading(false);
-    }
+  const medicalRecordMap = React.useMemo(() => {
+    const map: Record<number, MedicalRecord> = {};
+    medicalRecords.forEach((rec) => {
+      map[rec.userId] = rec;
+    });
+    return map;
+  }, [medicalRecords]);
+
+  const guardianMap = React.useMemo(() => {
+    const map: Record<string, Guardian> = {};
+    guardians.forEach((g) => {
+      map[g.phoneNumber] = g;
+    });
+    return map;
+  }, [guardians]);
+
+  const normalizePhone = (phone?: string) => {
+    if (!phone) return '';
+    let p = phone.replace(/\D/g, '');
+    if (p.startsWith('84')) p = '0' + p.slice(2);
+    if (p.length === 9) p = '0' + p;
+    return p;
   };
 
-  // Fetch all medical sent records
   useEffect(() => {
-    fetchAllMedicalSents();
+    const fetchAll = async () => {
+      setLoading(true);
+      try {
+        const [medicalSents, medicalRecordsRes, guardiansRes] = await Promise.all([
+          getAllMedicalSents(token),
+          getAllMedicalRecords(token),
+          getAllGuardians(token),
+        ]);
+        const sorted = medicalSents.sort((a, b) => dayjs(b.createdAt).unix() - dayjs(a.createdAt).unix());
+        setMedicineRecords(sorted);
+        setMedicalRecords(medicalRecordsRes);
+        setGuardians(guardiansRes);
+      } catch (err) {
+        console.error('Lỗi lấy dữ liệu:', err);
+        message.error('Không thể tải dữ liệu.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
   }, [token]);
 
-  // Lọc theo ngày gửi
   const filteredRecords = selectedDate
     ? medicineRecords.filter(record => {
       const recordDate = dayjs(record.createdAt).toDate();
@@ -62,14 +93,12 @@ const MedicineManagement: React.FC = () => {
     })
     : medicineRecords;
 
-  // Xem chi tiết
   const handleViewDetail = async (record: MedicalSent) => {
     setLoading(true);
     try {
       const detail = await getMedicalSentById(record.id, token);
       setDetailModal({ open: true, record: detail });
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Lỗi lấy chi tiết đơn thuốc:', err);
       message.error('Lỗi khi tải chi tiết đơn thuốc.');
     } finally {
@@ -91,7 +120,6 @@ const MedicineManagement: React.FC = () => {
 
       await updateMedicalSent(record.id, formData, token);
 
-      // Cập nhật lại state để UI hiển thị đúng
       setMedicineRecords((prevRecords) =>
         prevRecords.map((rec) => (rec.id === record.id ? { ...rec, Status: newStatus } : rec))
       );
@@ -99,7 +127,6 @@ const MedicineManagement: React.FC = () => {
       message.success('Cập nhật trạng thái thành công!');
     } catch (error) {
       message.error('Cập nhật trạng thái thất bại.');
-      // eslint-disable-next-line no-console
       console.error('Lỗi cập nhật trạng thái:', error);
     }
   };
@@ -112,38 +139,54 @@ const MedicineManagement: React.FC = () => {
       width: 60,
     },
     {
-      title: 'Thời gian gửi',
+      title: 'Ngày gửi',
       dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (createdAt: string) => dayjs(createdAt).format('HH:mm DD/MM/YYYY'),
-      sorter: (a: MedicalSent, b: MedicalSent) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
+      key: 'ngaygui',
+      render: (createdAt: string) => dayjs(createdAt).format('DD/MM/YYYY'),
     },
     {
       title: 'Tên học sinh',
-      dataIndex: ['User', 'Full_name'],
+      dataIndex: 'patientName',
       key: 'patientName',
+      render: (_: any, record: MedicalSent) => medicalRecordMap[record.User_ID]?.fullname || '',
     },
     {
       title: 'Lớp',
       dataIndex: 'Class',
       key: 'Class',
+      render: (_: any, record: MedicalSent) => medicalRecordMap[record.User_ID]?.Class || '',
     },
     {
       title: 'SĐT Phụ huynh',
       dataIndex: 'Guardian_phone',
-      key: 'patientPhone',
+      key: 'Guardian_phone',
+      render: (_: any, record: MedicalSent) => {
+        const phoneVariants = [
+          normalizePhone(record.Guardian_phone),
+          normalizePhone('0' + record.Guardian_phone),
+          normalizePhone(record.Guardian_phone?.replace(/^\+84/, '0')),
+        ];
+        let found = null;
+        for (const v of phoneVariants) {
+          if (guardianMap[v]) {
+            found = guardianMap[v].phoneNumber;
+            break;
+          }
+        }
+        return found || record.Guardian_phone || 'Không có';
+      },
     },
     {
       title: 'Thời gian uống thuốc',
       dataIndex: 'Delivery_time',
-      key: 'deliveryTime',
-      render: (time: string) => dayjs(time).format('HH:mm'),
+      key: 'Delivery_time',
+      render: (time: string) => time ? (time.split(' - ')[1] || time) : '',
     },
     {
       title: 'Trạng thái',
       dataIndex: 'Status',
-      key: 'status',
-      render: (status: MedicalSentStatus, record: MedicalSent) => {
+      key: 'Status',
+      render: (status: string, record: MedicalSent) => {
         const menu = (
           <Menu
             onClick={({ key }) => handleStatusChange(record, key as MedicalSentStatus)}
@@ -213,9 +256,9 @@ const MedicineManagement: React.FC = () => {
         {detailModal.record && (
           <div>
             <div style={{ marginBottom: 16 }}>
-              <strong>Tên học sinh:</strong> {detailModal.record.User?.Full_name}<br />
-              <strong>SĐT:</strong> {detailModal.record.Guardian_phone}<br />
-              <strong>Lớp:</strong> {detailModal.record.Class}<br />
+              <strong>Tên học sinh:</strong> {medicalRecordMap[detailModal.record.User_ID]?.fullname || ''}<br />
+              <strong>SĐT:</strong> {guardianMap[detailModal.record.Guardian_phone]?.phoneNumber || detailModal.record.Guardian_phone || ''}<br />
+              <strong>Lớp:</strong> {medicalRecordMap[detailModal.record.User_ID]?.Class || ''}<br />
               <strong>Thời gian uống thuốc:</strong> {dayjs(detailModal.record.Delivery_time).format('HH:mm')}<br />
               <strong>Trạng thái:</strong> <Tag color={statusColor[detailModal.record.Status]}>{statusText[detailModal.record.Status]}</Tag><br />
               <strong>Thời gian tạo:</strong> {dayjs(detailModal.record.createdAt).format('HH:mm DD/MM/YYYY')}<br />
