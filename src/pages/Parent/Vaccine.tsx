@@ -139,12 +139,13 @@ const Vaccine: React.FC = () => {
                 // Check URL parameter first
                 const shouldOpenModal = searchParams.get('openModal') === 'true';
 
+
                 const response = await vaccineService.getVaccinesByGuardian();
                 const transformedStudents = response.histories.map(history => ({
                     id: history.medicalRecord.ID.toString(),
                     name: history.user.fullname,
                     dateOfBirth: history.user.dateOfBirth,
-                    class: history.medicalRecord.class,
+                    class: history.medicalRecord.Class,
                     studentCode: history.medicalRecord.ID.toString(),
                     totalVaccinated: history.vaccineHistory.filter(v => v.Status === 'Đã tiêm').length,
                     totalNeedConfirm: history.vaccineHistory.filter(v => v.Status === 'Chờ xác nhận').length,

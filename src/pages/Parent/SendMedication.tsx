@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement, useEffect, useMemo, useState } from 'react';
 import {
     Button,
     Table,
@@ -9,8 +9,6 @@ import {
     Space,
     Card,
     Tag,
-    DatePicker,
-    TimePicker,
     Row,
     Col,
     Typography,
@@ -18,426 +16,330 @@ import {
     message,
     Image,
     Tooltip,
-    Select
+    Select,
+    Popconfirm
 } from 'antd';
 import {
     PlusOutlined,
     EyeOutlined,
-    UploadOutlined,
-    FileTextOutlined,
-    ClockCircleOutlined,
+    EditOutlined,
+    DeleteOutlined,
+    ExclamationCircleOutlined,
     CheckCircleOutlined,
     SyncOutlined,
-    ExclamationCircleOutlined
+    FileTextOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { UploadProps } from 'antd';
 import dayjs from 'dayjs';
+import {
+    getMedicalSentsByGuardian,
+    createMedicalSent,
+    updateMedicalSent,
+    deleteMedicalSent,
+    MedicalSent
+} from '../../services/MedicalSentService';
+import { getMedicalRecordsByGuardian } from '../../services/MedicalRecordService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
-const { Option } = Select;
 
-// Interface cho dữ liệu gửi thuốc
-interface MedicationDelivery {
-    id: string;
-    patientName: string;
-    patientPhone: string;
-    class: string;
-    prescriptionImage: string;
-    medications: string;
-    deliveryTime: string;
-    status: 'pending' | 'processing' | 'delivered' | 'cancelled';
-    createdAt: string;
-    notes?: string;
-    deliveryFee: number;
-}
-
-type StatusType = 'pending' | 'processing' | 'delivered' | 'cancelled';
-
-const statusConfig: Record<StatusType, {
-    color: string;
-    icon: ReactElement;
-    text: string;
-}> = {
+const statusConfig: Record<string, { color: string; icon: ReactElement; text: string }> = {
     pending: { color: 'orange', icon: <ExclamationCircleOutlined />, text: 'Chờ xử lý' },
-    processing: { color: 'blue', icon: <SyncOutlined />, text: 'Đang giao' },
+    processing: { color: 'blue', icon: <SyncOutlined />, text: 'Đang xử lý' },
     delivered: { color: 'green', icon: <CheckCircleOutlined />, text: 'Đã giao' },
     cancelled: { color: 'red', icon: <ExclamationCircleOutlined />, text: 'Đã hủy' }
 };
 
-const students = [
-    { id: '1', name: 'Nguyễn Văn A', className: '4A3', phone: '0901234567' },
-    { id: '2', name: 'Trần Thị B', className: '2A5', phone: '0907654321' },
-];
-
-
 const SendMedication: React.FC = () => {
-    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [modalState, setModalState] = useState<{ open: boolean; mode: 'create' | 'edit'; record: MedicalSent | null }>({ open: false, mode: 'create', record: null });
     const [viewModalVisible, setViewModalVisible] = useState(false);
-    const [selectedRecord, setSelectedRecord] = useState<MedicationDelivery | null>(null);
+    const [selectedRecord, setSelectedRecord] = useState<MedicalSent | null>(null);
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [deliveries, setDeliveries] = useState<MedicalSent[]>([]);
+    const [students, setStudents] = useState<{ id: number; name: string; className: string; phone: string }[]>([]);
+    const [fetching, setFetching] = useState(false);
 
-    // Mock data - trong thực tế sẽ lấy từ API
-    const [deliveries, setDeliveries] = useState<MedicationDelivery[]>([
-        {
-            id: '1',
-            patientName: 'Nguyễn Văn A',
-            patientPhone: '0901234567',
-            class: '4A3',
-            prescriptionImage: 'https://via.placeholder.com/400x300',
-            medications: 'Paracetamol 500mg x2 viên, Amoxicillin 250mg x3 viên',
-            deliveryTime: '14:30',
-            status: 'delivered',
-            createdAt: dayjs().format('DD/MM/YYYY HH:mm'),
-            notes: 'Giao hàng thành công',
-            deliveryFee: 25000
-        },
-        {
-            id: '2',
-            patientName: 'Trần Thị B',
-            patientPhone: '0907654321',
-            class: '2A5',
-            prescriptionImage: 'https://via.placeholder.com/400x300',
-            medications: 'Vitamin C x1 lọ, Cảm cúm 999 x2 gói',
-            deliveryTime: '16:00',
-            status: 'processing',
-            createdAt: dayjs().subtract(1, 'hour').format('DD/MM/YYYY HH:mm'),
-            deliveryFee: 30000
+    const studentInfoMap = useMemo(() => {
+        const map = new Map<number, { name: string; className: string }>();
+        students.forEach((s) => {
+            map.set(s.id, { name: s.name, className: s.className });
+        });
+        return map;
+    }, [students]);
+
+    const token = localStorage.getItem('accessToken') || '';
+    const userStr = localStorage.getItem('user');
+    const userId = userStr ? JSON.parse(userStr).id : null;
+
+    const loadData = async () => {
+        if (!userId || !token) return;
+        setFetching(true);
+        try {
+            const medicalRecords = await getMedicalRecordsByGuardian(token);
+            const medicalSentsData = await getMedicalSentsByGuardian(token);
+
+            const fetchedStudents = medicalRecords.map((s: any) => ({
+                id: s.userId,
+                name: s.fullname,
+                className: s.Class || '',
+                phone: s.phoneNumber || ''
+            }));
+            setStudents(fetchedStudents);
+
+            const sortedData = medicalSentsData.sort((a, b) => dayjs(b.createdAt).unix() - dayjs(a.createdAt).unix());
+            setDeliveries(sortedData);
+        } catch (err) {
+            console.error('Failed to load data:', err);
+            message.error('Lỗi khi tải dữ liệu.');
+        } finally {
+            setFetching(false);
         }
-    ]);
-
-    // Cấu hình upload
-    const uploadProps: UploadProps = {
-        name: 'prescription',
-        listType: 'picture-card',
-        maxCount: 1,
-        beforeUpload: (file) => {
-            const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-            if (!isJpgOrPng) {
-                message.error('Chỉ có thể upload file JPG/PNG!');
-            }
-            const isLt2M = file.size / 1024 / 1024 < 2;
-            if (!isLt2M) {
-                message.error('Hình ảnh phải nhỏ hơn 2MB!');
-            }
-            return false; // Prevent auto upload
-        },
     };
 
-    // Xử lý tạo đơn thuốc mới
-    const handleCreateDelivery = async (values: any) => {
-        setLoading(true);
-        try {
-            const newDelivery: MedicationDelivery = {
-                id: Date.now().toString(),
-                patientName: values.patientName,
-                patientPhone: values.patientPhone,
-                class: values.patientAddress,
-                prescriptionImage: 'https://via.placeholder.com/400x300', // Mock URL
-                medications: values.medications,
-                deliveryTime: values.deliveryTime.format('HH:mm'),
-                status: 'pending',
-                createdAt: dayjs().format('DD/MM/YYYY HH:mm'),
-                notes: values.notes,
-                deliveryFee: values.deliveryFee
+    useEffect(() => {
+        loadData();
+    }, [userId, token]);
+
+    const showModal = (mode: 'create' | 'edit', record: MedicalSent | null = null) => {
+        setModalState({ open: true, mode, record });
+        if (mode === 'edit' && record) {
+            const timeNote = record.Delivery_time.split(' - ')[1];
+            const initialValues: any = {
+                studentId: record.User_ID,
+                medications: record.Medications,
+                deliveryTimeNote: timeNote,
+                notes: record.Notes
             };
 
-            setDeliveries([newDelivery, ...deliveries]);
-            message.success('Tạo đơn gửi thuốc thành công!');
-            setIsModalVisible(false);
+            if (record.Image_prescription) {
+                initialValues.prescriptionImage = [
+                    {
+                        uid: '-1',
+                        name: 'image.png',
+                        status: 'done',
+                        url: record.Image_prescription
+                    }
+                ];
+            }
+
+            form.setFieldsValue(initialValues);
+        } else {
             form.resetFields();
-        } catch (error) {
-            message.error('Có lỗi xảy ra, vui lòng thử lại!');
+        }
+    };
+
+    const handleModalCancel = () => {
+        setModalState({ open: false, mode: 'create', record: null });
+    };
+
+    const handleFormSubmit = async (values: any) => {
+        setLoading(true);
+        try {
+            const isCreate = modalState.mode === 'create';
+            let student;
+
+            if (isCreate) {
+                student = students.find((s) => s.id === values.studentId);
+            } else if (modalState.record) {
+                student = students.find((s) => s.id === modalState.record!.User_ID);
+            }
+
+            if (!student) throw new Error('Không tìm thấy thông tin học sinh. Vui lòng thử lại.');
+
+            const file = values.prescriptionImage?.[0];
+            const fileObj = file?.originFileObj;
+
+            const formData = new FormData();
+            const deliveryTime = `${dayjs().format('YYYY-MM-DD')} - ${values.deliveryTimeNote}`;
+
+            if (isCreate) {
+                formData.append('userId', String(student.id));
+                formData.append('guardianPhone', student.phone);
+                formData.append('Class', student.className || '');
+                if (fileObj) formData.append('prescriptionImage', fileObj);
+                formData.append('medications', values.medications);
+                formData.append('deliveryTime', deliveryTime);
+                formData.append('status', 'pending');
+                if (values.notes) formData.append('notes', values.notes);
+
+                await createMedicalSent(formData, token);
+                message.success('Tạo đơn gửi thuốc thành công!');
+            } else if (modalState.record) {
+                formData.append('userId', String(student.id));
+                formData.append('guardianPhone', student.phone);
+                formData.append('Class', student.className || modalState.record.Class || '');
+                if (fileObj) {
+                    formData.append('prescriptionImage', fileObj);
+                }
+                formData.append('medications', values.medications);
+                formData.append('deliveryTime', deliveryTime);
+                formData.append('status', modalState.record.Status);
+                if (values.notes) {
+                    formData.append('notes', values.notes);
+                } else {
+                    formData.append('notes', '');
+                }
+                await updateMedicalSent(modalState.record.id, formData, token);
+                message.success('Cập nhật đơn thuốc thành công!');
+            }
+
+            handleModalCancel();
+            await loadData();
+        } catch (error: any) {
+            message.error(error.message || 'Có lỗi xảy ra, vui lòng thử lại!');
         } finally {
             setLoading(false);
         }
     };
 
-    // Xem chi tiết đơn thuốc
-    const handleViewDelivery = (record: MedicationDelivery) => {
+    const handleConfirmDelete = async (recordId: number) => {
+        try {
+            await deleteMedicalSent(recordId, token);
+            message.success('Xóa đơn thuốc thành công!');
+            await loadData();
+        } catch (error) {
+            message.error('Lỗi khi xóa đơn thuốc.');
+        }
+    };
+
+    const handleViewDelivery = (record: MedicalSent) => {
         setSelectedRecord(record);
         setViewModalVisible(true);
     };
 
-    // Cấu hình cột bảng
-    const columns: ColumnsType<MedicationDelivery> = [
-        {
-            title: 'Mã đơn',
-            dataIndex: 'id',
-            key: 'id',
-            // width: 80,
-            render: (id) => <Text code>#{id}</Text>
+    const uploadProps: UploadProps = {
+        name: 'prescriptionImage', listType: 'picture-card', maxCount: 1,
+        beforeUpload: file => {
+            const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+            if (!isJpgOrPng) message.error('Chỉ có thể upload file JPG/PNG!');
+            const isLt2M = file.size / 1024 / 1024 < 2;
+            if (!isLt2M) message.error('Hình ảnh phải nhỏ hơn 2MB!');
+            return isJpgOrPng && isLt2M ? true : Upload.LIST_IGNORE;
         },
+        customRequest: ({ onSuccess }) => setTimeout(() => onSuccess && onSuccess('ok'), 0)
+    };
+
+    const timeOptions = ['Trước ăn sáng', 'Sau ăn sáng', 'Trước ăn trưa', 'Sau ăn trưa', 'Trước ăn chiều', 'Sau ăn chiều'];
+
+    const columns: ColumnsType<MedicalSent> = [
+        { title: 'STT', key: 'stt', render: (_, __, index) => index + 1 },
+        { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt_date', render: (date: string) => dayjs(date).format('DD/MM/YYYY') },
+        { title: 'Học sinh', dataIndex: 'User_ID', key: 'User_ID', render: (userId: number) => studentInfoMap.get(userId)?.name || 'Không rõ' },
+        { title: 'Lớp', dataIndex: 'User_ID', key: 'Class', render: (userId: number, record) => record.Class || studentInfoMap.get(userId)?.className || '' },
+        { title: 'Thời gian uống thuốc', dataIndex: 'Delivery_time', key: 'Delivery_time', render: (time: string) => time ? time.split(' - ')[1] || time : '' },
+        { title: 'Trạng thái', dataIndex: 'Status', key: 'Status', render: (status: string) => { const config = statusConfig[status] || statusConfig['pending']; return (<Tag color={config.color} icon={config.icon}>{config.text}</Tag>); } },
         {
-            title: 'Học sinh',
-            dataIndex: 'patientName',
-            key: 'patientName',
-            render: (name, record) => (
-                <div>
-                    <Text strong>{name}</Text>
-                    <br />
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                        {record.patientPhone}
-                    </Text>
-                </div>
-            )
-        },
-        {
-            title: 'Lớp',
-            dataIndex: 'class',
-            key: 'class',
-            ellipsis: true,
-            // width: 200
-        },
-        {
-            title: 'Số điện thoại phụ huynh',
-            dataIndex: 'patientPhone',
-            key: 'patientPhone',
-            // width: 120,
-        },
-        {
-            title: 'Thời gian uống thuốc',
-            dataIndex: 'deliveryTime',
-            key: 'deliveryTime',
-            // width: 120,
-            render: (time) => <Text>{dayjs(time, 'HH:mm').format('HH:mm')}</Text>
-        },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status: StatusType) => {
-                const config = statusConfig[status];
-                return (
-                    <Tag color={config.color} icon={config.icon}>
-                        {config.text}
-                    </Tag>
-                );
-            }
-        },
-        {
-            title: 'Thời gian tạo',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            // width: 130
-        },
-        {
-            title: 'Thao tác',
-            key: 'actions',
-            // width: 100,
-            render: (_, record) => (
-                <Tooltip title="Xem chi tiết">
-                    <Button
-                        type="primary"
-                        icon={<EyeOutlined />}
-                        size="small"
-                        onClick={() => handleViewDelivery(record)}
-                    />
-                </Tooltip>
+            title: 'Thao tác', key: 'action', render: (_, record) => (
+                <Space>
+                    <Tooltip title="Xem chi tiết"><Button type="text" icon={<EyeOutlined />} onClick={() => handleViewDelivery(record)} /></Tooltip>
+                    <Tooltip title="Sửa"><Button type="text" icon={<EditOutlined />} onClick={() => showModal('edit', record)} /></Tooltip>
+                    <Popconfirm
+                        title="Xác nhận xóa"
+                        description="Bạn chắc chắn muốn xóa đơn thuốc này?"
+                        onConfirm={() => handleConfirmDelete(record.id)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                        placement="topRight"
+                    >
+                        <Tooltip title="Xóa"><Button type="text" danger icon={<DeleteOutlined />} /></Tooltip>
+                    </Popconfirm>
+                </Space>
             )
         }
     ];
 
     return (
         <div style={{ padding: '24px' }}>
-            {/* Header */}
             <Card>
                 <Row justify="space-between" align="middle">
                     <Col>
-                        <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-                            <FileTextOutlined /> Quản lý gửi thuốc
-                        </Title>
-                        <Text type="secondary">
-                            Theo dõi các toa thuốc đã gửi và trạng thái đơn thuốc
-                        </Text>
+                        <Title level={2} style={{ margin: 0 }}><FileTextOutlined /> Quản lý gửi thuốc</Title>
+                        <Text type="secondary">Theo dõi các toa thuốc đã gửi và trạng thái của chúng.</Text>
                     </Col>
                     <Col>
-                        <Button
-                            type="primary"
-                            size="large"
-                            icon={<PlusOutlined />}
-                            onClick={() => setIsModalVisible(true)}
-                        >
-                            Tạo đơn gửi thuốc
-                        </Button>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal('create')}>Tạo đơn gửi thuốc</Button>
                     </Col>
                 </Row>
             </Card>
 
-            {/* Bảng danh sách */}
-            <Card>
-                <Table
-                    columns={columns}
-                    dataSource={deliveries}
-                    rowKey="id"
-                    pagination={{
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showQuickJumper: true,
-                        showTotal: (total) => `Tổng ${total} đơn`
-                    }}
-                />
+            <Card style={{ marginTop: 24 }}>
+                <Table columns={columns} dataSource={deliveries} rowKey="id" loading={fetching} pagination={{ position: ['bottomRight'] }} />
             </Card>
 
-            {/* Modal tạo đơn mới */}
             <Modal
-                title={
-                    <Space>
-                        <PlusOutlined />
-                        Tạo đơn gửi thuốc mới
-                    </Space>
-                }
-                open={isModalVisible}
-                onCancel={() => {
-                    setIsModalVisible(false);
-                    form.resetFields();
-                }}
+                title={modalState.mode === 'create' ? 'Tạo đơn gửi thuốc mới' : 'Cập nhật đơn thuốc'}
+                open={modalState.open}
+                onCancel={handleModalCancel}
                 footer={null}
-                width={800}
+                destroyOnHidden
             >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleCreateDelivery}
-                    initialValues={{
-                        deliveryTime: dayjs(),
-                        deliveryFee: 25000
-                    }}
-                >
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item label="Học sinh" name="studentId" rules={[{ required: true, message: 'Vui lòng chọn học sinh' }]}>
-                                <Select placeholder="Chọn học sinh">
-                                    {students.map((student) => (
-                                        <Select.Option key={student.id} value={student.id}>
-                                            {student.name} ({student.className})
-                                        </Select.Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                label="Số điện thoại phụ huynh"
-                                name="patientPhone"
-                                rules={[
-                                    { required: true, message: 'Vui lòng nhập số điện thoại!' },
-                                    { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ!' }
-                                ]}
-                            >
-                                <Input placeholder="Nhập số điện thoại" />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Form.Item
-                        label="Thời gian uống thuốc"
-                        name="deliveryTime"
-                        rules={[{ required: true, message: 'Vui lòng chọn thời gian!' }]}
-                    >
-                        <TimePicker
-                            format="HH:mm"
-                            placeholder="Chọn giờ uống"
-                            style={{ width: '100%' }}
-                        />
+                <Form form={form} layout="vertical" onFinish={handleFormSubmit} style={{ marginTop: 24 }}>
+                    <Form.Item name="studentId" label="Chọn học sinh" rules={[{ required: true, message: 'Vui lòng chọn học sinh!' }]}>
+                        <Select
+                            loading={fetching}
+                            placeholder="Chọn học sinh của bạn"
+                            disabled={modalState.mode === 'edit'}
+                            onChange={() => {
+                                // Handle student change nếu cần
+                            }}
+                        >
+                            {students.map((s) => (<Select.Option key={s.id} value={s.id}>{s.name}</Select.Option>))}
+                        </Select>
                     </Form.Item>
 
-                    <Form.Item
-                        label="Danh sách thuốc"
-                        name="medications"
-                        rules={[{ required: true, message: 'Vui lòng nhập danh sách thuốc!' }]}
-                    >
-                        <TextArea
-                            rows={3}
-                            placeholder="Nhập danh sách thuốc (VD: Paracetamol 500mg x2 viên, Amoxicillin 250mg x3 viên)"
-                        />
+                    <Form.Item name="medications" label="Tên và liều lượng thuốc" rules={[{ required: true, message: 'Vui lòng nhập thông tin thuốc!' }]}>
+                        <TextArea rows={3} placeholder="Ví dụ: Paracetamol 500mg, 1 viên" />
                     </Form.Item>
-
-                    <Form.Item
-                        label="Hình ảnh toa thuốc"
-                        name="prescriptionImage"
-                        rules={[{ required: true, message: 'Vui lòng upload hình ảnh toa thuốc!' }]}
-                    >
+                    <Form.Item name="deliveryTimeNote" label="Buổi uống" rules={[{ required: true, message: 'Vui lòng chọn buổi uống!' }]}>
+                        <Select placeholder="Chọn buổi">
+                            {timeOptions.map((time) => (<Select.Option key={time} value={time}>{time}</Select.Option>))}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item name="prescriptionImage" label="Hình ảnh toa thuốc (nếu có)" valuePropName="fileList" getValueFromEvent={(e) => (Array.isArray(e) ? e : e && e.fileList)}>
                         <Upload {...uploadProps}>
-                            <div>
-                                <UploadOutlined />
-                                <div style={{ marginTop: 8 }}>Upload toa thuốc</div>
-                            </div>
+                            <div><PlusOutlined /><div style={{ marginTop: 8 }}>Upload</div></div>
                         </Upload>
                     </Form.Item>
-
-                    <Form.Item
-                        label="Ghi chú"
-                        name="notes"
-                    >
-                        <TextArea rows={2} placeholder="Ghi chú thêm (tùy chọn)" />
-                    </Form.Item>
-
-                    <Divider />
-
+                    <Form.Item name="notes" label="Ghi chú thêm"><TextArea rows={2} placeholder="Dặn dò thêm cho y tá..." /></Form.Item>
                     <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
                         <Space>
-                            <Button onClick={() => setIsModalVisible(false)}>
-                                Hủy
-                            </Button>
+                            <Button onClick={handleModalCancel}>Hủy</Button>
                             <Button type="primary" htmlType="submit" loading={loading}>
-                                Tạo đơn gửi thuốc
+                                {modalState.mode === 'create' ? 'Gửi đơn' : 'Cập nhật'}
                             </Button>
                         </Space>
                     </Form.Item>
                 </Form>
             </Modal>
 
-            {/* Modal xem chi tiết */}
             <Modal
-                title={
-                    <Space>
-                        <EyeOutlined />
-                        Chi tiết đơn gửi thuốc #{selectedRecord?.id}
-                    </Space>
-                }
+                title={`Chi tiết đơn thuốc #${selectedRecord?.id}`}
                 open={viewModalVisible}
                 onCancel={() => setViewModalVisible(false)}
-                footer={
-                    <Button type="primary" onClick={() => setViewModalVisible(false)}>
-                        Đóng
-                    </Button>
-                }
-                width={700}
+                footer={[<Button key="back" onClick={() => setViewModalVisible(false)}>Đóng</Button>]}
             >
                 {selectedRecord && (
-                    <div>
-                        <Row gutter={16}>
-                            <Col span={24}>
-                                <Card size="small" title="Thông tin bệnh nhân">
-                                    <p><strong>Tên:</strong> {selectedRecord.patientName}</p>
-                                    <p><strong>SĐT:</strong> {selectedRecord.patientPhone}</p>
-                                    <p><strong>Lớp:</strong> {selectedRecord.class}</p>
-                                </Card>
-                            </Col>
-
-                        </Row>
-
-                        <Card size="small" title="Danh sách thuốc" style={{ marginTop: 16 }}>
-                            <Text>{selectedRecord.medications}</Text>
-                        </Card>
-
-                        <Card size="small" title="Hình ảnh toa thuốc" style={{ marginTop: 16 }}>
-                            <Image
-                                width={200}
-                                src={selectedRecord.prescriptionImage}
-                                alt="Toa thuốc"
-                            />
-                        </Card>
-
-                        {selectedRecord.notes && (
-                            <Card size="small" title="Ghi chú" style={{ marginTop: 16 }}>
-                                <Text>{selectedRecord.notes}</Text>
-                            </Card>
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                        <Text><strong>Học sinh:</strong> {studentInfoMap.get(selectedRecord.User_ID)?.name || 'Không rõ'}</Text>
+                        <Text><strong>Lớp:</strong> {selectedRecord.Class || studentInfoMap.get(selectedRecord.User_ID)?.className || ''}</Text>
+                        <Text><strong>Thời gian uống:</strong> {selectedRecord.Delivery_time.split(' - ')[1]}</Text>
+                        <Text><strong>Tình trạng:</strong> <Tag color={statusConfig[selectedRecord.Status]?.color}>{statusConfig[selectedRecord.Status]?.text}</Tag></Text>
+                        <Divider style={{ margin: '12px 0' }} />
+                        <Text><strong>Thuốc & liều lượng:</strong></Text>
+                        <Text>{selectedRecord.Medications}</Text>
+                        {selectedRecord.Notes && (
+                            <>
+                                <Divider style={{ margin: '12px 0' }} />
+                                <Text><strong>Ghi chú:</strong></Text>
+                                <Text>{selectedRecord.Notes}</Text>
+                            </>
                         )}
-                    </div>
+                        <Divider style={{ margin: '12px 0' }} />
+                        <Text><strong>Ảnh toa thuốc:</strong></Text>
+                        {selectedRecord.Image_prescription ? (<Image width={200} src={selectedRecord.Image_prescription} />) : (<Text type="secondary">Không có ảnh</Text>)}
+                    </Space>
                 )}
             </Modal>
         </div>

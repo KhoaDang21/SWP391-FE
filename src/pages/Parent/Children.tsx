@@ -196,7 +196,7 @@ const Children = () => {
                     gender: values.gender
                 },
                 medicalRecord: {
-                    class: values.class,
+                    Class: values.class,
                     height: Number(values.height),
                     weight: Number(values.weight),
                     bloodType: values.bloodType,

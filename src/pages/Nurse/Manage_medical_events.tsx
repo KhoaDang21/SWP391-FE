@@ -24,7 +24,7 @@ interface MedicalEventApi {
   Medical_record: {
     ID: number;
     userId: number;
-    class: string;
+    Class: string;
     historyHealth: string;
   };
   UserFullname?: string;
@@ -54,7 +54,7 @@ const MedicalEventManagement: React.FC = () => {
 
   useEffect(() => {
     const fetchMedicalEvents = async () => {
-    setLoading(true);
+      setLoading(true);
       try {
         const data = await medicalEventService.getAllMedicalEvents();
         setMedicalEvents(data);
@@ -70,11 +70,11 @@ const MedicalEventManagement: React.FC = () => {
 
   const filteredEvents = selectedDate
     ? medicalEvents.filter(ev => {
-        const dateStr = ev.history?.[0]?.Date_create;
-        if (!dateStr) return false;
-        const eventDate = new Date(dateStr);
-        return eventDate.toDateString() === selectedDate.toDateString();
-      })
+      const dateStr = ev.history?.[0]?.Date_create;
+      if (!dateStr) return false;
+      const eventDate = new Date(dateStr);
+      return eventDate.toDateString() === selectedDate.toDateString();
+    })
     : medicalEvents;
 
   const handleCreateEvent = async (formData: FormData) => {
@@ -83,7 +83,7 @@ const MedicalEventManagement: React.FC = () => {
       if (response.status === 201) {
         setIsModalOpen(false);
         notificationService.success('Tạo sự kiện thành công!');
-        
+
         // Refresh data
         const refreshData = await medicalEventService.getAllMedicalEvents();
         setMedicalEvents(refreshData);
@@ -108,7 +108,7 @@ const MedicalEventManagement: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (!deleteModalConfig.eventId) return;
-    
+
     try {
       const response = await medicalEventService.deleteMedicalEvent(deleteModalConfig.eventId);
       if (response.success) {
@@ -126,7 +126,7 @@ const MedicalEventManagement: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Quản lý sự kiện y tế</h1>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
           className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-blue-500/30"
         >
@@ -171,8 +171,8 @@ const MedicalEventManagement: React.FC = () => {
               </tr>
             ) : (
               filteredEvents.map((event, index) => (
-                <tr 
-                  key={event.OrtherM_ID} 
+                <tr
+                  key={event.OrtherM_ID}
                   className="hover:bg-gray-50 transition-colors duration-200"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{index + 1}</td>
@@ -181,15 +181,14 @@ const MedicalEventManagement: React.FC = () => {
                       {event.UserFullname || 'Không rõ'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Medical_record?.class}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Medical_record?.Class}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Decription}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Handle}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      event.Is_calLOb
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${event.Is_calLOb
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
-                    }`}>
+                      }`}>
                       {event.Is_calLOb ? 'Đã gọi' : 'Không gọi'}
                     </span>
                   </td>

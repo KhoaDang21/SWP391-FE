@@ -24,7 +24,7 @@ export interface MedicalRecord {
     fullname: string;
     dateOfBirth: string;
     gender: string;
-    class: string;
+    Class: string;
     height: number;
     weight: number;
     bloodType: string;
@@ -42,7 +42,7 @@ export interface CreateStudentMedicalPayload {
         gender: string;
     };
     medicalRecord: {
-        class: string;
+        Class: string;
         height: number;
         weight: number;
         bloodType: string;
@@ -52,7 +52,6 @@ export interface CreateStudentMedicalPayload {
         vaccines?: Vaccine[];
     };
 }
-
 
 const API_URL = 'http://localhost:3333/api/v1/medical-records';
 
@@ -70,8 +69,8 @@ export async function getAllMedicalRecords(token: string): Promise<MedicalRecord
 export async function getMedicalRecordsByGuardian(token: string): Promise<MedicalRecord[]> {
     const res = await fetch(`${API_URL}/by-guardian`, {
         headers: {
-            Authorization: `Bearer ${token}`,
-        },
+            Authorization: `Bearer ${token}`
+        }
     });
 
     if (!res.ok) {
@@ -93,10 +92,7 @@ export async function getMedicalRecordById(id: number, token: string): Promise<M
     return data;
 }
 
-export async function createMedicalRecord(
-    record: Omit<MedicalRecord, 'ID'>,
-    token: string
-): Promise<MedicalRecord> {
+export async function createMedicalRecord(record: Omit<MedicalRecord, 'ID'>, token: string): Promise<MedicalRecord> {
     const res = await fetch(`${API_URL}`, {
         method: 'POST',
         headers: {
@@ -149,7 +145,7 @@ export async function createStudentWithMedicalRecord(
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(payload)
     });
