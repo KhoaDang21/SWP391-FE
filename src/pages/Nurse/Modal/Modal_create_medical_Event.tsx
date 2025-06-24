@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Search } from 'lucide-react';
+import SearchMedicalRecordModal from './SearchMedicalRecordModal';
 
 interface ModalProps {
   isOpen: boolean;
@@ -8,7 +9,7 @@ interface ModalProps {
 }
 
 interface FormData {
-  MR_ID: string;
+  ID: string;
   Decription: string;
   Handle: string;
   Image: File | null;
@@ -17,7 +18,7 @@ interface FormData {
 
 const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState<FormData>({
-    MR_ID: '',
+    ID: '',
     Decription: '',
     Handle: '',
     Image: null,
@@ -25,19 +26,18 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFormData(prev => ({ ...prev, Image: file }));
       
-      // Create preview URL
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     }
   };
 
-  // Cleanup preview URL on unmount
   useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -47,7 +47,7 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
   }, [previewUrl]);
 
   const initialFormData = {
-    MR_ID: '',
+    ID: '',
     Decription: '',
     Handle: '',
     Image: null,
@@ -70,6 +70,10 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
     }
   };
 
+  const handleSelectRecord = (id: string) => {
+    setFormData(prev => ({ ...prev, ID: id }));
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -86,17 +90,26 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               ID Hồ sơ y tế
             </label>
-            <input
-              type="text"
-              value={formData.MR_ID}
-              onChange={e => setFormData(prev => ({ ...prev, MR_ID: e.target.value }))}
-              className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={formData.ID}
+                onChange={e => setFormData(prev => ({ ...prev, ID: e.target.value }))}
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowSearch(true)}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <Search className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
@@ -207,6 +220,14 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
           </div>
         </form>
       </div>
+
+      {showSearch && (
+        <SearchMedicalRecordModal
+          isOpen={showSearch}
+          onClose={() => setShowSearch(false)}
+          onSelect={handleSelectRecord}
+        />
+      )}
     </div>
   );
 };

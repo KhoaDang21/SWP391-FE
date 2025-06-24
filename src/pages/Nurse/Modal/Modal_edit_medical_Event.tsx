@@ -21,7 +21,7 @@ interface ModalProps {
     Medical_record: {
       ID: number;
       userId: number;
-      class: string;
+      Class: string;
       historyHealth: string;
     };
     UserFullname?: string;

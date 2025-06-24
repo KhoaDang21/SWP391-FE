@@ -34,12 +34,16 @@ const Manage_vaccine: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
     if (!selectedVaccine) {
       setVaccineRecords([]);
       setIsLoading(false);
       return;
     }
+
     setIsLoading(true);
+
     const fetchByName = async () => {
       try {
         const records = await vaccineService.getVaccineByName(selectedVaccine);
@@ -50,7 +54,13 @@ const Manage_vaccine: React.FC = () => {
         setIsLoading(false);
       }
     };
+
     fetchByName();
+    intervalId = setInterval(fetchByName, 5000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [selectedVaccine]);
 
   const handleEditSave = async () => {
@@ -238,7 +248,7 @@ const Manage_vaccine: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-medium text-gray-900">{record.PatientName}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{record.MedicalRecord.class}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{record.MedicalRecord.Class}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{record.Vaccine_name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {formatDate(record.Date_injection)}

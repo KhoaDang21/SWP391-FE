@@ -26,8 +26,6 @@ const Noti: React.FC = () => {
       setUnreadCount(response.unreadCount);
       setLoading(false);
     });
-
-    // Cleanup on component unmount
     return () => {
       notificationService.stopAutoRefresh();
     };
@@ -51,6 +49,17 @@ const Noti: React.FC = () => {
       if (notification.title.toLowerCase().includes('lịch tiêm chủng')) {
         navigate('/guardian/vaccines?openModal=true');
         setOpen(false);
+        return;
+      }
+      const match = notification.title.match(/Con bạn có vài vấn đề về sức khỏe vào ngày (\d{1,2})\/(\d{1,2})\/(\d{4})/i);
+      if (match) { 
+        const day = match[1].padStart(2, '0');
+        const month = match[2].padStart(2, '0');
+        const year = match[3];
+        const isoDate = `${year}-${month}-${day}`;
+        navigate(`/guardian/events?date=${isoDate}`);
+        setOpen(false);
+        return;
       }
     } catch (error) {
       console.error('Failed to mark notification as read:', error);

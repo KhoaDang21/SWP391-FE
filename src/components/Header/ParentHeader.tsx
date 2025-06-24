@@ -7,9 +7,7 @@ import { logout, changePassword } from "../../services/AuthServices";
 import { notificationService } from "../../services/NotificationService";
 
 const Header = () => {
-  // Class chung cho tất cả link
   const baseClass = "font-medium px-2 py-1 transition";
-  // Class khi active (xanh) và khi không active (xám)
   const activeClass = "text-blue-600";
   const inactiveClass = "text-gray-700 hover:text-blue-600";
   const userInfo = localStorage.getItem("user");

@@ -21,7 +21,7 @@ interface MedicalEventApi {
 }
 
 interface CreateMedicalEventData {
-  MR_ID: string;
+  ID: string;
   Decription: string;
   Handle: string;
   Image: File | null;
@@ -31,7 +31,7 @@ interface CreateMedicalEventData {
 const API_URL = 'http://localhost:3333/api/v1';
 
 export const medicalEventService = {
-  // Get all medical events
+
   getAllMedicalEvents: async (): Promise<MedicalEventApi[]> => {
     const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/other-medical`, {
@@ -43,7 +43,6 @@ export const medicalEventService = {
     return data.data;
   },
 
-  // Get medical event by ID
   getMedicalEventById: async (id: string): Promise<MedicalEventApi> => {
     const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/other-medical/${id}`, {
@@ -55,18 +54,22 @@ export const medicalEventService = {
     return data.data;
   },
 
-  // Create medical event
   createMedicalEvent: async (formData: CreateMedicalEventData): Promise<any> => {
     const token = localStorage.getItem('accessToken');
     const submitData = new FormData();
-    submitData.append('MR_ID', formData.MR_ID);
-    submitData.append('Decription', formData.Decription);
-    submitData.append('Handle', formData.Handle);
-    submitData.append('Is_calLOb', formData.Is_calLOb.toString());
-    if (formData.Image) {
+    
+    submitData.append('ID', formData.ID);
+    submitData.append('Decription', formData.Decription.trim());
+    submitData.append('Handle', formData.Handle.trim());
+    submitData.append('Is_calLOb', formData.Is_calLOb ? 'true' : 'false');
+    
+    if (formData.Image instanceof File) {
       submitData.append('Image', formData.Image);
     }
 
+    console.log('Submitting medical event data:', {
+      ID: submitData.get('ID')
+    });
     const response = await fetch(`${API_URL}/other-medical`, {
       method: 'POST',
       headers: {
@@ -74,14 +77,19 @@ export const medicalEventService = {
       },
       body: submitData
     });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Có lỗi xảy ra khi tạo sự kiện y tế');
+    }
+
     return response.json();
   },
 
-  // Update medical event
   updateMedicalEvent: async (id: string, formData: CreateMedicalEventData): Promise<any> => {
     const token = localStorage.getItem('accessToken');
     const form = new FormData();
-    form.append('MR_ID', formData.MR_ID);
+    form.append('MR_ID', formData.ID);
     form.append('Decription', formData.Decription);
     form.append('Handle', formData.Handle);
     form.append('Is_calLOb', String(formData.Is_calLOb));
@@ -99,7 +107,7 @@ export const medicalEventService = {
     return response.json();
   },
 
-  // Delete medical event
+
   deleteMedicalEvent: async (id: number): Promise<any> => {
     const token = localStorage.getItem('accessToken');
     const response = await fetch(`${API_URL}/other-medical/${id}`, {
@@ -109,5 +117,16 @@ export const medicalEventService = {
       }
     });
     return response.json();
-  }
+  },
+
+  getMedicalEventsByGuardian: async (guardianId: string): Promise<MedicalEventApi[]> => {
+    const token = localStorage.getItem('accessToken');
+    const response = await fetch(`${API_URL}/other-medical/guardian/${guardianId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const data = await response.json();
+    return data.data;
+  },
 };
