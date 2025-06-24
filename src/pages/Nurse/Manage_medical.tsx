@@ -8,9 +8,9 @@ import {
   MedicalSent,
   MedicalSentStatus
 } from '../../services/MedicalSentService';
-import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message } from 'antd';
+import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message, Image } from 'antd';
 import dayjs from 'dayjs';
-import { DownOutlined } from '@ant-design/icons';
+import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined } from '@ant-design/icons';
 import { getAllMedicalRecords, MedicalRecord } from '../../services/MedicalRecordService';
 import { getAllGuardians, Guardian } from '../../services/AccountService';
 
@@ -39,6 +39,7 @@ const MedicineManagement: React.FC = () => {
 
   const medicalRecordMap = React.useMemo(() => {
     const map: Record<number, MedicalRecord> = {};
+    console.log('Medical records:', medicalRecords);
     medicalRecords.forEach((rec) => {
       map[rec.userId] = rec;
     });
@@ -92,7 +93,7 @@ const MedicineManagement: React.FC = () => {
       );
     })
     : medicineRecords;
-
+  console.log('Filtered records:', filteredRecords);
   const handleViewDetail = async (record: MedicalSent) => {
     setLoading(true);
     try {
@@ -154,8 +155,13 @@ const MedicineManagement: React.FC = () => {
       title: 'Lớp',
       dataIndex: 'Class',
       key: 'Class',
-      render: (_: any, record: MedicalSent) => medicalRecordMap[record.User_ID]?.Class || '',
+      render: (_: any, record: MedicalSent) => {
+        const className = medicalRecordMap[record.User_ID]?.Class || '';
+        console.log('User_ID:', record.User_ID, '→ Class:', className);
+        return className;
+      }
     },
+
     {
       title: 'SĐT Phụ huynh',
       dataIndex: 'Guardian_phone',
@@ -221,6 +227,12 @@ const MedicineManagement: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Quản lý đơn thuốc</h1>
+        {/* <button
+          className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-blue-500/30"
+          type="button"
+          onClick={handleCreateSent}>
+          + Tạo đơn gửi thuốc
+        </button> */}
       </div>
 
       <div className="mb-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
@@ -246,40 +258,105 @@ const MedicineManagement: React.FC = () => {
         </Spin>
       </div>
 
+
+
+
       <Modal
         open={detailModal.open}
         onCancel={() => setDetailModal({ open: false, record: null })}
-        footer={<Button onClick={() => setDetailModal({ open: false, record: null })}>Đóng</Button>}
-        width={700}
-        title={`Chi tiết đơn gửi thuốc #${detailModal.record?.id}`}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setDetailModal({ open: false, record: null })}>
+            Đóng
+          </Button>
+        ]}
+        width={800}
+        centered
+        title={
+          <div className="flex items-center space-x-3">
+            <div className="bg-blue-100 p-2 rounded-lg">
+              <MedicineBoxOutlined className="text-blue-600 text-xl" />
+            </div>
+            <div>
+              <div className="text-lg font-semibold">Chi Tiết Đơn Thuốc</div>
+              <div className="text-sm text-gray-500 font-normal">Thông tin giao thuốc cho học sinh</div>
+            </div>
+          </div>
+        }
+        className="medicine-detail-modal"
       >
         {detailModal.record && (
-          <div>
-            <div style={{ marginBottom: 16 }}>
-              <strong>Tên học sinh:</strong> {medicalRecordMap[detailModal.record.User_ID]?.fullname || ''}<br />
-              <strong>SĐT:</strong> {guardianMap[detailModal.record.Guardian_phone]?.phoneNumber || detailModal.record.Guardian_phone || ''}<br />
-              <strong>Lớp:</strong> {medicalRecordMap[detailModal.record.User_ID]?.Class || ''}<br />
-              <strong>Thời gian uống thuốc:</strong> {dayjs(detailModal.record.Delivery_time).format('HH:mm')}<br />
-              <strong>Trạng thái:</strong> <Tag color={statusColor[detailModal.record.Status]}>{statusText[detailModal.record.Status]}</Tag><br />
-              <strong>Thời gian tạo:</strong> {dayjs(detailModal.record.createdAt).format('HH:mm DD/MM/YYYY')}<br />
+          <div className="space-y-6 max-h-[70vh] overflow-y-auto px-2">
+            {/* Thông tin học sinh */}
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4 shadow-sm">
+              <div className="flex items-center space-x-2 mb-3">
+                <UserOutlined className="text-blue-600" />
+                <span className="text-blue-800 font-semibold">Thông Tin Học Sinh</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-gray-700">
+                <div><span className="font-semibold">Tên học sinh:</span> {medicalRecordMap[detailModal.record.User_ID]?.fullname || ''}</div>
+                <div><span className="font-semibold">SĐT:</span> {guardianMap[detailModal.record.Guardian_phone]?.phoneNumber || detailModal.record.Guardian_phone || ''}</div>
+                <div><span className="font-semibold">Lớp:</span> {medicalRecordMap[detailModal.record.User_ID]?.Class || ''}</div>
+                <div><span className="font-semibold">Thời gian uống:</span> {detailModal.record.Delivery_time?.split(' - ')[1]}</div>
+                <div><span className="font-semibold">Tình trạng:</span>
+                  <Tag color={statusColor[detailModal.record.Status]}>
+                    {statusText[detailModal.record.Status]}
+                  </Tag>
+                </div>
+                <div><span className="font-semibold">Thời gian tạo:</span> {dayjs(detailModal.record.createdAt).format('HH:mm DD/MM/YYYY')}</div>
+              </div>
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <strong>Danh sách thuốc:</strong><br />
-              <div dangerouslySetInnerHTML={{ __html: detailModal.record.Medications.replace(/\n/g, '<br />') }} />
+
+            {/* Thuốc & liều lượng */}
+            <div className="bg-purple-50 border border-purple-200 rounded-md p-4 shadow-sm">
+              <div className="flex items-center space-x-2 mb-3">
+                <MedicineBoxOutlined className="text-purple-600" />
+                <span className="text-purple-800 font-semibold">Thuốc & Liều Lượng</span>
+              </div>
+              <div className="bg-white border border-purple-100 rounded-lg p-4 text-gray-700 whitespace-pre-wrap leading-relaxed">
+                <div dangerouslySetInnerHTML={{ __html: detailModal.record.Medications.replace(/\n/g, '<br />') }} />
+              </div>
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <strong>Hình ảnh toa thuốc:</strong><br />
-              <img src={detailModal.record.Image_prescription} alt="Toa thuốc" style={{ maxWidth: 300 }} />
+
+            {/* Ảnh toa thuốc */}
+            <div className="bg-indigo-50 border border-indigo-200 rounded-md p-4 shadow-sm">
+              <div className="flex items-center space-x-2 mb-3">
+                <PictureOutlined className="text-indigo-600" />
+                <span className="text-indigo-800 font-semibold">Ảnh Toa Thuốc</span>
+              </div>
+              {detailModal.record.Image_prescription ? (
+                <div className="flex justify-center">
+                  <Image
+                    width={300}
+                    src={detailModal.record.Image_prescription}
+                    alt="Toa thuốc"
+                    className="rounded-lg border border-gray-200 shadow-sm max-h-[200px] object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  <PictureOutlined className="text-4xl mb-2" />
+                  <p>Không có ảnh toa thuốc</p>
+                </div>
+              )}
+
             </div>
+
+            {/* Ghi chú */}
             {detailModal.record.Notes && (
-              <div style={{ marginBottom: 16 }}>
-                <strong>Ghi chú:</strong><br />
-                {detailModal.record.Notes}
+              <div className="bg-orange-50 border border-orange-200 rounded-md p-4 shadow-sm">
+                <div className="flex items-center space-x-2 mb-3">
+                  <FileTextOutlined className="text-orange-600" />
+                  <span className="text-orange-800 font-semibold">Ghi Chú Đặc Biệt</span>
+                </div>
+                <div className="bg-white border border-orange-100 rounded-lg p-4 text-gray-700">
+                  {detailModal.record.Notes}
+                </div>
               </div>
             )}
           </div>
         )}
       </Modal>
+
     </div>
   );
 };

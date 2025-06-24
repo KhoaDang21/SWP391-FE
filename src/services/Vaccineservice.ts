@@ -148,6 +148,7 @@ export const vaccineService = {
     }
     const data = await response.json();
     return data.data;
+    return data.data;
   },
 
   getVaccineByName: async (vaccineName: string): Promise<VaccinePayload[]> => {
@@ -165,8 +166,8 @@ export const vaccineService = {
   },
 
   getVaccinesByGuardian: async (): Promise<GuardianVaccineResponse> => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) throw new Error('No access token found');
+    const token = localStorage.getItem("accessToken");
+    if (!token) throw new Error("No access token found");
 
     const decodedToken = decodeToken(token);
     if (!decodedToken?.id) {
@@ -296,3 +297,4 @@ export const vaccineService = {
     }
   }
 };
+

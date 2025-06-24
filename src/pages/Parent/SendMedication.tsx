@@ -27,7 +27,12 @@ import {
     ExclamationCircleOutlined,
     CheckCircleOutlined,
     SyncOutlined,
-    FileTextOutlined
+    FileTextOutlined,
+    PictureOutlined,
+    MedicineBoxOutlined,
+    CalendarOutlined,
+    ClockCircleOutlined,
+    UserOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { UploadProps } from 'antd';
@@ -156,7 +161,7 @@ const SendMedication: React.FC = () => {
 
             if (isCreate) {
                 formData.append('userId', String(student.id));
-                formData.append('guardianPhone', student.phone);
+                formData.append('guardianPhone', values.guardianPhone);
                 formData.append('Class', student.className || '');
                 if (fileObj) formData.append('prescriptionImage', fileObj);
                 formData.append('medications', values.medications);
@@ -168,7 +173,7 @@ const SendMedication: React.FC = () => {
                 message.success('Tạo đơn gửi thuốc thành công!');
             } else if (modalState.record) {
                 formData.append('userId', String(student.id));
-                formData.append('guardianPhone', student.phone);
+                formData.append('guardianPhone', values.guardianPhone);
                 formData.append('Class', student.className || modalState.record.Class || '');
                 if (fileObj) {
                     formData.append('prescriptionImage', fileObj);
@@ -289,6 +294,14 @@ const SendMedication: React.FC = () => {
                         </Select>
                     </Form.Item>
 
+                    <Form.Item
+                        name="guardianPhone"
+                        label="Số điện thoại phụ huynh"
+                        rules={[{ required: true, message: 'Vui lòng nhập số điện thoại phụ huynh!' }]}
+                    >
+                        <Input placeholder="Nhập số điện thoại" maxLength={15} />
+                    </Form.Item>
+
                     <Form.Item name="medications" label="Tên và liều lượng thuốc" rules={[{ required: true, message: 'Vui lòng nhập thông tin thuốc!' }]}>
                         <TextArea rows={3} placeholder="Ví dụ: Paracetamol 500mg, 1 viên" />
                     </Form.Item>
@@ -315,33 +328,127 @@ const SendMedication: React.FC = () => {
             </Modal>
 
             <Modal
-                title={`Chi tiết đơn thuốc #${selectedRecord?.id}`}
+                title={
+                    <div className="flex items-center space-x-3">
+                        <div className="bg-blue-100 p-2 rounded-lg">
+                            <MedicineBoxOutlined className="text-blue-600 text-xl" />
+                        </div>
+                        <div>
+                            <div className="text-lg font-semibold">Chi Tiết Đơn Thuốc</div>
+                            <div className="text-sm text-gray-500 font-normal">Thông tin giao thuốc cho học sinh</div>
+                        </div>
+                    </div>
+                }
                 open={viewModalVisible}
                 onCancel={() => setViewModalVisible(false)}
-                footer={[<Button key="back" onClick={() => setViewModalVisible(false)}>Đóng</Button>]}
+                width={800}
+                centered
+                footer={[
+                    <Button key="close" type="primary" onClick={() => setViewModalVisible(false)}>
+                        Đóng
+                    </Button>
+                ]}
             >
                 {selectedRecord && (
-                    <Space direction="vertical" style={{ width: '100%' }}>
-                        <Text><strong>Học sinh:</strong> {studentInfoMap.get(selectedRecord.User_ID)?.name || 'Không rõ'}</Text>
-                        <Text><strong>Lớp:</strong> {selectedRecord.Class || studentInfoMap.get(selectedRecord.User_ID)?.className || ''}</Text>
-                        <Text><strong>Thời gian uống:</strong> {selectedRecord.Delivery_time.split(' - ')[1]}</Text>
-                        <Text><strong>Tình trạng:</strong> <Tag color={statusConfig[selectedRecord.Status]?.color}>{statusConfig[selectedRecord.Status]?.text}</Tag></Text>
-                        <Divider style={{ margin: '12px 0' }} />
-                        <Text><strong>Thuốc & liều lượng:</strong></Text>
-                        <Text>{selectedRecord.Medications}</Text>
+                    <div className="space-y-6 max-h-[70vh] overflow-y-auto px-2">
+                        {/* Thông tin học sinh */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 shadow-sm">
+                            <div className="flex items-center space-x-2 mb-3">
+                                <UserOutlined className="text-blue-600" />
+                                <span className="text-blue-800 font-semibold">Thông Tin Học Sinh</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="flex space-x-2 text-gray-700">
+                                    <span className="font-semibold">Học sinh:</span>
+                                    <span>{studentInfoMap.get(selectedRecord.User_ID)?.name || 'Không rõ'}</span>
+                                </div>
+                                <div className="flex space-x-2 text-gray-700">
+                                    <span className="font-semibold">Lớp:</span>
+                                    <span>{selectedRecord.Class || studentInfoMap.get(selectedRecord.User_ID)?.className || ''}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Thông tin giao thuốc */}
+                        <div className="bg-green-50 border border-green-200 rounded-md p-4 shadow-sm">
+                            <div className="flex items-center space-x-2 mb-3">
+                                <ClockCircleOutlined className="text-green-600" />
+                                <span className="text-green-800 font-semibold">Thông Tin Giao Thuốc</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="flex space-x-2 text-gray-700">
+                                    <CalendarOutlined className="text-gray-500" />
+                                    <span className="font-semibold">Thời gian uống:</span>
+                                    <span>{selectedRecord.Delivery_time?.split(' - ')[1]}</span>
+                                </div>
+                                <div className="flex space-x-2 text-gray-700">
+                                    <span className="font-semibold">Tình trạng:</span>
+                                    <span className={`px-2 py-1 rounded-full text-white text-sm font-medium
+              ${selectedRecord.Status === 'delivered'
+                                            ? 'bg-green-500'
+                                            : selectedRecord.Status === 'pending'
+                                                ? 'bg-orange-400'
+                                                : 'bg-red-500'
+                                        }`}>
+                                        {statusConfig[selectedRecord.Status]?.text}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Thuốc & liều lượng */}
+                        <div className="bg-purple-50 border border-purple-200 rounded-md p-4 shadow-sm">
+                            <div className="flex items-center space-x-2 mb-3">
+                                <MedicineBoxOutlined className="text-purple-600" />
+                                <span className="text-purple-800 font-semibold">Thuốc & Liều Lượng</span>
+                            </div>
+                            <div className="bg-white border border-purple-100 rounded-lg p-4 text-gray-700 whitespace-pre-wrap leading-relaxed">
+                                {selectedRecord.Medications}
+                            </div>
+                        </div>
+
+                        {/* Ghi chú */}
                         {selectedRecord.Notes && (
-                            <>
-                                <Divider style={{ margin: '12px 0' }} />
-                                <Text><strong>Ghi chú:</strong></Text>
-                                <Text>{selectedRecord.Notes}</Text>
-                            </>
+                            <div className="bg-orange-50 border border-orange-200 rounded-md p-4 shadow-sm">
+                                <div className="flex items-center space-x-2 mb-3">
+                                    <FileTextOutlined className="text-orange-600" />
+                                    <span className="text-orange-800 font-semibold">Ghi Chú Đặc Biệt</span>
+                                </div>
+                                <div className="bg-white border border-orange-100 rounded-lg p-4 text-gray-700">
+                                    {selectedRecord.Notes}
+                                </div>
+                            </div>
                         )}
-                        <Divider style={{ margin: '12px 0' }} />
-                        <Text><strong>Ảnh toa thuốc:</strong></Text>
-                        {selectedRecord.Image_prescription ? (<Image width={200} src={selectedRecord.Image_prescription} />) : (<Text type="secondary">Không có ảnh</Text>)}
-                    </Space>
+
+                        {/* Ảnh toa thuốc */}
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-md p-4 shadow-sm">
+                            <div className="flex items-center space-x-2 mb-3">
+                                <PictureOutlined className="text-indigo-600" />
+                                <span className="text-indigo-800 font-semibold">Ảnh Toa Thuốc</span>
+                            </div>
+                            <div className="text-center">
+                                {selectedRecord.Image_prescription ? (
+                                    <div>
+                                        <Image
+                                            width={300}
+                                            src={selectedRecord.Image_prescription}
+                                            alt="Toa thuốc"
+                                            className="rounded-lg border border-gray-200 shadow-sm max-h-[200px] object-cover mx-auto"
+                                        />
+                                        <p className="text-sm text-gray-500 mt-2">Nhấn vào ảnh để xem chi tiết</p>
+                                    </div>
+                                ) : (
+                                    <div className="py-8 flex flex-col items-center text-gray-400">
+                                        <PictureOutlined className="text-4xl mb-2" />
+                                        <p>Không có ảnh toa thuốc</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 )}
             </Modal>
+
         </div>
     );
 };
