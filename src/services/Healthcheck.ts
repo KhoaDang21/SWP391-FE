@@ -89,11 +89,30 @@ export interface HealthCheckForm {
   updatedAt: string;
   GuardianUserId: number | null;
   Student: Student;
+  status?: string;
 }
 
 export interface GetStudentsByHealthCheckResponse {
   success: boolean;
   data: HealthCheckForm[];
+}
+
+export interface HealthCheckFormByStudent {
+  formId: number;
+  studentId: number;
+  status: string;
+  healthCheckId: number;
+  title: string;
+  description: string;
+  schoolYear: string;
+  eventId: number;
+  dateEvent: string;
+  type: string;
+}
+
+export interface GetHealthCheckFormsByStudentResponse {
+  success: boolean;
+  data: HealthCheckFormByStudent[];
 }
 
 const API_URL = 'http://localhost:3333/api/v1';
@@ -230,5 +249,74 @@ export const healthCheckService = {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return response.json();
+  },
+
+  // Get detail of a health check event by ID
+  getHealthCheckById: async (hcId: number): Promise<CreateHealthCheckResponse> => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Access token is missing");
+    }
+    const response = await fetch(`${API_URL}/health-check/${hcId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  // Guardian confirm or reject health check form
+  confirmHealthCheckForm: async (formId: number, action: 'approve' | 'reject'): Promise<{ success: boolean; message: string }> => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Access token is missing");
+    }
+    const response = await fetch(`${API_URL}/health-check/form/${formId}/confirm`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+      },
+      body: JSON.stringify({ action }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  getHealthCheckFormsByStudent: async (studentId: number): Promise<GetHealthCheckFormsByStudentResponse> => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('Access token is missing');
+    const response = await fetch(`${API_URL}/health-check/student/${studentId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
   }
+};
+
+export const getHealthCheckFormsByStudent = async (studentId: number): Promise<GetHealthCheckFormsByStudentResponse> => {
+  const token = localStorage.getItem('accessToken');
+  if (!token) throw new Error('Access token is missing');
+  const response = await fetch(`${API_URL}/health-check/student/${studentId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
 };
