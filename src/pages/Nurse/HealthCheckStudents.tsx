@@ -37,13 +37,14 @@ const HealthCheckStudents: React.FC = () => {
 
       // Calculate stats
       const total = studentsData.data.length;
-      const confirmed = studentsData.data.filter(s => s.Is_confirmed_by_guardian).length;
-      const reject = studentsData.data.filter(s => s.Is_need_meet).length;
+      const confirmed = studentsData.data.filter(s => s.status === 'approved').length;
+      const pending = studentsData.data.filter(s => s.status === 'pending' || !s.status).length;
+      const reject = studentsData.data.filter(s => s.status === 'rejected').length;
       
       setStats({
         total,
         confirmed,
-        pending: total - confirmed,
+        pending,
         reject
       });
     } catch (error) {

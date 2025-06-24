@@ -29,26 +29,7 @@ const ManageHealthcheck: React.FC = () => {
   const [sendingConfirmation, setSendingConfirmation] = useState<number | null>(null);
   const navigate = useNavigate();
   
-
-  const [sentConfirmations, setSentConfirmations] = useState<Set<number>>(() => {
-    const saved = localStorage.getItem('sentHealthCheckConfirmations');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return new Set(parsed);
-      } catch (error) {
-        console.error('Error parsing saved confirmations:', error);
-        return new Set();
-      }
-    }
-    return new Set();
-  });
-
-  // Save sent confirmations to localStorage whenever it changes
-  const updateSentConfirmations = (newSet: Set<number>) => {
-    setSentConfirmations(newSet);
-    localStorage.setItem('sentHealthCheckConfirmations', JSON.stringify([...newSet]));
-  };
+  const [sentStatus, setSentStatus] = useState<{ [key: number]: boolean }>({});
 
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
@@ -60,6 +41,22 @@ const ManageHealthcheck: React.FC = () => {
   const [createDate, setCreateDate] = useState<Date | null>(null);
   const [editDate, setEditDate] = useState<Date | null>(null);
 
+  // Hàm kiểm tra trạng thái gửi form cho từng đợt khám
+  const checkSentStatus = async (events: HealthCheckEvent[]) => {
+    const statusObj: { [key: number]: boolean } = {};
+    await Promise.all(
+      events.map(async (event) => {
+        try {
+          const res = await healthCheckService.getStudentsByHealthCheck(event.HC_ID);
+          statusObj[event.HC_ID] = Array.isArray(res.data) && res.data.length > 0;
+        } catch {
+          statusObj[event.HC_ID] = false;
+        }
+      })
+    );
+    setSentStatus(statusObj);
+  };
+
   const fetchEvents = async () => {
     setLoading(true);
     try {
@@ -69,6 +66,7 @@ const ManageHealthcheck: React.FC = () => {
         new Set(events.map((e) => e.School_year)),
       );
       setSchoolYears(uniqueYears);
+      await checkSentStatus(events);
     } catch (error) {
       console.error('Lỗi khi lấy dữ liệu khám sức khỏe:', error);
       notificationService.error('Có lỗi xảy ra khi tải dữ liệu');
@@ -117,10 +115,9 @@ const ManageHealthcheck: React.FC = () => {
     try {
       const result = await healthCheckService.sendConfirmationForm(hcId);
       if (result.success) {
-        // Thêm vào danh sách đã gửi và lưu vào localStorage
-        const newSet = new Set([...sentConfirmations, hcId]);
-        updateSentConfirmations(newSet);
         notificationService.success(result.message || 'Đã gửi form xác nhận thành công!');
+        // Gửi xong thì cập nhật lại trạng thái gửi form
+        await checkSentStatus(healthEvents);
       } else {
         throw new Error(result.message || 'Có lỗi xảy ra khi gửi form xác nhận');
       }
@@ -253,7 +250,7 @@ const ManageHealthcheck: React.FC = () => {
               </tr>
             ) : (
               filteredEvents.map((event, index) => {
-                const isSent = sentConfirmations.has(event.HC_ID);
+                const isSent = sentStatus[event.HC_ID];
                 const isSending = sendingConfirmation === event.HC_ID;
                 
                 return (
