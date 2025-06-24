@@ -40,7 +40,7 @@ export interface GuardianVaccineHistory {
   user: {
     id: number;
     fullname: string;
-    dateOfBirth: string;
+    dateOfBirth: Date;
   };
   vaccineHistory: {
     VH_ID: number;

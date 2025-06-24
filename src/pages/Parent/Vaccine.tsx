@@ -59,7 +59,7 @@ interface VaccineRecord {
 interface Student {
     id: string;
     name: string;
-    dateOfBirth: string;
+    dateOfBirth: Date;
     class: string;
     studentCode: string;
     vaccineRecords: VaccineRecord[];
@@ -77,26 +77,11 @@ const Vaccine: React.FC = () => {
     const [students, setStudents] = useState<Student[]>([]);
     const [selectedVaccine, setSelectedVaccine] = useState<VaccineRecord | null>(null);
     const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-    console.log('Vaccine component loaded', students);
-    const vaccineTypes: VaccineInfo[] = [
-        { id: '1', name: 'BCG', description: 'Phòng bệnh lao', recommendedAge: '0-1 tháng', isRequired: true },
-        { id: '2', name: 'Viêm gan B', description: 'Phòng viêm gan B', recommendedAge: '0-2 tháng', isRequired: true },
-        { id: '3', name: 'DPT (Bạch hầu)', description: 'Phòng bạch hầu, ho gà, uốn ván', recommendedAge: '2-4 tháng', isRequired: true },
-        { id: '4', name: 'Polio', description: 'Phòng bại liệt', recommendedAge: '2-4 tháng', isRequired: true },
-        { id: '5', name: 'Hib', description: 'Phòng Haemophilus influenzae type b', recommendedAge: '2-6 tháng', isRequired: true },
-        { id: '6', name: 'PCV', description: 'Phòng phế cầu khuẩn', recommendedAge: '2-6 tháng', isRequired: false },
-        { id: '7', name: 'Rotavirus', description: 'Phòng tiêu chảy do Rotavirus', recommendedAge: '2-6 tháng', isRequired: false },
-        { id: '8', name: 'Sởi', description: 'Phòng bệnh sởi', recommendedAge: '9-15 tháng', isRequired: true },
-        { id: '9', name: 'Rubella', description: 'Phòng bệnh rubella', recommendedAge: '12-15 tháng', isRequired: true },
-        { id: '10', name: 'Quai bị', description: 'Phòng bệnh quai bị', recommendedAge: '12-15 tháng', isRequired: true },
-        { id: '11', name: 'Varicella', description: 'Phòng bệnh thủy đậu', recommendedAge: '12-15 tháng', isRequired: false },
-        { id: '12', name: 'Viêm gan A', description: 'Phòng viêm gan A', recommendedAge: '12-23 tháng', isRequired: false },
-        { id: '13', name: 'JE', description: 'Phòng viêm não Nhật Bản', recommendedAge: '12-24 tháng', isRequired: true },
-        { id: '14', name: 'Td', description: 'Nhắc lại uốn ván và bạch hầu', recommendedAge: '4-6 tuổi', isRequired: true }
-    ];
 
     const fetchVaccineData = async () => {
+        let intervalId: ReturnType<typeof setInterval>;
         try {
+
             const response = await vaccineService.getVaccinesByGuardian();
 
             const transformedStudents: Student[] = response.histories.map(history => ({
@@ -131,12 +116,19 @@ const Vaccine: React.FC = () => {
             message.error('Failed to fetch vaccine data');
             console.error(error);
         }
+
+        intervalId = setInterval(fetchVaccineData, 5000);
+
+        return () => {
+            clearInterval(intervalId);
+        };
     };
 
     useEffect(() => {
+        let intervalId: ReturnType<typeof setInterval>;
+
         const fetchData = async () => {
             try {
-                // Check URL parameter first
                 const shouldOpenModal = searchParams.get('openModal') === 'true';
 
 
@@ -163,12 +155,18 @@ const Vaccine: React.FC = () => {
 
                 setStudents(transformedStudents);
 
-                // Open modal after data is loaded
                 if (shouldOpenModal && transformedStudents.length > 0) {
                     setSelectedStudent(transformedStudents[0]);
                     setTimeout(() => {
                         setDetailModalVisible(true);
-                    }, 100); // Small delay to ensure state is updated
+                        const params = new URLSearchParams(searchParams);
+                        params.delete('openModal');
+                        window.history.replaceState(
+                            {},
+                            '',
+                            `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`
+                        );
+                    }, 100);
                 }
             } catch (error) {
                 message.error('Failed to fetch vaccine data');
@@ -177,6 +175,11 @@ const Vaccine: React.FC = () => {
         };
 
         fetchData();
+        intervalId = setInterval(fetchData, 5000);
+
+        return () => {
+            clearInterval(intervalId);
+        };
     }, [searchParams]);
 
     const handleViewDetail = (student: Student) => {
@@ -355,7 +358,7 @@ const Vaccine: React.FC = () => {
                                                 >
                                                     <Avatar
                                                         style={{
-                                                            backgroundColor: vaccineRecord.status === 'Đã tiêm' ? '#52c41a' :
+                                                            backgroundColor: vaccineRecord.status === 'Đã tiêm' ? '#f6ffed' :
                                                                 vaccineRecord.status === 'Chờ xác nhận' || vaccineRecord.status === 'Cho phép tiêm' ? '#fa8c16' : '#d9d9d9'
                                                         }}
                                                         icon={<MedicineBoxOutlined />}

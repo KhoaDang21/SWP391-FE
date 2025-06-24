@@ -29,7 +29,7 @@ const ManageHealthcheck: React.FC = () => {
   const [sendingConfirmation, setSendingConfirmation] = useState<number | null>(null);
   const navigate = useNavigate();
   
-  // Load sent confirmations from localStorage on component mount
+
   const [sentConfirmations, setSentConfirmations] = useState<Set<number>>(() => {
     const saved = localStorage.getItem('sentHealthCheckConfirmations');
     if (saved) {

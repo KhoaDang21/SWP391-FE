@@ -76,8 +76,6 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
                 required
               />
             </div>
-
-            {/* Vaccine Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Loại Vaccine
@@ -91,8 +89,6 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
                 required
               />
             </div>
-
-            {/* Date Input with Calendar */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Ngày tiêm

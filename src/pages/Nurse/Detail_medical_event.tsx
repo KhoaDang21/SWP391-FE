@@ -20,7 +20,7 @@ interface MedicalEventDetail {
   Medical_record: {
     ID: number;
     userId: number;
-    class: string;
+    Class: string;
     historyHealth: string;
   };
   UserFullname?: string;
@@ -53,8 +53,10 @@ const Detail_medical_event: React.FC = () => {
         setLoading(false);
       }
     };
-
-    fetchEventDetail();
+    function fetchEventDetailWrapper() {
+      fetchEventDetail();
+    }
+    fetchEventDetailWrapper();
   }, [id, navigate]);
 
   const handleGoBack = () => {
@@ -128,7 +130,7 @@ const Detail_medical_event: React.FC = () => {
               
               <div>
                 <label className="text-sm font-medium text-gray-500">Lớp:</label>
-                <p className="text-lg text-gray-900">{eventDetail.Medical_record.class}</p>
+                <p className="text-lg text-gray-900">{eventDetail.Medical_record.Class}</p>
               </div>
 
               <div>

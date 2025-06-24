@@ -31,7 +31,7 @@ interface MedicalEventApi {
 }
 
 interface FormData {
-  MR_ID: string;
+  ID: string;
   Decription: string;
   Handle: string;
   Image: File | null;
@@ -83,8 +83,6 @@ const MedicalEventManagement: React.FC = () => {
       if (response.status === 201) {
         setIsModalOpen(false);
         notificationService.success('Tạo sự kiện thành công!');
-
-        // Refresh data
         const refreshData = await medicalEventService.getAllMedicalEvents();
         setMedicalEvents(refreshData);
       }

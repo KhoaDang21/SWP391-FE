@@ -34,12 +34,16 @@ const Manage_vaccine: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
     if (!selectedVaccine) {
       setVaccineRecords([]);
       setIsLoading(false);
       return;
     }
+
     setIsLoading(true);
+
     const fetchByName = async () => {
       try {
         const records = await vaccineService.getVaccineByName(selectedVaccine);
@@ -50,7 +54,13 @@ const Manage_vaccine: React.FC = () => {
         setIsLoading(false);
       }
     };
+
     fetchByName();
+    intervalId = setInterval(fetchByName, 5000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [selectedVaccine]);
 
   const handleEditSave = async () => {
