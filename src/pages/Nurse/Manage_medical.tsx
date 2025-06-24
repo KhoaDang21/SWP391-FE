@@ -132,6 +132,12 @@ const MedicineManagement: React.FC = () => {
     }
   };
 
+  const getNextStatuses = (current: MedicalSentStatus): MedicalSentStatus[] => {
+    if (current === 'pending') return ['processing', 'cancelled'];
+    if (current === 'processing') return ['delivered', 'cancelled'];
+    return [];
+  };
+
   const columns = [
     {
       title: 'STT',
@@ -193,16 +199,19 @@ const MedicineManagement: React.FC = () => {
       dataIndex: 'Status',
       key: 'Status',
       render: (status: string, record: MedicalSent) => {
+        const nextStatuses = getNextStatuses(status as MedicalSentStatus);
+        if (nextStatuses.length === 0) {
+          return <Tag color={statusColor[status]}>{statusText[status]}</Tag>;
+        }
         const menu = (
           <Menu
             onClick={({ key }) => handleStatusChange(record, key as MedicalSentStatus)}
-            items={Object.keys(statusText).map((s) => ({
+            items={nextStatuses.map((s) => ({
               key: s,
-              label: statusText[s]
+              label: <Tag color={statusColor[s]}>{statusText[s]}</Tag>,
             }))}
           />
         );
-
         return (
           <Dropdown overlay={menu} trigger={['click']}>
             <Tag color={statusColor[status]} style={{ cursor: 'pointer' }}>
