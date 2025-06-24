@@ -43,6 +43,8 @@ const Children = () => {
 
     const [loading, setLoading] = useState(false);
     const [children, setChildren] = useState<MedicalRecord[]>([]);
+    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -143,7 +145,6 @@ const Children = () => {
                 vaccines: child.vaccines || [],
                 chronicDiseases: child.chronicDiseases || [],
                 allergies: child.allergies || [],
-                pastIllnesses: child.pastIllnesses || []
             });
         } else {
             form.resetFields();
@@ -158,20 +159,42 @@ const Children = () => {
 
     useEffect(() => {
         if (editingChild) {
+            // chronicDiseases có thể là string hoặc mảng đối tượng
+            const chronicArr: string[] = [];
+            if (typeof editingChild.chronicDiseases === 'string') {
+                chronicArr.push(
+                    ...editingChild.chronicDiseases.split(',').map(s => s.trim()).filter(s => s)
+                );
+            }
+            // allergies tương tự
+            const allergyArr: string[] = [];
+            if (typeof editingChild.allergies === 'string') {
+                allergyArr.push(
+                    ...editingChild.allergies.split(',').map(s => s.trim()).filter(s => s)
+                );
+            }
+
             form.setFieldsValue({
                 ...editingChild,
-                chronicDiseases: editingChild.chronicDiseases?.map((item: any) =>
-                    typeof item.name === 'string' ? item.name : item.name?.name
-                ),
-                allergies: editingChild.allergies?.map((item: any) =>
-                    typeof item.name === 'string' ? item.name : item.name?.name
-                ),
-                pastIllnesses: editingChild.pastIllnesses || [],
+                chronicDiseases: chronicArr,
+                allergies: allergyArr,
                 vaccines: editingChild.vaccines || [],
+                // Nếu bạn dùng field "Class" trong Form.Item, nhớ setFieldsValue({ Class: editingChild.class || ... })
+                Class: (editingChild as any).class || (editingChild as any).Class || undefined
             });
         }
     }, [editingChild]);
 
+    const parseToObjArray = (val: any): { name: string }[] => {
+        if (!val) return [];
+        if (Array.isArray(val)) {
+            return val.map((d: string) => ({ name: d }));
+        }
+        if (typeof val === 'string') {
+            return val.split(',').map(s => ({ name: s.trim() })).filter(item => item.name);
+        }
+        return [];
+    };
 
     const handleSubmit = async (values: any) => {
         const token = localStorage.getItem('accessToken') as string;
@@ -196,12 +219,12 @@ const Children = () => {
                     gender: values.gender
                 },
                 medicalRecord: {
-                    Class: values.class,
+                    Class: values.Class,
                     height: Number(values.height),
                     weight: Number(values.weight),
                     bloodType: values.bloodType,
-                    chronicDiseases: values.chronicDiseases?.map((d: string) => ({ name: d })) || [],
-                    allergies: values.allergies?.map((a: string) => ({ name: a })) || [],
+                    chronicDiseases: parseToObjArray(values.chronicDiseases),
+                    allergies: parseToObjArray(values.allergies),
                     pastIllnesses: values.pastIllnesses || []
                 }
             };
@@ -228,26 +251,25 @@ const Children = () => {
     };
 
 
-    const deleteChild = (id: number) => {
-        const token = localStorage.getItem('accessToken');
-        if (!token) return;
+    const showDeleteConfirm = (id: number) => {
+        setDeletingId(id);
+        setIsDeleteModalVisible(true);
+    };
 
-        Modal.confirm({
-            title: 'Xác nhận xóa',
-            content: 'Bạn có chắc chắn muốn xóa hồ sơ y tế của học sinh này không?',
-            okText: 'Xóa',
-            cancelText: 'Hủy',
-            okType: 'danger',
-            onOk: async () => {
-                try {
-                    await deleteMedicalRecord(id, token);
-                    const updatedRecords = await getMedicalRecordsByGuardian(token);
-                    setChildren(updatedRecords);
-                } catch (error) {
-                    console.error('Lỗi khi xóa hồ sơ y tế:', error);
-                }
-            }
-        });
+    const handleDelete = async () => {
+        const token = localStorage.getItem('accessToken');
+        if (!token || deletingId === null) return;
+
+        try {
+            await deleteMedicalRecord(deletingId, token);
+            const updatedRecords = await getMedicalRecordsByGuardian(token);
+            setChildren(updatedRecords);
+        } catch (error) {
+            console.error('Lỗi khi xóa hồ sơ y tế:', error);
+        } finally {
+            setIsDeleteModalVisible(false);
+            setDeletingId(null);
+        }
     };
 
 
@@ -313,7 +335,7 @@ const Children = () => {
                                         style={{ height: '100%' }}
                                         actions={[
                                             <EditOutlined key="edit" onClick={() => showModal(child)} />,
-                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.ID)} />
+                                            <DeleteOutlined key="delete" onClick={() => showDeleteConfirm(child.ID)} />
                                         ]}
                                     >
                                         <div style={{ marginBottom: '16px' }}>
@@ -321,6 +343,8 @@ const Children = () => {
                                                 <Avatar size={64} icon={<UserOutlined />} />
                                                 <div>
                                                     <Title level={4} style={{ margin: 0 }}>{child.fullname}</Title>
+                                                    <Text type="secondary">Lớp : {child.Class || 'Chưa xác định'}  • Tuổi: {calculateAge(child.dateOfBirth)}</Text>
+                                                    <br />
                                                     <Text type="secondary">Chiều cao: {child.height || 'Chưa xác định'} cm  • Cân nặng: {child.weight || 'Chưa xác định'} kg</Text>
                                                 </div>
                                             </Space>
@@ -347,42 +371,61 @@ const Children = () => {
 
                                             <TabPane tab={<div><MedicineBoxOutlined />Sức khỏe</div>} key="2">
                                                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {Array.isArray(child.chronicDiseases) && child.chronicDiseases.length > 0 && (
-                                                        <div style={{ marginBottom: '12px' }}>
-                                                            <Text strong>Bệnh nền:</Text>
-                                                            <div style={{ marginTop: '4px' }}>
-                                                                {child.chronicDiseases.map((disease, index) => (
-                                                                    <Tag key={index} color="orange">{disease.name}</Tag>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                                    {(() => {
+                                                        // Chuyển chronicDiseases thành array đối tượng { name: string }
+                                                        let chronicArr: { name: string }[] = [];
+                                                        if (Array.isArray(child.chronicDiseases)) {
+                                                            chronicArr = child.chronicDiseases;
+                                                        } else if (typeof child.chronicDiseases === 'string') {
+                                                            chronicArr = child.chronicDiseases
+                                                                .split(',')
+                                                                .map(s => ({ name: s.trim() }))
+                                                                .filter(item => item.name);
+                                                        }
+                                                        // Chuyển allergies thành array đối tượng { name: string }
+                                                        let allergyArr: { name: string }[] = [];
+                                                        if (Array.isArray(child.allergies)) {
+                                                            allergyArr = child.allergies;
+                                                        } else if (typeof child.allergies === 'string') {
+                                                            allergyArr = child.allergies
+                                                                .split(',')
+                                                                .map(s => ({ name: s.trim() }))
+                                                                .filter(item => item.name);
+                                                        }
+                                                        // Chuyển pastIllnesses thành array đối tượng { disease, date, treatment? }
 
-                                                    {Array.isArray(child.allergies) && child.allergies.length > 0 && (
-                                                        <div style={{ marginBottom: '12px' }}>
-                                                            <Text strong>Dị ứng:</Text>
-                                                            <div style={{ marginTop: '4px' }}>
-                                                                {child.allergies.map((allergy, index) => (
-                                                                    <Tag key={index} color="red">{allergy.name}</Tag>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
 
-                                                    {Array.isArray(child.pastIllnesses) && child.pastIllnesses.length > 0 && (
-                                                        <div>
-                                                            <Text strong>Bệnh đã mắc:</Text>
-                                                            <div style={{ marginTop: '4px' }}>
-                                                                {child.pastIllnesses.map((illness, index) => (
-                                                                    <div key={index} style={{ marginBottom: '4px', fontSize: '12px' }}>
-                                                                        <Text>{illness.disease}</Text> - <Text type="secondary">{illness.date}</Text>
+                                                        return (
+                                                            <>
+                                                                {chronicArr.length > 0 && (
+                                                                    <div style={{ marginBottom: 12 }}>
+                                                                        <Text strong>Bệnh nền:</Text>
+                                                                        <div style={{ marginTop: 4 }}>
+                                                                            {chronicArr.map((disease, idx) => (
+                                                                                <Tag key={idx} color="orange">{disease.name}</Tag>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                                                )}
+
+                                                                {allergyArr.length > 0 && (
+                                                                    <div style={{ marginBottom: 12 }}>
+                                                                        <Text strong>Dị ứng:</Text>
+                                                                        <div style={{ marginTop: 4 }}>
+                                                                            {allergyArr.map((allergy, idx) => (
+                                                                                <Tag key={idx} color="red">{allergy.name}</Tag>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </TabPane>
+
 
                                         </Tabs>
                                     </Card>
@@ -424,7 +467,7 @@ const Children = () => {
 
 
                         <Form.Item
-                            name="class"
+                            name="Class"
                             label="Lớp"
                             rules={[{ required: true, message: 'Vui lòng nhập lớp!' }]}
                         >
@@ -598,57 +641,6 @@ const Children = () => {
                             </Select>
                         </Form.Item>
 
-                        <Form.List name="pastIllnesses">
-                            {(fields, { add, remove }) => (
-                                <>
-                                    {fields.map(field => (
-                                        <Row key={field.key} gutter={16} align="middle">
-                                            <Col span={8}>
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, 'disease']}
-                                                    label={field.key === 0 ? "Bệnh đã mắc" : ""}
-                                                >
-                                                    <Input placeholder="Tên bệnh" />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col span={6}>
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, 'date']}
-                                                    label={field.key === 0 ? "Ngày mắc" : ""}
-                                                >
-                                                    <Input
-                                                        type="date"
-                                                        max={new Date().toISOString().split("T")[0]}
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col span={6}>
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, 'treatment']}
-                                                    label={field.key === 0 ? "Điều trị" : ""}
-                                                >
-                                                    <Input placeholder="Cách điều trị" />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col span={4}>
-                                                {field.key === 0 && <div style={{ height: '22px' }} />}
-                                                <Button className='mb-4' onClick={() => remove(field.name)}>
-                                                    Xóa
-                                                </Button>
-                                            </Col>
-                                        </Row>
-                                    ))}
-                                    <Form.Item>
-                                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                                            Thêm Bệnh Đã Mắc
-                                        </Button>
-                                    </Form.Item>
-                                </>
-                            )}
-                        </Form.List>
 
                         <Form.Item style={{ marginTop: '24px', textAlign: 'right' }}>
                             <Space>
@@ -662,6 +654,19 @@ const Children = () => {
                         </Form.Item>
                     </Form>
                 </Modal>
+
+                <Modal
+                    title="Xác nhận xóa"
+                    open={isDeleteModalVisible}
+                    onOk={handleDelete}
+                    onCancel={() => setIsDeleteModalVisible(false)}
+                    okText="Xóa"
+                    cancelText="Hủy"
+                    okType="danger"
+                >
+                    <p>Bạn có chắc chắn muốn xóa hồ sơ y tế của học sinh này không?</p>
+                </Modal>
+
             </div>
         </div>
     );

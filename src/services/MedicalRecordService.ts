@@ -12,11 +12,6 @@ export interface Allergy {
     name: string;
 }
 
-export interface PastIllness {
-    disease: string;
-    date: string;
-    treatment: string;
-}
 
 export interface MedicalRecord {
     ID: number;
@@ -28,9 +23,8 @@ export interface MedicalRecord {
     height: number;
     weight: number;
     bloodType: string;
-    chronicDiseases: ChronicDisease[];
-    allergies: Allergy[];
-    pastIllnesses: PastIllness[];
+    chronicDiseases: string;
+    allergies: string;
     vaccines: Vaccine[];
 }
 
@@ -48,7 +42,6 @@ export interface CreateStudentMedicalPayload {
         bloodType: string;
         chronicDiseases?: ChronicDisease[];
         allergies?: Allergy[];
-        pastIllnesses?: PastIllness[];
         vaccines?: Vaccine[];
     };
 }

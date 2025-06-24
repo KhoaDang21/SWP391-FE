@@ -103,7 +103,7 @@ const Vaccine: React.FC = () => {
                 id: history.medicalRecord.ID.toString(),
                 name: history.user.fullname,
                 dateOfBirth: history.user.dateOfBirth,
-                class: history.medicalRecord.class,
+                class: history.medicalRecord.Class,
                 studentCode: history.medicalRecord.ID.toString(),
                 totalVaccinated: history.vaccineHistory.filter(v => v.Status === 'Đã tiêm').length,
                 totalNeedConfirm: history.vaccineHistory.filter(v => v.Status === 'Chờ xác nhận').length,

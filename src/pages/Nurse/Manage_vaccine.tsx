@@ -82,7 +82,7 @@ const Manage_vaccine: React.FC = () => {
         console.log('Request Data:', updateData);
 
         await vaccineService.updateVaccineStatus(updateData);
-        
+
         const notification = document.createElement('div');
         notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out';
         notification.textContent = 'Cập nhật trạng thái thành công!';
@@ -124,7 +124,7 @@ const Manage_vaccine: React.FC = () => {
       };
 
       await vaccineService.createVaccine(newVaccineData);
-      
+
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out';
       notification.textContent = 'Tạo đợt tiêm thành công!';
@@ -137,7 +137,7 @@ const Manage_vaccine: React.FC = () => {
         vaccineService.getVaccineTypes(),
         vaccineService.getVaccineByName(data.vaccineName)
       ]);
-      
+
       setVaccineTypes(types);
       setSelectedVaccine(data.vaccineName);
       setVaccineRecords(records);
@@ -168,8 +168,8 @@ const Manage_vaccine: React.FC = () => {
 
   // Add function to check if all records are completed
   const areAllRecordsCompleted = React.useMemo(() => {
-    return filteredRecords.length > 0 && 
-           filteredRecords.every(record => record.Status === 'Đã tiêm');
+    return filteredRecords.length > 0 &&
+      filteredRecords.every(record => record.Status === 'Đã tiêm');
   }, [filteredRecords]);
 
   if (isLoading) {
@@ -188,13 +188,12 @@ const Manage_vaccine: React.FC = () => {
             Tạo mới đợt tiêm
           </button>
           {!areAllRecordsCompleted && (
-            <button 
+            <button
               onClick={handleEditSave}
-              className={`px-6 py-2.5 rounded-lg transition-all duration-200 shadow-lg ${
-                isEditing 
-                  ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:shadow-green-500/30' 
+              className={`px-6 py-2.5 rounded-lg transition-all duration-200 shadow-lg ${isEditing
+                  ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:shadow-green-500/30'
                   : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-blue-500/30'
-              } text-white`}
+                } text-white`}
             >
               {isEditing ? 'Lưu' : 'Chỉnh sửa'}
             </button>
@@ -205,7 +204,7 @@ const Manage_vaccine: React.FC = () => {
       <div className="mb-8 p-4 bg-white rounded-xl shadow-sm border border-gray-200 space-y-4">
         <div className="flex items-center gap-3">
           <label className="font-medium text-gray-700">Loại Vaccine:</label>
-          <select 
+          <select
             value={selectedVaccine}
             onChange={(e) => setSelectedVaccine(e.target.value)}
             className="min-w-[200px] border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -238,7 +237,7 @@ const Manage_vaccine: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-medium text-gray-900">{record.PatientName}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{record.MedicalRecord.class}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{record.MedicalRecord.Class}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{record.Vaccine_name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {formatDate(record.Date_injection)}
@@ -257,13 +256,12 @@ const Manage_vaccine: React.FC = () => {
                     ) : record.note_affter_injection || 'Chưa có ghi chú'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      record.Status === 'Đã tiêm' 
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${record.Status === 'Đã tiêm'
                         ? 'bg-green-100 text-green-800'
                         : record.Status === 'Cho phép tiêm'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {record.Status}
                     </span>
                   </td>
