@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Table, Card, Row, Col, Statistic, Spin, Tag } from 'antd';
 import { ArrowLeft, Users, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { healthCheckService, HealthCheckForm, HealthCheckEvent } from '../../services/Healthcheck';
+import { healthCheckService, HealthCheckForm } from '../../services/Healthcheck';
 import { notificationService } from '../../services/NotificationService';
 
 const HealthCheckStudents: React.FC = () => {
   const { hcId } = useParams<{ hcId: string }>();
   const navigate = useNavigate();
   const [students, setStudents] = useState<HealthCheckForm[]>([]);
-  const [healthEvent, setHealthEvent] = useState<HealthCheckEvent | null>(null);
+  const [healthEventDetail, setHealthEventDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     total: 0,
@@ -27,14 +27,13 @@ const HealthCheckStudents: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [studentsData, healthEvents] = await Promise.all([
+      const [studentsData, healthEventDetailRes] = await Promise.all([
         healthCheckService.getStudentsByHealthCheck(parseInt(hcId!)),
-        healthCheckService.getAllHealthChecks()
+        healthCheckService.getHealthCheckById(parseInt(hcId!))
       ]);
 
       setStudents(studentsData.data);
-      const currentEvent = healthEvents.find(event => event.HC_ID === parseInt(hcId!));
-      setHealthEvent(currentEvent || null);
+      setHealthEventDetail(healthEventDetailRes.data);
 
       // Calculate stats
       const total = studentsData.data.length;
@@ -101,34 +100,38 @@ const HealthCheckStudents: React.FC = () => {
     {
       title: 'Trạng thái xác nhận',
       key: 'confirmation',
-      render: (record: HealthCheckForm) => (
-        <Tag
-          color={record.Is_confirmed_by_guardian ? 'green' : 'orange'}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            fontSize: '12px',
-            fontWeight: '500',
-            minWidth: '100px'
-          }}
-        >
-          {record.Is_confirmed_by_guardian ? (
-            <>
-              <CheckCircle className="w-3 h-3" />
-              Đã xác nhận
-            </>
-          ) : (
-            <>
-              <Clock className="w-3 h-3" />
-              Chờ xác nhận
-            </>
-          )}
-        </Tag>
-      ),
+      render: (record: HealthCheckForm) => {
+        let color = 'orange';
+        let text = 'Chờ xác nhận';
+        let icon = <Clock className="w-3 h-3" />;
+        if (record.status === 'approved') {
+          color = 'green';
+          text = 'Đã xác nhận';
+          icon = <CheckCircle className="w-3 h-3" />;
+        } else if (record.status === 'rejected') {
+          color = 'red';
+          text = 'Từ chối';
+          icon = <AlertCircle className="w-3 h-3" />;
+        }
+        return (
+          <Tag
+            color={color}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: '500',
+              minWidth: '100px'
+            }}
+          >
+            {icon} {text}
+          </Tag>
+        );
+      },
     },
     {
       title: 'Cần gặp',
@@ -233,10 +236,10 @@ const HealthCheckStudents: React.FC = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Danh sách học sinh - {healthEvent?.title}
+              Danh sách học sinh - {healthEventDetail?.title}
             </h1>
             <p className="text-gray-600">
-              Năm học: {healthEvent?.School_year} | Ngày khám: {healthEvent?.Event?.dateEvent ? new Date(healthEvent.Event.dateEvent).toLocaleDateString() : 'N/A'}
+              Năm học: {healthEventDetail?.schoolYear} | Ngày khám: {healthEventDetail?.dateEvent ? new Date(healthEventDetail.dateEvent).toLocaleDateString() : 'N/A'}
             </p>
           </div>
         </div>
