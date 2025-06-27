@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
+    "@ckeditor/ckeditor5-react": "^9.5.0",
     "@reduxjs/toolkit": "^2.8.2",
     "@tailwindcss/vite": "^4.1.4",
     "@types/react-datepicker": "^6.2.0",

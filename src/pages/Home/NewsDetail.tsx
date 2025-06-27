@@ -98,9 +98,11 @@ const NewsDetail: React.FC = () => {
 
         {/* Article Content */}
         <div className="prose prose-lg max-w-none">
-          <div className="text-xl text-gray-700 mb-8 leading-relaxed whitespace-pre-wrap">
-            {blog.content}
-          </div>
+          <div
+            className="prose prose-xl max-w-none text-gray-800 [&>p]:text-lg [&>h2]:text-3xl [&>h3]:text-2xl"
+            dangerouslySetInnerHTML={{ __html: blog.content }}
+          ></div>
+
         </div>
       </article>
     </div>

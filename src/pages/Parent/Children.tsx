@@ -111,14 +111,6 @@ const Children = () => {
 
     const [childrenList, setChildrenList] = useState<{ id: number; name: string }[]>([]);
 
-    // const availableChildren = childrenList.filter(child => {
-    //     const alreadyUsed = children.some(record =>
-    //         record.userId === child.id && record.userId !== editingChild?.userId
-    //     );
-    //     return !alreadyUsed;
-    // });
-
-
     const vaccineOptions = [
         'BCG', 'Viêm gan B', 'DPT', 'Bại liệt', 'Sởi', 'Rubella',
         'Quai bị', 'Thủy đậu', 'Cúm', 'Phế cầu', 'Não mô cầu',
@@ -134,7 +126,7 @@ const Children = () => {
         'Phấn hoa', 'Bụi nhà', 'Lông động vật', 'Tôm cua', 'Sữa',
         'Trứng', 'Đậu phộng', 'Kháng sinh Penicillin', 'Aspirin'
     ];
-    const genderOptions = ['Nam', 'Nữ', 'Khác'];
+    const genderOptions = ['Nam', 'Nữ'];
     const showModal = (child: MedicalRecord | null = null) => {
         setEditingChild(child);
         setIsModalVisible(true);
@@ -465,14 +457,20 @@ const Children = () => {
                         </Form.Item>
 
 
-
                         <Form.Item
                             name="Class"
                             label="Lớp"
-                            rules={[{ required: true, message: 'Vui lòng nhập lớp!' }]}
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập lớp!' },
+                                {
+                                    pattern: /^[1-5]\/[1-9]\d*$/,
+                                    message: 'Lớp phải có định dạng như 1/1, 2/3... với số từ 1 đến 5 và số dương phía sau.'
+                                }
+                            ]}
                         >
-                            <Input placeholder="Nhập lớp" />
+                            <Input placeholder="Nhập lớp (ví dụ: 1/1, 5/2)" />
                         </Form.Item>
+
 
                         <Form.Item
                             name="gender"
@@ -656,7 +654,11 @@ const Children = () => {
                 </Modal>
 
                 <Modal
-                    title="Xác nhận xóa"
+                    title={
+                        <span className="text-lg font-bold">
+                            Xác nhận xóa
+                        </span>
+                    }
                     open={isDeleteModalVisible}
                     onOk={handleDelete}
                     onCancel={() => setIsDeleteModalVisible(false)}
@@ -664,7 +666,10 @@ const Children = () => {
                     cancelText="Hủy"
                     okType="danger"
                 >
-                    <p>Bạn có chắc chắn muốn xóa hồ sơ y tế của học sinh này không?</p>
+                    <p className="text-base font-semibold text-gray-800">Bạn có chắc chắn muốn xóa hồ sơ y tế của học sinh này không?</p>
+                    <Text type="danger" className='text-sm'>
+                        * Nếu xóa hồ sơ này, học sinh cũng sẽ bị xóa khỏi hệ thống. Hãy kiểm tra kỹ trước khi thực hiện.
+                    </Text>
                 </Modal>
 
             </div>
