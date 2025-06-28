@@ -32,6 +32,7 @@ import Manage_vaccine from '../pages/Nurse/Manage_vaccine';
 import Manage_medical_events from '../pages/Nurse/Manage_medical_events';
 import Detail_medical_event from '../pages/Nurse/Detail_medical_event';
 import HealthCheckStudents from '../pages/Nurse/HealthCheckStudents';
+import ForgotPasswordPage from '../pages/Login/ForgotPasswordPage';
 
 export default function AppRoutes() {
     return (
@@ -44,6 +45,7 @@ export default function AppRoutes() {
                 <Route path="/lien-he" element={<Contact />} />
             </Route>
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
             {/* Admin Routes */}
             <Route
