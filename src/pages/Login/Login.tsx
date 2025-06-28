@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import animationData from "../../assets/files/BgLogin.json";
-import { login } from "../../services/AuthServices";
+import { login, forgotPassword } from "../../services/AuthServices";
 import logo from "../../assets/images/medical-book.png";
 import { useDispatch } from 'react-redux';
 import { toggleLoading } from '../../app/redux/loading.slice';
@@ -184,7 +184,16 @@ const Login = () => {
                             {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                         </div>
 
-
+                        {/* Quên mật khẩu */}
+                        <div className="flex justify-end mt-1">
+                            <button
+                                type="button"
+                                className="text-blue-500 hover:underline text-sm"
+                                onClick={() => navigate('/forgot-password')}
+                            >
+                                Quên mật khẩu?
+                            </button>
+                        </div>
 
                         <button
                             type="submit"

@@ -69,12 +69,22 @@ export interface Guardian {
   isCallFirst: boolean;
   userId: number;
   fullname: string;
+  address: string;
   students: Student[];
 }
 
 export interface StudentsByGuardianResponse {
   guardianObId: number;
   students: Student[];
+}
+
+export interface UpdateGuardianDto {
+  username?: string;
+  fullname?: string;
+  phoneNumber?: string;
+  address?: string;
+  roleInFamily?: string;
+  isCallFirst?: boolean;
 }
 
 const API_URL = 'http://localhost:3333/api/v1';
@@ -291,4 +301,27 @@ export async function deleteStudent(guardianId: number, studentId: number, token
     const error = await res.json();
     throw new Error(error.message || 'Lỗi khi xóa học sinh');
   }
+}
+
+export async function updateGuardian(
+  obId: number,
+  updateData: UpdateGuardianDto,
+  token: string
+): Promise<{ guardian: Guardian; user: User }> {
+  const res = await fetch(`${API_URL}/guardians/${obId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(updateData)
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Lỗi khi cập nhật thông tin phụ huynh');
+  }
+
+  const data = await res.json();
+  return data.data;
 }

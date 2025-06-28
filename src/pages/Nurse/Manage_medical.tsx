@@ -16,16 +16,16 @@ import { getAllGuardians, Guardian } from '../../services/AccountService';
 
 const statusColor: Record<string, string> = {
   pending: 'orange',
-  processing: 'blue',
-  delivered: 'green',
-  cancelled: 'red',
+  received: 'blue',
+  rejected: 'red',
+  given: 'green',
 };
 
 const statusText: Record<string, string> = {
   pending: 'Chờ xử lý',
-  processing: 'Đang xử lý',
-  delivered: 'Đã giao',
-  cancelled: 'Đã hủy',
+  received: 'Đã nhận',
+  rejected: 'Từ chối',
+  given: 'Đã cho uống',
 };
 
 const MedicineManagement: React.FC = () => {
@@ -133,8 +133,8 @@ const MedicineManagement: React.FC = () => {
   };
 
   const getNextStatuses = (current: MedicalSentStatus): MedicalSentStatus[] => {
-    if (current === 'pending') return ['processing', 'cancelled'];
-    if (current === 'processing') return ['delivered', 'cancelled'];
+    if (current === 'pending') return ['received', 'rejected'];
+    if (current === 'received') return ['given'];
     return [];
   };
 
