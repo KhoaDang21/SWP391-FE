@@ -32,6 +32,7 @@ import Manage_vaccine from '../pages/Nurse/Manage_vaccine';
 import Manage_medical_events from '../pages/Nurse/Manage_medical_events';
 import Detail_medical_event from '../pages/Nurse/Detail_medical_event';
 import HealthCheckStudents from '../pages/Nurse/HealthCheckStudents';
+import VaccineEventStudents from '../pages/Nurse/VaccineEventStudents';
 import ForgotPasswordPage from '../pages/Login/ForgotPasswordPage';
 
 export default function AppRoutes() {
@@ -88,6 +89,9 @@ export default function AppRoutes() {
                 <Route path="vaccine" element={<Manage_vaccine />} />
                 <Route path="medical-events" element={<Manage_medical_events />} />
                 <Route path="medical-events/detail/:id" element={<Detail_medical_event />} />
+                <Route path="vaccine-events">
+                    <Route path=":eventName/:eventGade/:eventDate" element={<VaccineEventStudents />} />   
+                </Route>
             </Route>
             <Route
                 path="/guardian"
@@ -104,7 +108,6 @@ export default function AppRoutes() {
                 <Route path="checkups" element={<Checkup />} />
                 <Route path="events" element={<Event />} />
             </Route>
-            {/* Catch-all */}
             <Route path="*" element={<Login />} />
         </Routes>
     );

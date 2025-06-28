@@ -125,12 +125,9 @@ const Vaccine: React.FC = () => {
     };
 
     useEffect(() => {
-        let intervalId: ReturnType<typeof setInterval>;
-
         const fetchData = async () => {
             try {
-                const shouldOpenModal = searchParams.get('openModal') === 'true';
-
+                const shouldOpenModal = searchParams.get('openModal') === 'true';                const studentNameParam = searchParams.get('studentName');
 
                 const response = await vaccineService.getVaccinesByGuardian();
                 const transformedStudents = response.histories.map(history => ({
@@ -156,11 +153,18 @@ const Vaccine: React.FC = () => {
                 setStudents(transformedStudents);
 
                 if (shouldOpenModal && transformedStudents.length > 0) {
-                    setSelectedStudent(transformedStudents[0]);
+                    let studentToOpen = transformedStudents[0];
+                    if (studentNameParam) {
+                        const decodedName = decodeURIComponent(studentNameParam).toLowerCase();
+                        const found = transformedStudents.find(s => s.name.toLowerCase() === decodedName);
+                        if (found) studentToOpen = found;
+                    }
+                    setSelectedStudent(studentToOpen);
                     setTimeout(() => {
                         setDetailModalVisible(true);
                         const params = new URLSearchParams(searchParams);
                         params.delete('openModal');
+                        params.delete('studentName');
                         window.history.replaceState(
                             {},
                             '',
@@ -175,11 +179,6 @@ const Vaccine: React.FC = () => {
         };
 
         fetchData();
-        intervalId = setInterval(fetchData, 5000);
-
-        return () => {
-            clearInterval(intervalId);
-        };
     }, [searchParams]);
 
     const handleViewDetail = (student: Student) => {
@@ -292,7 +291,6 @@ const Vaccine: React.FC = () => {
             >
                 {selectedStudent && (
                     <div>
-                        {/* Thông tin học sinh */}
                         <Card size="small" style={{ marginBottom: 16 }}>
                             <Row gutter={16}>
                                 <Col span={6}>
@@ -312,6 +310,10 @@ const Vaccine: React.FC = () => {
                         <List
                             itemLayout="horizontal"
                             dataSource={selectedStudent.vaccineRecords}
+                            pagination={{
+                                pageSize: 5,
+                                showSizeChanger: false
+                            }}
                             renderItem={(vaccineRecord) => {
                                 const getBackgroundColor = () => {
                                     switch (vaccineRecord.status) {

@@ -18,6 +18,8 @@ const Header = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
     const fetchNotifications = async () => {
       try {
         const response = await notificationService.getNotificationsForCurrentUser();
@@ -28,6 +30,9 @@ const Header = () => {
     };
 
     fetchNotifications();
+    intervalId = setInterval(fetchNotifications, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleLogout = async () => {

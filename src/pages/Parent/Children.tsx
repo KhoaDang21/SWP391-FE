@@ -31,6 +31,7 @@ import {
 } from '@ant-design/icons';
 import { getStudentsByGuardianUserId } from '../../services/AccountService';
 import { createStudentWithMedicalRecord, deleteMedicalRecord, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
+import { vaccineService, VaccineHistoryByMedicalRecordResponse } from '../../services/Vaccineservice';
 import type { MedicalRecord } from '../../services/MedicalRecordService';
 const { Option } = Select;
 const { TextArea } = Input;
@@ -45,6 +46,9 @@ const Children = () => {
     const [children, setChildren] = useState<MedicalRecord[]>([]);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [vaccineHistories, setVaccineHistories] = useState<{ [medicalRecordId: number]: VaccineHistoryByMedicalRecordResponse }>(
+        {}
+    );
 
     useEffect(() => {
         const fetchData = async () => {
@@ -277,6 +281,29 @@ const Children = () => {
         return age;
     };
 
+    useEffect(() => {
+        const fetchVaccineHistories = async () => {
+            try {
+                const histories: { [medicalRecordId: number]: VaccineHistoryByMedicalRecordResponse } = {};
+                for (const child of children) {
+                    if (child.ID) {
+                        try {
+                            const data = await vaccineService.getVaccineHistoryByMedicalRecordId(child.ID);
+                            histories[child.ID] = data;
+                            console.log(`Fetched vaccine history for child ID ${child.ID}:`, data);
+                        } catch (e) {
+                        }
+                    }
+                }
+                setVaccineHistories(histories);
+            } catch (error) {
+            }
+        };
+        if (children.length > 0) {
+            fetchVaccineHistories();
+        }
+    }, [children]);
+
     return (
         <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
@@ -345,18 +372,29 @@ const Children = () => {
                                         <Tabs size="small">
                                             <TabPane tab={<span><SafetyOutlined />Vaccine</span>} key="1">
                                                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {child.vaccines && child.vaccines.length > 0 ? (
-                                                        child.vaccines.map((vaccine, index) => (
-                                                            <div key={index} style={{ marginBottom: '8px', padding: '8px', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
-                                                                <Text strong>{vaccine.name}</Text>
-                                                                <br />
-                                                                <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                                    {vaccine.date} • {vaccine.status}
-                                                                </Text>
-                                                            </div>
-                                                        ))
+                                                    {vaccineHistories[child.ID] && vaccineHistories[child.ID].vaccineHistory.filter(v => v.Status === 'Đã tiêm').length > 0 ? (
+                                                        vaccineHistories[child.ID].vaccineHistory
+                                                            .filter(vaccine => vaccine.Status === 'Đã tiêm')
+                                                            .map((vaccine, index) => (
+                                                                <div
+                                                                    key={index}
+                                                                    style={{
+                                                                        marginBottom: '8px',
+                                                                        padding: '8px',
+                                                                        backgroundColor: '#f6ffed',
+                                                                        borderRadius: '4px',
+                                                                        border: '1px solid #b7eb8f'
+                                                                    }}
+                                                                >
+                                                                    <Text strong style={{ color: '#389e0d' }}>{vaccine.Vaccine_name}</Text>
+                                                                    <br />
+                                                                    <Text type="secondary" style={{ fontSize: '12px', color: '#389e0d' }}>
+                                                                       Ngày Tiêm: {vaccine.Date_injection ? new Date(vaccine.Date_injection).toLocaleDateString('vi-VN') : ''} 
+                                                                    </Text>
+                                                                </div>
+                                                            ))
                                                     ) : (
-                                                        <Text type="secondary">Chưa có thông tin vaccine</Text>
+                                                        <Text type="secondary">Chưa có thông tin vaccine đã tiêm</Text>
                                                     )}
                                                 </div>
                                             </TabPane>

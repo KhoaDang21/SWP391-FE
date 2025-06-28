@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 interface VaccineCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { vaccineName: string, vaccineType: string, date: string }) => void;
+  onSubmit: (data: { vaccineName: string, vaccineType: string, date: string, grade: string }) => void;
   vaccineTypes: string[];
   selectedVaccine: string;
 }
@@ -18,24 +18,28 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
   const [date, setDate] = useState('');
   const [vaccineName, setVaccineName] = useState('');
   const [vaccineType, setVaccineType] = useState('');
+  const [grade, setGrade] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setVaccineName('');
       setVaccineType('');
       setDate('');
+      setGrade('');
     }
   }, [isOpen]);
 
   const handleSubmit = () => {
-    onSubmit({ 
-      vaccineName, 
-      vaccineType, 
-      date 
+    onSubmit({
+      vaccineName,
+      vaccineType,
+      date,
+      grade
     });
     setVaccineName('');
     setVaccineType('');
     setDate('');
+    setGrade('');
   };
 
   if (!isOpen) return null;
@@ -102,9 +106,21 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
                 required
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Khối lớp
+              </label>
+              <input
+                type="text"
+                value={grade}
+                onChange={(e) => setGrade(e.target.value)}
+                className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
+                placeholder="Nhập khối lớp"
+                required
+              />
+            </div>
           </div>
 
-          {/* Footer Buttons */}
           <div className="mt-6 flex gap-3 justify-end">
             <button
               onClick={onClose}
@@ -114,7 +130,7 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={!date || !vaccineName || !vaccineType}
+              disabled={!date || !vaccineName || !vaccineType || !grade}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Tạo mới

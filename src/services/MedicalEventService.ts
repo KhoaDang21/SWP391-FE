@@ -16,8 +16,21 @@ interface MedicalEventApi {
     userId: number;
     Class: string;
     historyHealth: string;
+    height?: number;
+    weight?: number;
+    bloodType?: string;
+    chronicDiseases?: string;
+    allergies?: string;
+    pastIllnesses?: string;
   };
   UserFullname?: string;
+  guardian?: {
+    fullname: string;
+    phoneNumber: string;
+    roleInFamily: string;
+    address: string;
+    isCallFirst: boolean;
+  };
 }
 
 interface CreateMedicalEventData {
