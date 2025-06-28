@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { vaccineService, VaccinePayload, VaccineCreateRequest, UpdateVaccineStatusRequest } from '../../services/Vaccineservice';
+import { vaccineService, VaccineEvent } from '../../services/Vaccineservice';
 import VaccineCreateModal from './Modal/VaccineCreateModal';
+import { useNavigate } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -12,175 +15,89 @@ const formatDate = (dateString: string) => {
 };
 
 const Manage_vaccine: React.FC = () => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedVaccine, setSelectedVaccine] = useState('');
-  const [vaccineRecords, setVaccineRecords] = useState<VaccinePayload[]>([]);
-  const [vaccineTypes, setVaccineTypes] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [noteInputs, setNoteInputs] = useState<{ [key: number]: string }>({});
+  const [vaccineEvents, setVaccineEvents] = useState<VaccineEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchDate, setSearchDate] = useState('');
+  const [searchGrade, setSearchGrade] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const pageSize = 10;
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTypes = async () => {
+    const fetchEvents = async () => {
       try {
-        const types = await vaccineService.getVaccineTypes();
-        setVaccineTypes(types);
-        setSelectedVaccine(types[0] || '');
+        const events = await vaccineService.getVaccineEvents();
+        setVaccineEvents(events);
       } catch (error) {
-        setVaccineTypes([]);
-      }
-    };
-    fetchTypes();
-  }, []);
-
-  useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval>;
-
-    if (!selectedVaccine) {
-      setVaccineRecords([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    const fetchByName = async () => {
-      try {
-        const records = await vaccineService.getVaccineByName(selectedVaccine);
-        setVaccineRecords(records);
-      } catch (error) {
-        setVaccineRecords([]);
+        setVaccineEvents([]);
       } finally {
         setIsLoading(false);
       }
     };
-
-    fetchByName();
-    intervalId = setInterval(fetchByName, 5000);
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [selectedVaccine]);
-
-  const handleEditSave = async () => {
-    if (isEditing) {
-      try {
-        console.log('Filtered Records:', filteredRecords);
-        console.log('Note Inputs:', noteInputs);
-
-        const updates = filteredRecords
-          .filter(record => noteInputs[record.MR_ID] !== undefined || record.note_affter_injection)
-          .map(record => ({
-            VH_ID: record.VH_ID,
-            status: "Đã tiêm",
-            note_affter_injection: noteInputs[record.MR_ID] || record.note_affter_injection || ''
-          }));
-
-        console.log('Updates:', updates);
-
-        if (updates.length === 0) {
-          console.log('No records to update');
-          setIsEditing(false);
-          return;
-        }
-
-        const updateData: UpdateVaccineStatusRequest = {
-          updates: updates
-        };
-
-        console.log('Request Data:', updateData);
-
-        await vaccineService.updateVaccineStatus(updateData);
-
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out';
-        notification.textContent = 'Cập nhật trạng thái thành công!';
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
-
-        // Refresh the data
-        const records = await vaccineService.getVaccineByName(selectedVaccine);
-        setVaccineRecords(records);
-      } catch (error) {
-        // Log the error details
-        console.error('Update Error Details:', {
-          error,
-          noteInputs,
-          filteredRecords
-        });
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out';
-        notification.textContent = 'Có lỗi xảy ra khi cập nhật!';
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
-      }
-    }
-    setIsEditing(!isEditing);
-    setNoteInputs({});
-  };
+    fetchEvents();
+  }, []);
 
   const handleCreateNewEvent = () => {
     setIsModalOpen(true);
   };
 
-  const handleModalSubmit = async (data: { vaccineName: string, vaccineType: string, date: string }) => {
+  const handleModalSubmit = async (data: { vaccineName: string, vaccineType: string, date: string, grade: string }) => {
     try {
       setIsLoading(true);
-      const newVaccineData: VaccineCreateRequest = {
+      await vaccineService.createVaccine({
         Vaccine_name: data.vaccineName,
         Vaccince_type: data.vaccineType,
         Date_injection: data.date,
-      };
-
-      await vaccineService.createVaccine(newVaccineData);
+        Grade: data.grade
+      });
 
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out';
       notification.textContent = 'Tạo đợt tiêm thành công!';
       document.body.appendChild(notification);
-      setTimeout(() => {
-        notification.remove();
-      }, 3000);
+      setTimeout(() => notification.remove(), 3000);
 
-      const [types, records] = await Promise.all([
-        vaccineService.getVaccineTypes(),
-        vaccineService.getVaccineByName(data.vaccineName)
-      ]);
-
-      setVaccineTypes(types);
-      setSelectedVaccine(data.vaccineName);
-      setVaccineRecords(records);
+      const events = await vaccineService.getVaccineEvents();
+      setVaccineEvents(events);
       setIsModalOpen(false);
-
     } catch (error) {
-      console.error('Error creating vaccine event:', error);
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out';
-      notification.textContent = 'Có lỗi xảy ra khi tạo đợt tiêm!';
+      notification.textContent = error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo đợt tiêm';
       document.body.appendChild(notification);
-
-      setTimeout(() => {
-        notification.remove();
-      }, 3000);
+      setTimeout(() => notification.remove(), 3000);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredRecords = React.useMemo(() => {
-    return vaccineRecords.filter(record => {
-      const matchesVaccine = record.Vaccine_name === selectedVaccine;
-      const isAllowed = record.Status !== "Không cho phép tiêm";
-      return matchesVaccine && isAllowed;
-    });
-  }, [vaccineRecords, selectedVaccine]);
+  const gradeOptions = Array.from(new Set(vaccineEvents.map(e => e.grade))).sort();
 
-  // Add function to check if all records are completed
-  const areAllRecordsCompleted = React.useMemo(() => {
-    return filteredRecords.length > 0 &&
-      filteredRecords.every(record => record.Status === 'Đã tiêm');
-  }, [filteredRecords]);
+
+  const filteredEvents = vaccineEvents.filter(event => {
+    const matchesName = event.vaccineName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDate = searchDate
+      ? formatDate(event.eventdate) === formatDate(searchDate)
+      : true;
+    const matchesGrade = searchGrade
+      ? String(event.grade) === searchGrade
+      : true;
+    return matchesName && matchesDate && matchesGrade;
+  });
+  const paginatedEvents = filteredEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalPages = Math.ceil(filteredEvents.length / pageSize);
+
+  useEffect(() => {
+    if (!searchDate) {
+      setSelectedDate(null);
+    } else {
+      const d = new Date(searchDate);
+      if (!isNaN(d.getTime())) setSelectedDate(d);
+    }
+  }, [searchDate]);
 
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
@@ -190,37 +107,61 @@ const Manage_vaccine: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Quản lý tiêm chủng</h1>
-        <div className="flex gap-3">
-          <button
-            onClick={handleCreateNewEvent}
-            className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
-          >
-            Tạo mới đợt tiêm
-          </button>
-          {!areAllRecordsCompleted && (
-            <button
-              onClick={handleEditSave}
-              className={`px-6 py-2.5 rounded-lg transition-all duration-200 shadow-lg ${isEditing
-                  ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:shadow-green-500/30'
-                  : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-blue-500/30'
-                } text-white`}
-            >
-              {isEditing ? 'Lưu' : 'Chỉnh sửa'}
-            </button>
-          )}
-        </div>
+        <button
+          onClick={handleCreateNewEvent}
+          className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg"
+        >
+          Tạo mới đợt tiêm
+        </button>
       </div>
 
-      <div className="mb-8 p-4 bg-white rounded-xl shadow-sm border border-gray-200 space-y-4">
-        <div className="flex items-center gap-3">
-          <label className="font-medium text-gray-700">Loại Vaccine:</label>
-          <select
-            value={selectedVaccine}
-            onChange={(e) => setSelectedVaccine(e.target.value)}
+      <div className="mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <label className="block text-gray-700 font-medium mb-1 sm:mb-0 sm:mr-4" htmlFor="search-vaccine-event">
+            Tìm kiếm đợt tiêm:
+          </label>
+          <input
+            id="search-vaccine-event"
+            type="text"
+            className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+            placeholder="Nhập tên đợt tiêm..."
+            value={searchTerm}
+            onChange={e => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); 
+            }}
+          />
+          <label className="block text-gray-700 font-medium mb-1 sm:mb-0 sm:ml-4" htmlFor="search-vaccine-date">
+            Ngày tiêm:
+          </label>
+          <DatePicker
+            selected={selectedDate}
+            onChange={(date: Date | null) => {
+              setSelectedDate(date);
+              setSearchDate(date ? date.toISOString().slice(0, 10) : '');
+              setCurrentPage(1);
+            }}
+            dateFormat="dd/MM/yyyy"
             className="min-w-[200px] border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            placeholderText="Chọn ngày tiêm"
+            id="search-vaccine-date"
+            isClearable
+          />
+          <label className="block text-gray-700 font-medium mb-1 sm:mb-0 sm:ml-4" htmlFor="search-vaccine-grade">
+            Khối:
+          </label>
+          <select
+            id="search-vaccine-grade"
+            className="w-full sm:w-40 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+            value={searchGrade}
+            onChange={e => {
+              setSearchGrade(e.target.value);
+              setCurrentPage(1);
+            }}
           >
-            {vaccineTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
+            <option value="">Tất cả</option>
+            {gradeOptions.map(grade => (
+              <option key={grade} value={grade}>Khối {grade}</option>
             ))}
           </select>
         </div>
@@ -231,69 +172,77 @@ const Manage_vaccine: React.FC = () => {
           <thead>
             <tr className="bg-gray-50">
               <th className="w-[10%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STT</th>
-              <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên học sinh</th>
-              <th className="w-[10%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lớp</th>
-              <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên Vaccine</th>
-              <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiêm</th>
-              <th className="w-[20%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Theo dõi sau tiêm</th>
-              <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+              <th className="w-[30%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên đợt tiêm</th>
+              <th className="w-[20%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khối</th>
+              <th className="w-[20%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiêm</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredRecords.length > 0 ? (
-              filteredRecords.map((record, index) => (
-                <tr key={record.VH_ID} className="hover:bg-gray-50 transition-colors duration-200">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{index + 1}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{record.PatientName}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{record.MedicalRecord.Class}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{record.Vaccine_name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {formatDate(record.Date_injection)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        defaultValue={record.note_affter_injection || ''}
-                        onChange={(e) => setNoteInputs(prev => ({
-                          ...prev,
-                          [record.MR_ID]: e.target.value
-                        }))}
-                        className="w-full border rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    ) : record.note_affter_injection || 'Chưa có ghi chú'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${record.Status === 'Đã tiêm'
-                        ? 'bg-green-100 text-green-800'
-                        : record.Status === 'Cho phép tiêm'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                      {record.Status}
-                    </span>
-                  </td>
+            {filteredEvents.length > 0 ? (
+              paginatedEvents.map((event, index) => (
+                <tr
+                  key={event.vaccineName + event.grade + event.eventdate}
+                  className="hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
+                  onClick={() =>
+                    navigate(
+                      `/nurse/vaccine-events/${encodeURIComponent(event.vaccineName)}/${event.grade}/${event.eventdate}`,
+                      { state: { vaccineName: event.vaccineName, grade: event.grade, eventDate: event.eventdate } }
+                    )
+                  }
+                  title="Xem danh sách học sinh"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{(currentPage - 1) * pageSize + index + 1}</td>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{event.vaccineName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Khối {event.grade}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(event.eventdate)}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                  Không có dữ liệu cho loại vaccine này
+                <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                  Không có dữ liệu đợt tiêm
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        {filteredEvents.length > pageSize && (
+          <div className="flex justify-end items-center px-6 py-4 space-x-2">            
+            <button
+              className={`w-8 h-8 flex items-center justify-center rounded border ${currentPage === 1 ? 'border-gray-200 text-gray-300 bg-white' : 'border-gray-300 text-gray-600 bg-white hover:border-blue-400 hover:text-blue-600'} transition`}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              aria-label="Trang trước"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <span
+              className="w-8 h-8 flex items-center justify-center rounded border border-blue-500 text-blue-600 bg-white font-semibold"
+            >
+              {currentPage}
+            </span>
+            <button
+              className={`w-8 h-8 flex items-center justify-center rounded border ${currentPage === totalPages ? 'border-gray-200 text-gray-300 bg-white' : 'border-gray-300 text-gray-600 bg-white hover:border-blue-400 hover:text-blue-600'} transition`}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              aria-label="Trang sau"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       <VaccineCreateModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}
-        vaccineTypes={vaccineTypes}
-        selectedVaccine={selectedVaccine}
+        vaccineTypes={[]}
+        selectedVaccine={''}
       />
     </div>
   );

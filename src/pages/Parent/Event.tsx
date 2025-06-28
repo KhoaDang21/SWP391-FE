@@ -4,7 +4,10 @@ import { EyeOutlined, CheckCircleOutlined, MinusCircleOutlined, MedicineBoxOutli
 import type { ColumnsType } from 'antd/es/table'
 import { medicalEventService } from '../../services/MedicalEventService'
 import dayjs, { Dayjs } from 'dayjs'
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { RangePickerProps } from 'antd/es/date-picker';
 
 const { Title, Text } = Typography
 
@@ -19,10 +22,14 @@ interface EventType {
     image?: string | null
 }
 
+dayjs.extend(isSameOrAfter)
+dayjs.extend(isSameOrBefore)
+
 const Event = () => {
     const [events, setEvents] = useState<EventType[]>([])
     const [loading, setLoading] = useState(false)
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs())
+    const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
     const [detailModal, setDetailModal] = useState<{ open: boolean, event?: EventType }>({ open: false })
     const location = useLocation()
     const navigate = useNavigate()
@@ -79,11 +86,17 @@ const Event = () => {
         }
     }, [])
 
-    const filteredEvents = selectedDate
+    const filteredEvents = dateRange && dateRange[0] && dateRange[1]
         ? events.filter(ev =>
-            ev.createdAt && dayjs(ev.createdAt).isSame(selectedDate, 'day')
+            ev.createdAt &&
+            dayjs(ev.createdAt).isSameOrAfter(dateRange[0], 'day') &&
+            dayjs(ev.createdAt).isSameOrBefore(dateRange[1], 'day')
         )
-        : events
+        : selectedDate
+            ? events.filter(ev =>
+                ev.createdAt && dayjs(ev.createdAt).isSame(selectedDate, 'day')
+            )
+            : events
 
     const columns: ColumnsType<EventType> = [
         {
@@ -161,12 +174,23 @@ const Event = () => {
                         placeholder={dayjs().format('DD/MM/YYYY')}
                         value={selectedDate}
                         onChange={date => {
-                            setSelectedDate(date)  
+                            setSelectedDate(date)
+                            setDateRange(null)
                             if (location.search.includes('date=')) {
                                 navigate('/guardian/event')
                             }
                         }}
                         allowClear
+                    />
+                    <DatePicker.RangePicker
+                        format="DD/MM/YYYY"
+                        value={dateRange}
+                        onChange={range => {
+                            setDateRange(range)
+                            setSelectedDate(null)
+                        }}
+                        allowClear
+                        placeholder={['Từ ngày', 'Đến ngày']}
                     />
                 </Space>
                 <Table

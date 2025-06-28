@@ -26,6 +26,13 @@ export interface MedicalRecord {
     chronicDiseases: string;
     allergies: string;
     vaccines: Vaccine[];
+    guardian?: {
+        fullname: string;
+        phoneNumber: string;
+        roleInFamily: string;
+        address: string;
+        isCallFirst: boolean;
+    };
 }
 
 export interface CreateStudentMedicalPayload {
