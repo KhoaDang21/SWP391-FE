@@ -88,16 +88,3 @@ export async function forgotPassword(email: string): Promise<any> {
   }
   return res.json();
 }
-
-export async function resetPassword(token: string, newPassword: string, confirmPassword: string): Promise<any> {
-  const res = await fetch('http://localhost:3333/api/v1/auth/reset-password', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, newPassword, confirmPassword })
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Đặt lại mật khẩu thất bại');
-  }
-  return res.json();
-}
