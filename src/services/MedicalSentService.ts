@@ -1,6 +1,6 @@
 const API_URL = 'http://localhost:3333/api/v1/medical-sents';
 
-export type MedicalSentStatus = 'pending' | 'processing' | 'delivered' | 'cancelled';
+export type MedicalSentStatus = 'pending' | 'received' | 'rejected' | 'given';
 
 const mapMedicalSent = (item: any): MedicalSent => {
   const { ID, ...rest } = item;

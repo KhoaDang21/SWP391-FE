@@ -115,6 +115,40 @@ export interface GetHealthCheckFormsByStudentResponse {
   data: HealthCheckFormByStudent[];
 }
 
+export interface SubmitHealthCheckResultRequest {
+  student_id: number;
+  height: number;
+  weight: number;
+  blood_pressure: string;
+  vision_left: number;
+  vision_right: number;
+  dental_status: string;
+  ent_status: string;
+  skin_status: string;
+  general_conclusion: string;
+  is_need_meet: boolean;
+}
+
+export interface HealthCheckResult {
+  Form_ID: number;
+  HC_ID: number;
+  Student_ID: number;
+  Height: number;
+  Weight: number;
+  Blood_Pressure: string;
+  Vision_Left: number;
+  Vision_Right: number;
+  Dental_Status: string;
+  ENT_Status: string;
+  Skin_Status: string;
+  General_Conclusion: string;
+  Is_need_meet: boolean;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  GuardianUserId: number | null;
+}
+
 const API_URL = 'http://localhost:3333/api/v1';
 
 export const healthCheckService = {
@@ -298,6 +332,77 @@ export const healthCheckService = {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
       },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  // Submit health check result for a student
+  submitHealthCheckResult: async (hcId: number, data: SubmitHealthCheckResultRequest): Promise<{ success: boolean; message: string }> => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('Access token is missing');
+    const response = await fetch(`${API_URL}/health-check/${hcId}/submit-result`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  // Send health check result to guardians
+  sendHealthCheckResult: async (hcId: number): Promise<{ success: boolean; message: string }> => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('Access token is missing');
+    const response = await fetch(`${API_URL}/health-check/${hcId}/send-result`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': '*/*',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  // Get health check result for a specific student
+  getHealthCheckResult: async (hcId: number, studentId: number): Promise<HealthCheckResult> => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('Access token is missing');
+    const response = await fetch(`${API_URL}/health-check/${hcId}/form-result?student_id=${studentId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': '*/*',
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+
+  // Update health check result
+  updateHealthCheckResult: async (hcId: number, studentId: number, data: SubmitHealthCheckResultRequest): Promise<{ success: boolean; message: string }> => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('Access token is missing');
+    const response = await fetch(`${API_URL}/health-check/${hcId}/form-result?student_id=${studentId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+      },
+      body: JSON.stringify(data),
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

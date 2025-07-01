@@ -12,7 +12,6 @@ import {
     Row,
     Col,
     Typography,
-    Divider,
     message,
     Image,
     Tooltip,
@@ -32,7 +31,6 @@ import {
     FileTextOutlined,
     PictureOutlined,
     MedicineBoxOutlined,
-    CalendarOutlined,
     ClockCircleOutlined,
     UserOutlined
 } from '@ant-design/icons';
@@ -55,7 +53,10 @@ const statusConfig: Record<string, { color: string; icon: ReactElement; text: st
     pending: { color: 'orange', icon: <ExclamationCircleOutlined />, text: 'Chờ xử lý' },
     processing: { color: 'blue', icon: <SyncOutlined />, text: 'Đang xử lý' },
     delivered: { color: 'green', icon: <CheckCircleOutlined />, text: 'Đã giao' },
-    cancelled: { color: 'red', icon: <ExclamationCircleOutlined />, text: 'Đã hủy' }
+    cancelled: { color: 'red', icon: <ExclamationCircleOutlined />, text: 'Đã hủy' },
+    rejected: { color: 'red', icon: <ExclamationCircleOutlined />, text: 'Đã từ chối' },
+    received: { color: 'blue', icon: <SyncOutlined />, text: 'Đã nhận' },
+    given: { color: 'green', icon: <CheckCircleOutlined />, text: 'Đã cho uống' },
 };
 
 const SendMedication: React.FC = () => {
@@ -429,10 +430,7 @@ const SendMedication: React.FC = () => {
                                             <Text type="secondary" className="text-xs">TÌNH TRẠNG</Text>
                                             <div className="mt-1">
                                                 <Tag
-                                                    color={
-                                                        selectedRecord.Status === 'delivered' ? 'success' :
-                                                            selectedRecord.Status === 'pending' ? 'warning' : 'error'
-                                                    }
+                                                    color={statusConfig[selectedRecord.Status]?.color || 'default'}
                                                     className="px-3 py-1 rounded-full font-medium"
                                                 >
                                                     {statusConfig[selectedRecord.Status]?.text}

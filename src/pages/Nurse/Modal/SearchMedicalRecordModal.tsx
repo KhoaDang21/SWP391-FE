@@ -5,20 +5,14 @@ import { getAllMedicalRecords, MedicalRecord as APIMedicalRecord } from '../../.
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (id: string) => void;
-}
-
-interface MedicalRecord {
-  ID: string;
-  studentName: string;
-  class: string;
+  onSelect: (info: APIMedicalRecord) => void; 
 }
 
 const SearchMedicalRecordModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [allRecords, setAllRecords] = useState<MedicalRecord[]>([]);
+  const [records, setRecords] = useState<APIMedicalRecord[]>([]);
+  const [allRecords, setAllRecords] = useState<APIMedicalRecord[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
@@ -29,13 +23,8 @@ const SearchMedicalRecordModal: React.FC<SearchModalProps> = ({ isOpen, onClose,
       try {
         const token = localStorage.getItem('token') || '';
         const apiRecords = await getAllMedicalRecords(token);
-        const mappedRecords = apiRecords.map((rec: APIMedicalRecord) => ({
-          ID: rec.ID.toString(),
-          studentName: rec.fullname,
-          class: rec.Class,
-        }));
-        setAllRecords(mappedRecords);
-        setRecords(mappedRecords);
+        setAllRecords(apiRecords);
+        setRecords(apiRecords);
         setCurrentPage(1); 
       } catch (err) {
         setAllRecords([]);
@@ -51,9 +40,9 @@ const SearchMedicalRecordModal: React.FC<SearchModalProps> = ({ isOpen, onClose,
     setIsLoading(true);
     setTimeout(() => {
       const filtered = allRecords.filter(record =>
-        record.studentName.toLowerCase().includes(term.toLowerCase()) ||
-        record.ID.includes(term) ||
-        record.class.toLowerCase().includes(term.toLowerCase())
+        record.fullname.toLowerCase().includes(term.toLowerCase()) ||
+        record.ID.toString().includes(term) ||
+        record.Class.toLowerCase().includes(term.toLowerCase())
       );
       setRecords(filtered);
       setCurrentPage(1); 
@@ -106,14 +95,14 @@ const SearchMedicalRecordModal: React.FC<SearchModalProps> = ({ isOpen, onClose,
                 <button
                   key={record.ID}
                   onClick={() => {
-                    onSelect(record.ID);
+                    onSelect(record); 
                     onClose();
                   }}
                   className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors w-full text-left"
                 >
                   <div>
-                    <p className="font-medium text-gray-900">{record.studentName}</p>
-                    <p className="text-sm text-gray-500">Lớp: {record.class}</p>
+                    <p className="font-medium text-gray-900">{record.fullname}</p>
+                    <p className="text-sm text-gray-500">Lớp: {record.Class}</p>
                   </div>
                   <p className="text-sm font-medium text-gray-600">ID: {record.ID}</p>
                 </button>

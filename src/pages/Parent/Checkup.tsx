@@ -12,7 +12,8 @@ import {
     Space,
     Divider,
     Empty,
-    Skeleton
+    Skeleton,
+    Spin
 } from 'antd';
 import {
     UserOutlined,
@@ -25,6 +26,7 @@ import {
 import dayjs from 'dayjs';
 import { getStudentsByGuardianUserId } from '../../services/AccountService';
 import { getHealthCheckFormsByStudent, healthCheckService } from '../../services/Healthcheck';
+import { notificationService } from '../../services/NotificationService';
 
 const { Title, Text } = Typography;
 
@@ -42,6 +44,9 @@ const Checkup: React.FC = () => {
     const [selectedForm, setSelectedForm] = useState<any>(null);
     const [confirmModalVisible, setConfirmModalVisible] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
+    const [resultModalVisible, setResultModalVisible] = useState(false);
+    const [selectedResult, setSelectedResult] = useState<any>(null);
+    const [resultLoading, setResultLoading] = useState(false);
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -82,6 +87,20 @@ const Checkup: React.FC = () => {
     const handleCheckupClick = (record: any) => {
         setSelectedCheckup(record);
         setCheckupModalVisible(true);
+    };
+
+    const handleViewResult = async (form: any) => {
+        setResultLoading(true);
+        try {
+            const result = await healthCheckService.getHealthCheckResult(form.eventId, form.studentId);
+            setSelectedResult(result);
+            setResultModalVisible(true);
+        } catch (error) {
+            console.error('Error fetching health check result:', error);
+            notificationService.error('Có lỗi xảy ra khi tải kết quả khám');
+        } finally {
+            setResultLoading(false);
+        }
     };
 
     return (
@@ -170,14 +189,20 @@ const Checkup: React.FC = () => {
                                         switch (form.status) {
                                             case 'pending': tagColor = 'warning'; break;
                                             case 'approved': tagColor = 'success'; break;
+                                            case 'checked': tagColor = 'warning'; break;
                                             case 'rejected': tagColor = 'error'; break;
                                             default: tagColor = 'default';
                                         }
                                         return (
                                             <List.Item key={form.formId} style={{ padding: 0, border: 'none', cursor: 'pointer' }}
                                                 onClick={() => {
-                                                    setSelectedForm(form);
-                                                    setConfirmModalVisible(true);
+                                                    if (form.status === 'checked') {
+                                                        // Hiển thị kết quả khám thay vì modal xác nhận
+                                                        handleViewResult(form);
+                                                    } else {
+                                                        setSelectedForm(form);
+                                                        setConfirmModalVisible(true);
+                                                    }
                                                 }}
                                             >
                                                 <Card
@@ -201,7 +226,10 @@ const Checkup: React.FC = () => {
                                                         <Col xs={12} md={4}>
                                                             <Space>
                                                                 <Tag color={tagColor} style={{ fontWeight: 500, fontSize: 14, padding: '2px 10px' }}>
-                                                                    {form.status === 'pending' ? 'Chờ xác nhận' : form.status === 'approved' ? 'Đã xác nhận' : form.status === 'rejected' ? 'Từ chối' : form.status}
+                                                                    {form.status === 'pending' ? 'Chờ xác nhận' : 
+                                                                     form.status === 'approved' ? 'Đã xác nhận' : 
+                                                                     form.status === 'checked' ? 'Đã có kết quả khám' :
+                                                                     form.status === 'rejected' ? 'Từ chối' : form.status}
                                                                 </Tag>
                                                             </Space>
                                                         </Col>
@@ -323,10 +351,12 @@ const Checkup: React.FC = () => {
                             <Col span={24}><Text strong>Trạng thái hiện tại:</Text> <Tag color={
                                 selectedForm.status === 'pending' ? 'orange' :
                                 selectedForm.status === 'approved' ? 'green' :
+                                selectedForm.status === 'checked' ? 'yellow' :
                                 selectedForm.status === 'rejected' ? 'red' : 'default'
                             }>
                                 {selectedForm.status === 'pending' ? 'Chờ xác nhận' :
                                  selectedForm.status === 'approved' ? 'Đã xác nhận' :
+                                 selectedForm.status === 'checked' ? 'Đã có kết quả khám' :
                                  selectedForm.status === 'rejected' ? 'Từ chối' : selectedForm.status}
                             </Tag></Col>
                         </Row>
@@ -377,6 +407,88 @@ const Checkup: React.FC = () => {
                                 </>
                             )}
                         </Space>
+                    </div>
+                )}
+            </Modal>
+
+            <Modal
+                title={<Space><FileTextOutlined /> Kết quả khám sức khỏe</Space>}
+                open={resultModalVisible}
+                onCancel={() => setResultModalVisible(false)}
+                footer={null}
+                width={600}
+            >
+                {resultLoading ? (
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                        <Spin size="large" />
+                        <div style={{ marginTop: '10px' }}>Đang tải kết quả khám...</div>
+                    </div>
+                ) : selectedResult ? (
+                    <div>
+                        <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                                <Text strong>Chiều cao:</Text>
+                                <br />
+                                <Text>{selectedResult.Height} cm</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text strong>Cân nặng:</Text>
+                                <br />
+                                <Text>{selectedResult.Weight} kg</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text strong>Huyết áp:</Text>
+                                <br />
+                                <Text>{selectedResult.Blood_Pressure}</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text strong>Thị lực mắt trái:</Text>
+                                <br />
+                                <Text>{selectedResult.Vision_Left}/10</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text strong>Thị lực mắt phải:</Text>
+                                <br />
+                                <Text>{selectedResult.Vision_Right}/10</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text strong>Tình trạng răng:</Text>
+                                <br />
+                                <Text>{selectedResult.Dental_Status}</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text strong>Tai mũi họng:</Text>
+                                <br />
+                                <Text>{selectedResult.ENT_Status}</Text>
+                            </Col>
+                            <Col span={12}>
+                                <Text strong>Tình trạng da:</Text>
+                                <br />
+                                <Text>{selectedResult.Skin_Status}</Text>
+                            </Col>
+                            <Col span={24}>
+                                <Text strong>Kết luận chung:</Text>
+                                <br />
+                                <Text>{selectedResult.General_Conclusion}</Text>
+                            </Col>
+                            <Col span={24}>
+                                <Text strong>Cần gặp phụ huynh:</Text>
+                                <br />
+                                <Tag color={selectedResult.Is_need_meet ? 'red' : 'green'}>
+                                    {selectedResult.Is_need_meet ? 'Có' : 'Không'}
+                                </Tag>
+                            </Col>
+                            <Col span={24}>
+                                <Divider />
+                                <Text type="secondary">
+                                    Ngày khám: {selectedResult.createdAt ? dayjs(selectedResult.createdAt).format('DD/MM/YYYY HH:mm') : '-'}
+                                </Text>
+                            </Col>
+                        </Row>
+                    </div>
+                ) : (
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                        <Text type="secondary">Không tìm thấy kết quả khám</Text>
                     </div>
                 )}
             </Modal>
