@@ -463,13 +463,14 @@ const Children = () => {
                             rules={[
                                 { required: true, message: 'Vui lòng nhập lớp!' },
                                 {
-                                    pattern: /^[1-5]\/[1-9]\d*$/,
-                                    message: 'Lớp phải có định dạng như 1/1, 2/3... với số từ 1 đến 5 và số dương phía sau.'
+                                    pattern: /^[1-5][A-Z]$/,
+                                    message: 'Lớp phải có định dạng như 1A, 2B... với số từ 1 đến 5 và một chữ cái in hoa.'
                                 }
                             ]}
                         >
-                            <Input placeholder="Nhập lớp (ví dụ: 1/1, 5/2)" />
+                            <Input placeholder="Nhập lớp (ví dụ: 1A, 5E)" />
                         </Form.Item>
+
 
 
                         <Form.Item
@@ -487,13 +488,36 @@ const Children = () => {
                         <Form.Item
                             name="dateOfBirth"
                             label="Ngày sinh"
-                            rules={[{ required: true, message: 'Vui lòng chọn ngày sinh!' }]}
+                            rules={[
+                                { required: true, message: 'Vui lòng chọn ngày sinh!' },
+                                ({ getFieldValue }) => ({
+                                    validator(_, value) {
+                                        if (!value) return Promise.resolve();
+
+                                        const birthDate = new Date(value);
+                                        const today = new Date();
+                                        const age = today.getFullYear() - birthDate.getFullYear();
+                                        const m = today.getMonth() - birthDate.getMonth();
+
+                                        const isBirthdayPassed =
+                                            m > 0 || (m === 0 && today.getDate() >= birthDate.getDate());
+                                        const actualAge = isBirthdayPassed ? age : age - 1;
+
+                                        if (actualAge < 5 || actualAge > 13) {
+                                            return Promise.reject(new Error('Độ tuổi phải từ 5 đến 13 tuổi!'));
+                                        }
+
+                                        return Promise.resolve();
+                                    }
+                                })
+                            ]}
                         >
                             <Input
                                 type="date"
                                 max={new Date().toISOString().split("T")[0]}
                             />
                         </Form.Item>
+
 
                         <Form.Item
                             name="height"

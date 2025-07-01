@@ -21,6 +21,7 @@ export interface Student {
   email: string;
   password?: string;
   roleId: number;
+  className: string;
 }
 
 export interface UpdateUserDto {

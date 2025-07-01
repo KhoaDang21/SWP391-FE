@@ -28,7 +28,7 @@ const ManageHealthcheck: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [sendingConfirmation, setSendingConfirmation] = useState<number | null>(null);
   const navigate = useNavigate();
-  
+
   const [sentStatus, setSentStatus] = useState<{ [key: number]: boolean }>({});
 
   const [form] = Form.useForm();
@@ -199,7 +199,7 @@ const ManageHealthcheck: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Quản lý đợt khám sức khỏe</h1>
-        <button 
+        <button
           className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-blue-500/30"
           type="button"
           onClick={handleCreatePhase}>
@@ -252,10 +252,10 @@ const ManageHealthcheck: React.FC = () => {
               filteredEvents.map((event, index) => {
                 const isSent = sentStatus[event.HC_ID];
                 const isSending = sendingConfirmation === event.HC_ID;
-                
+
                 return (
-                  <tr 
-                    key={event.HC_ID} 
+                  <tr
+                    key={event.HC_ID}
                     className="hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
                     onClick={() => handleRowClick(event)}
                   >
