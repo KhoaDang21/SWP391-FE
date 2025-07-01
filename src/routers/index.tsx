@@ -34,6 +34,7 @@ import Detail_medical_event from '../pages/Nurse/Detail_medical_event';
 import HealthCheckStudents from '../pages/Nurse/HealthCheckStudents';
 import VaccineEventStudents from '../pages/Nurse/VaccineEventStudents';
 import ForgotPasswordPage from '../pages/Login/ForgotPasswordPage';
+import NurseDashboard from "../pages/Nurse/Dashboard";
 
 export default function AppRoutes() {
     return (
@@ -83,6 +84,8 @@ export default function AppRoutes() {
                     </ProtectedRoute>
                 }
             >
+
+                <Route path="dashboard" element={<NurseDashboard />} />
                 <Route path="medical" element={<Manage_medical />} />
                 <Route path="healthcheck" element={<Manage_healthcheck />} />
                 <Route path="healthcheck/students/:hcId" element={<HealthCheckStudents />} />
@@ -90,7 +93,7 @@ export default function AppRoutes() {
                 <Route path="medical-events" element={<Manage_medical_events />} />
                 <Route path="medical-events/detail/:id" element={<Detail_medical_event />} />
                 <Route path="vaccine-events">
-                    <Route path=":eventName/:eventGade/:eventDate" element={<VaccineEventStudents />} />   
+                    <Route path=":eventName/:eventGade/:eventDate" element={<VaccineEventStudents />} />
                 </Route>
             </Route>
             <Route
