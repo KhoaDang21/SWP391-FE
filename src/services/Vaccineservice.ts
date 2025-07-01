@@ -183,7 +183,6 @@ export const vaccineService = {
     }
     const data = await response.json();
     return data.data;
-    return data.data;
   },
 
   getVaccineByName: async (vaccineName: string, grade?: string, eventDate?: string): Promise<VaccinePayload[]> => {
