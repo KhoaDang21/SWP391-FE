@@ -25,8 +25,7 @@ export interface VaccinePayload {
 }
 
 export interface GuardianVaccineHistory {
-  totalVaccine: number;
-  totalNeedConfirm: number;
+
   medicalRecord: {
     ID: number;
     userId: number;
@@ -57,7 +56,8 @@ export interface GuardianVaccineHistory {
 }
 
 export interface GuardianVaccineResponse {
-
+  totalVaccine: number;
+  totalNeedConfirm: number;
   histories: GuardianVaccineHistory[];
 }
 

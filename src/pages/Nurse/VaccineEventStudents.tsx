@@ -67,6 +67,7 @@ const VaccineEventStudents: React.FC = () => {
             status: noteInputs[`status_${record.VH_ID}`] || record.Status,
             note_affter_injection: noteInputs[record.VH_ID] ?? record.note_affter_injection ?? ''
           }));
+        console.log('Updates:', updates);
 
         if (updates.length === 0) {
           setIsEditing(false);
@@ -192,7 +193,6 @@ const VaccineEventStudents: React.FC = () => {
               }}
             />
             <Select
-              defaultValue="Đã tiêm"
               style={{
                 width: 150,
                 borderRadius: 8,
@@ -234,10 +234,10 @@ const VaccineEventStudents: React.FC = () => {
                 }
               ]}
               placeholder={
-                <span style={{ color: '#389e0d', fontWeight: 600 }}>
-                  <CheckCircle size={16} style={{ marginRight: 4, color: '#389e0d' }} />
-                  Đã tiêm
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <CheckCircle size={18} style={{ color: '#389e0d' }} />
+                  <span style={{ color: '#389e0d', fontWeight: 600 }}>Đã tiêm</span>
+                </div>
               }
             />
           </div>
