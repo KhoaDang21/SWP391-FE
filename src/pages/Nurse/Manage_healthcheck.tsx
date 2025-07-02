@@ -114,6 +114,7 @@ const ManageHealthcheck: React.FC = () => {
     setSendingConfirmation(hcId);
     try {
       const result = await healthCheckService.sendConfirmationForm(hcId);
+      console.log('Send confirmation result:', hcId, result);
       if (result.success) {
         notificationService.success(result.message || 'Đã gửi form xác nhận thành công!');
         // Gửi xong thì cập nhật lại trạng thái gửi form
@@ -194,7 +195,7 @@ const ManageHealthcheck: React.FC = () => {
     selectedYear === 'Tất cả'
       ? healthEvents
       : healthEvents.filter((e) => e.School_year === selectedYear);
-
+  console.log('Filtered Events:', filteredEvents);
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
@@ -332,7 +333,7 @@ const ManageHealthcheck: React.FC = () => {
                           </div>
                         ) : (
                           <button
-                            onClick={(e) => handleSendConfirmation(event.HC_ID, e)}
+                            onClick={(e) => handleSendConfirmation(event.Event_ID, e)}
                             disabled={isSending}
                             className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Gửi form xác nhận cho phụ huynh"

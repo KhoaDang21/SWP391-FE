@@ -245,10 +245,10 @@ const Parent: React.FC = () => {
                         <Card title={`Tiêm chủng - ${currentChild?.fullname}`} style={{ marginBottom: '24px' }}>
                             <Row gutter={16}>
                                 <Col span={12}>
-                                    <Statistic title="Tổng số mũi đã tiêm" value={vaccineHistories?.histories[0].totalVaccine} />
+                                    <Statistic title="Tổng số mũi đã tiêm" value={vaccineHistories?.totalVaccine} />
                                 </Col>
                                 <Col span={12}>
-                                    <Statistic title="Chờ xác nhận" value={vaccineHistories?.histories[0].totalNeedConfirm} suffix="mũi" valueStyle={{ color: '#faad14' }} />
+                                    <Statistic title="Chờ xác nhận" value={vaccineHistories?.totalNeedConfirm} suffix="mũi" valueStyle={{ color: '#faad14' }} />
                                 </Col>
 
 
