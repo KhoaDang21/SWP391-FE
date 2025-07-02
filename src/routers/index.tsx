@@ -31,6 +31,10 @@ import Manage_healthcheck from '../pages/Nurse/Manage_healthcheck';
 import Manage_vaccine from '../pages/Nurse/Manage_vaccine';
 import Manage_medical_events from '../pages/Nurse/Manage_medical_events';
 import Detail_medical_event from '../pages/Nurse/Detail_medical_event';
+import HealthCheckStudents from '../pages/Nurse/HealthCheckStudents';
+import VaccineEventStudents from '../pages/Nurse/VaccineEventStudents';
+import ForgotPasswordPage from '../pages/Login/ForgotPasswordPage';
+import NurseDashboard from "../pages/Nurse/Dashboard";
 
 export default function AppRoutes() {
     return (
@@ -43,6 +47,7 @@ export default function AppRoutes() {
                 <Route path="/lien-he" element={<Contact />} />
             </Route>
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
             {/* Admin Routes */}
             <Route
@@ -79,11 +84,17 @@ export default function AppRoutes() {
                     </ProtectedRoute>
                 }
             >
+
+                <Route path="dashboard" element={<NurseDashboard />} />
                 <Route path="medical" element={<Manage_medical />} />
                 <Route path="healthcheck" element={<Manage_healthcheck />} />
+                <Route path="healthcheck/students/:hcId" element={<HealthCheckStudents />} />
                 <Route path="vaccine" element={<Manage_vaccine />} />
                 <Route path="medical-events" element={<Manage_medical_events />} />
                 <Route path="medical-events/detail/:id" element={<Detail_medical_event />} />
+                <Route path="vaccine-events">
+                    <Route path=":eventName/:eventGade/:eventDate" element={<VaccineEventStudents />} />
+                </Route>
             </Route>
             <Route
                 path="/guardian"
@@ -100,7 +111,6 @@ export default function AppRoutes() {
                 <Route path="checkups" element={<Checkup />} />
                 <Route path="events" element={<Event />} />
             </Route>
-            {/* Catch-all */}
             <Route path="*" element={<Login />} />
         </Routes>
     );

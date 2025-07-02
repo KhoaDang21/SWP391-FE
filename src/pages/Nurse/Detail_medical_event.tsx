@@ -20,10 +20,23 @@ interface MedicalEventDetail {
   Medical_record: {
     ID: number;
     userId: number;
-    class: string;
+    Class: string;
+    height: number;
+    weight: number;
+    bloodType: string;
+    chronicDiseases: string;
+    allergies: string;
+    pastIllnesses?: string;
     historyHealth: string;
   };
   UserFullname?: string;
+  guardian?: {
+    fullname: string;
+    phoneNumber: string;
+    roleInFamily: string;
+    address: string;
+    isCallFirst: boolean;
+  };
 }
 
 const Detail_medical_event: React.FC = () => {
@@ -46,15 +59,32 @@ const Detail_medical_event: React.FC = () => {
       try {
         if (!id) return;
         const data = await medicalEventService.getMedicalEventById(id);
-        setEventDetail(data);
+        const transformedData = {
+          ...data,
+          Medical_record: {
+            ID: data.Medical_record.ID,
+            userId: data.Medical_record.userId,
+            Class: data.Medical_record.Class ?? '',
+            height: data.Medical_record.height ?? 0,
+            weight: data.Medical_record.weight ?? 0,
+            bloodType: data.Medical_record.bloodType ?? '',
+            chronicDiseases: data.Medical_record.chronicDiseases ?? '',
+            allergies: data.Medical_record.allergies ?? '',
+            pastIllnesses: data.Medical_record.pastIllnesses ?? '',
+            historyHealth: data.Medical_record.historyHealth ?? '',
+          },
+        };
+        setEventDetail(transformedData);
       } catch (error) {
         notificationService.error('Có lỗi xảy ra khi tải dữ liệu');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchEventDetail();
+    function fetchEventDetailWrapper() {
+      fetchEventDetail();
+    }
+    fetchEventDetailWrapper();
   }, [id, navigate]);
 
   const handleGoBack = () => {
@@ -95,18 +125,17 @@ const Detail_medical_event: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Chi tiết sự kiện y tế</h1>
-      
-      <div className="flex gap-4 mb-4">
+      <h1 className="text-3xl font-bold text-blue-800 mb-8 text-center drop-shadow">Chi tiết sự kiện y tế</h1>
+      <div className="flex gap-4 mb-8 justify-center">
         <button 
           onClick={handleGoBack} 
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white font-semibold py-2 px-6 rounded-lg shadow transition"
         >
           Quay lại
         </button>
         <button 
           onClick={() => setIsEditModalOpen(true)}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+          className="bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-semibold py-2 px-6 rounded-lg shadow flex items-center gap-2 transition"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -114,78 +143,97 @@ const Detail_medical_event: React.FC = () => {
           Chỉnh sửa
         </button>
       </div>
-
-      <div className="grid grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">Thông tin sự kiện</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Học sinh:</label>
-                <p className="text-lg font-medium text-gray-900">{eventDetail.UserFullname}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6 border border-blue-100">
+          <h2 className="text-xl font-bold text-blue-700 mb-6 flex items-center gap-2">
+            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            Thông tin sự kiện
+          </h2>
+          <div className="space-y-4">
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-semibold text-blue-700 w-32">Học sinh:</span>
+              <span className="text-lg font-medium text-gray-900">{eventDetail.UserFullname}</span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-semibold text-blue-700 w-32">Lớp:</span>
+              <span className="text-lg text-gray-900">{eventDetail.Medical_record.Class}</span>
+            </div>
+            {eventDetail.guardian && (
+              <div className="rounded-lg bg-blue-50 p-4 mt-2 border border-blue-100">
+                <div className="mb-1 flex gap-2 items-center">
+                  <span className="text-sm font-semibold text-blue-700 w-32">Tên phụ huynh:</span>
+                  <span className="text-gray-900">{eventDetail.guardian.fullname}</span>
+                </div>
+                <div className="mb-1 flex gap-2 items-center">
+                  <span className="text-sm font-semibold text-blue-700 w-32">Số điện thoại:</span>
+                  <span className="text-gray-900">{eventDetail.guardian.phoneNumber}</span>
+                </div>
+                <div className="mb-1 flex gap-2 items-center">
+                  <span className="text-sm font-semibold text-blue-700 w-32">Địa chỉ:</span>
+                  <span className="text-gray-900">{eventDetail.guardian.address}</span>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <span className="text-sm font-semibold text-blue-700 w-32">Vai trò:</span>
+                  <span className="text-gray-900">{eventDetail.guardian.roleInFamily}</span>
+                </div>
               </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">Lớp:</label>
-                <p className="text-lg text-gray-900">{eventDetail.Medical_record.class}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500">Tiền sử bệnh:</label>
-                <p className="text-lg text-gray-900">{eventDetail.Medical_record.historyHealth}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">Mô tả sự kiện:</label>
-                <p className="text-lg text-gray-900">{eventDetail.Decription}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium text-gray-500">Biện pháp xử lý:</label>
-                <p className="text-lg text-gray-900">{eventDetail.Handle}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500">Thời gian:</label>
-                <p className="text-lg text-gray-900">
-                  {new Date(eventDetail.history[0].Date_create).toLocaleString('vi-VN')}
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-500">Gọi phụ huynh:</label>
-                <span className={`ml-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  eventDetail.Is_calLOb
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {eventDetail.Is_calLOb ? 'Đã gọi' : 'Không gọi'}
-                </span>
-              </div>
+            )}
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-semibold text-blue-700 w-32">Tiền sử bệnh:</span>
+              <span className="text-gray-900">
+                {eventDetail.Medical_record.chronicDiseases}
+                {eventDetail.Medical_record.allergies && `, Dị ứng: ${eventDetail.Medical_record.allergies}`}
+                {eventDetail.Medical_record.pastIllnesses && `, Bệnh đã mắc: ${eventDetail.Medical_record.pastIllnesses}`}
+              </span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-semibold text-blue-700 w-32">Mô tả sự kiện:</span>
+              <span className="text-gray-900">{eventDetail.Decription}</span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-semibold text-blue-700 w-32">Biện pháp xử lý:</span>
+              <span className="text-gray-900">{eventDetail.Handle}</span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-semibold text-blue-700 w-32">Thời gian:</span>
+              <span className="text-gray-900">
+                {new Date(eventDetail.history[0].Date_create).toLocaleString('vi-VN')}
+              </span>
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-semibold text-blue-700 w-32">Gọi phụ huynh:</span>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                eventDetail.Is_calLOb
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {eventDetail.Is_calLOb ? 'Đã gọi' : 'Không gọi'}
+              </span>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">Hình ảnh</h2>
-          <div className="flex items-center justify-center h-[500px] w-full">
+        <div className="bg-white rounded-2xl shadow-lg p-8 border border-blue-100 flex flex-col items-center">
+          <h2 className="text-xl font-bold text-blue-700 mb-6 flex items-center gap-2">
+            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A2 2 0 0020 6.382V5a2 2 0 00-2-2H6a2 2 0 00-2 2v1.382a2 2 0 00.447 1.342L9 10m6 0v10m0 0H9m6 0a2 2 0 002-2v-8a2 2 0 00-2-2H9a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+            Hình ảnh
+          </h2>
+          <div className="flex items-center justify-center h-[400px] w-full">
             {eventDetail.Image ? (
               <div className="relative w-full h-full flex items-center justify-center">
                 <img
                   src={eventDetail.Image}
                   alt="Event"
-                  className="max-w-full max-h-full object-contain rounded-lg"
+                  className="max-w-full max-h-full object-contain rounded-lg border border-gray-200 shadow"
                 />
               </div>
             ) : (
-              <div className="text-gray-500 text-center">
+              <div className="text-gray-500 text-center w-full">
                 Không có hình ảnh
               </div>
             )}
           </div>
         </div>
       </div>
-
       <Modal_edit_medical_Event
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}

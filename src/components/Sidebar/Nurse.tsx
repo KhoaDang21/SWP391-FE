@@ -1,30 +1,52 @@
-import { useState } from 'react';
-import { 
-  Heart, 
-  Activity, 
-  Menu, 
+import { useEffect, useState } from 'react';
+import {
+  Heart,
+  Activity,
   UserCircle,
   Bell,
+
   Pill,
   Stethoscope,
   ChevronRight,
-  Home
+  Home,
+  ChevronLeft
 } from 'lucide-react';
 import medicalLogo from '../../assets/images/medical-book.png';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
-import { logout } from '../../services/AuthServices';
 import { notificationService } from '../../services/NotificationService';
+import { Avatar, Badge, Button, Dropdown, Form, Input, Modal, Menu } from 'antd';
+import Noti from "../../pages/Noti/Noti";
+import { logout, changePassword } from "../../services/AuthServices";
+import { UserOutlined } from '@ant-design/icons';
 
 function Nurse() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+  const userInfo = localStorage.getItem("user");
 
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await notificationService.getNotificationsForCurrentUser();
+        setUnreadCount(response.unreadCount);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
   const menuItems = [
     {
       key: 'dashboard',
       title: 'Dashboard',
-      path: '/nurse',
+      path: '/nurse/dashboard',
       icon: Home,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-50',
@@ -95,6 +117,73 @@ function Nurse() {
     }
   };
 
+  const menu = (
+    <Menu>
+      <Menu.Item key="profile">
+        <button className="w-full text-left">Hồ sơ</button>
+      </Menu.Item>
+      <Menu.Item key="change-password">
+        <button onClick={() => setIsModalVisible(true)} className="w-full text-left">Đổi mật khẩu</button>
+      </Menu.Item>
+      <Menu.Item key="logout">
+        <button onClick={handleLogout} className="w-full text-left">Đăng xuất</button>
+      </Menu.Item>
+    </Menu>
+  );
+
+  <Modal
+    title="Đổi mật khẩu"
+    open={isModalVisible}
+    onCancel={() => setIsModalVisible(false)}
+    footer={null}
+  >
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={async (values) => {
+        try {
+          setLoading(true);
+          const token = localStorage.getItem('accessToken');
+          if (!token) {
+            notificationService.error('Vui lòng đăng nhập lại');
+            return;
+          }
+          await changePassword(values.currentPassword, values.newPassword, token);
+          notificationService.success('Đổi mật khẩu thành công');
+          setIsModalVisible(false);
+          form.resetFields();
+        } catch (error: any) {
+          notificationService.error(error.message || 'Đổi mật khẩu thất bại');
+        } finally {
+          setLoading(false);
+        }
+      }}
+    >
+      <Form.Item
+        name="currentPassword"
+        label="Mật khẩu hiện tại"
+        rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
+      >
+        <Input.Password />
+      </Form.Item>
+      <Form.Item
+        name="newPassword"
+        label="Mật khẩu mới"
+        rules={[
+          { required: true, message: 'Vui lòng nhập mật khẩu mới' },
+          { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
+        ]}
+      >
+        <Input.Password />
+      </Form.Item>
+      <Form.Item>
+        <Button type="primary" htmlType="submit" loading={loading}>
+          Đổi mật khẩu
+        </Button>
+      </Form.Item>
+    </Form>
+  </Modal>
+
   return (
     <div className="flex h-screen bg-gray-100">
       <div className={`bg-gradient-to-b from-blue-600 via-cyan-600 to-teal-600 opacity-90 text-white transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'} flex flex-col`}>
@@ -112,24 +201,11 @@ function Nurse() {
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
             >
-              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
-        {!isCollapsed && (
-          <div className="p-4 border-b border-white/20">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <UserCircle className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">Y tá Nguyễn</p>
-                <p className="text-xs text-white/70">Trực ca sáng</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         <nav className="flex-1 p-4 space-y-2">
           {menuItems.map((item) => {
@@ -196,14 +272,26 @@ function Nurse() {
                 Chào mừng bạn đến với hệ thống quản lý y tế
               </p>
             </div>
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-              </button>
-              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <UserCircle className="w-5 h-5 text-white" />
+            <div className="flex items-center space-x-4 ">
+              <div className="ml-4">
+                <Badge count={unreadCount}>
+                  <Noti />
+                </Badge>
               </div>
+
+              <Dropdown overlay={menu} trigger={['hover']} arrow placement="bottomRight">
+                <div className="flex items-center space-x-2 cursor-pointer">
+                  <div className="text-left">
+                    <p className="font-bold">
+                      {userInfo ? JSON.parse(userInfo).username : 'Người dùng'}
+                    </p>
+                    <p className="text-sm">
+                      {userInfo ? JSON.parse(userInfo).email : 'Người dùng'}
+                    </p>
+                  </div>
+                  <Avatar style={{ backgroundColor: '#155dfc', width: 40, height: 40 }} icon={<UserOutlined />} />
+                </div>
+              </Dropdown>
             </div>
           </div>
         </header>
@@ -212,6 +300,8 @@ function Nurse() {
         </main>
       </div>
     </div>
+
+
   );
 }
 

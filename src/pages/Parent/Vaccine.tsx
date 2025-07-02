@@ -23,7 +23,7 @@ import {
     MedicineBoxOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
-  
+
     ExclamationCircleOutlined,
     ExclamationCircleFilled
 } from '@ant-design/icons';
@@ -48,8 +48,8 @@ interface VaccineRecord {
     vaccineId: string;
     isVaccinated: boolean;
     status: string;
-    vaccineName: string;    
-    vaccineType: string;    
+    vaccineName: string;
+    vaccineType: string;
     vaccinatedDate?: string;
     location?: string;
     notes?: string;
@@ -59,12 +59,12 @@ interface VaccineRecord {
 interface Student {
     id: string;
     name: string;
-    dateOfBirth: string;
+    dateOfBirth: Date;
     class: string;
     studentCode: string;
     vaccineRecords: VaccineRecord[];
     totalVaccinated: number;
-    totalNeedConfirm: number; 
+    totalNeedConfirm: number;
 }
 
 const Vaccine: React.FC = () => {
@@ -78,32 +78,17 @@ const Vaccine: React.FC = () => {
     const [selectedVaccine, setSelectedVaccine] = useState<VaccineRecord | null>(null);
     const [confirmModalVisible, setConfirmModalVisible] = useState(false);
 
-    const vaccineTypes: VaccineInfo[] = [
-        { id: '1', name: 'BCG', description: 'Phòng bệnh lao', recommendedAge: '0-1 tháng', isRequired: true },
-        { id: '2', name: 'Viêm gan B', description: 'Phòng viêm gan B', recommendedAge: '0-2 tháng', isRequired: true },
-        { id: '3', name: 'DPT (Bạch hầu)', description: 'Phòng bạch hầu, ho gà, uốn ván', recommendedAge: '2-4 tháng', isRequired: true },
-        { id: '4', name: 'Polio', description: 'Phòng bại liệt', recommendedAge: '2-4 tháng', isRequired: true },
-        { id: '5', name: 'Hib', description: 'Phòng Haemophilus influenzae type b', recommendedAge: '2-6 tháng', isRequired: true },
-        { id: '6', name: 'PCV', description: 'Phòng phế cầu khuẩn', recommendedAge: '2-6 tháng', isRequired: false },
-        { id: '7', name: 'Rotavirus', description: 'Phòng tiêu chảy do Rotavirus', recommendedAge: '2-6 tháng', isRequired: false },
-        { id: '8', name: 'Sởi', description: 'Phòng bệnh sởi', recommendedAge: '9-15 tháng', isRequired: true },
-        { id: '9', name: 'Rubella', description: 'Phòng bệnh rubella', recommendedAge: '12-15 tháng', isRequired: true },
-        { id: '10', name: 'Quai bị', description: 'Phòng bệnh quai bị', recommendedAge: '12-15 tháng', isRequired: true },
-        { id: '11', name: 'Varicella', description: 'Phòng bệnh thủy đậu', recommendedAge: '12-15 tháng', isRequired: false },
-        { id: '12', name: 'Viêm gan A', description: 'Phòng viêm gan A', recommendedAge: '12-23 tháng', isRequired: false },
-        { id: '13', name: 'JE', description: 'Phòng viêm não Nhật Bản', recommendedAge: '12-24 tháng', isRequired: true },
-        { id: '14', name: 'Td', description: 'Nhắc lại uốn ván và bạch hầu', recommendedAge: '4-6 tuổi', isRequired: true }
-    ];
-
     const fetchVaccineData = async () => {
+        let intervalId: ReturnType<typeof setInterval>;
         try {
+
             const response = await vaccineService.getVaccinesByGuardian();
-            
+
             const transformedStudents: Student[] = response.histories.map(history => ({
                 id: history.medicalRecord.ID.toString(),
                 name: history.user.fullname,
-                dateOfBirth: '',
-                class: history.medicalRecord.class,
+                dateOfBirth: history.user.dateOfBirth,
+                class: history.medicalRecord.Class,
                 studentCode: history.medicalRecord.ID.toString(),
                 totalVaccinated: history.vaccineHistory.filter(v => v.Status === 'Đã tiêm').length,
                 totalNeedConfirm: history.vaccineHistory.filter(v => v.Status === 'Chờ xác nhận').length,
@@ -114,7 +99,7 @@ const Vaccine: React.FC = () => {
                     vaccineName: vh.Vaccine_name || '',
                     vaccineType: vh.Vaccince_type || '',
                     vaccinatedDate: vh.Date_injection,
-                    location: '', 
+                    location: '',
                     notes: vh.note_affter_injection || '',
                 }))
             }));
@@ -131,20 +116,26 @@ const Vaccine: React.FC = () => {
             message.error('Failed to fetch vaccine data');
             console.error(error);
         }
+
+        intervalId = setInterval(fetchVaccineData, 5000);
+
+        return () => {
+            clearInterval(intervalId);
+        };
     };
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Check URL parameter first
-                const shouldOpenModal = searchParams.get('openModal') === 'true';
-                
+                const shouldOpenModal = searchParams.get('openModal') === 'true';                
+                const studentNameParam = searchParams.get('studentName');
+
                 const response = await vaccineService.getVaccinesByGuardian();
                 const transformedStudents = response.histories.map(history => ({
                     id: history.medicalRecord.ID.toString(),
                     name: history.user.fullname,
-                    dateOfBirth: '',
-                    class: history.medicalRecord.class,
+                    dateOfBirth: history.user.dateOfBirth,
+                    class: history.medicalRecord.Class,
                     studentCode: history.medicalRecord.ID.toString(),
                     totalVaccinated: history.vaccineHistory.filter(v => v.Status === 'Đã tiêm').length,
                     totalNeedConfirm: history.vaccineHistory.filter(v => v.Status === 'Chờ xác nhận').length,
@@ -155,19 +146,32 @@ const Vaccine: React.FC = () => {
                         vaccineName: vh.Vaccine_name || '',
                         vaccineType: vh.Vaccince_type || '',
                         vaccinatedDate: vh.Date_injection,
-                        location: '', 
+                        location: '',
                         notes: vh.note_affter_injection || '',
                     }))
                 }));
 
                 setStudents(transformedStudents);
 
-                // Open modal after data is loaded
                 if (shouldOpenModal && transformedStudents.length > 0) {
-                    setSelectedStudent(transformedStudents[0]);
+                    let studentToOpen = transformedStudents[0];
+                    if (studentNameParam) {
+                        const decodedName = decodeURIComponent(studentNameParam).toLowerCase();
+                        const found = transformedStudents.find(s => s.name.toLowerCase() === decodedName);
+                        if (found) studentToOpen = found;
+                    }
+                    setSelectedStudent(studentToOpen);
                     setTimeout(() => {
                         setDetailModalVisible(true);
-                    }, 100); // Small delay to ensure state is updated
+                        const params = new URLSearchParams(searchParams);
+                        params.delete('openModal');
+                        params.delete('studentName');
+                        window.history.replaceState(
+                            {},
+                            '',
+                            `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`
+                        );
+                    }, 100);
                 }
             } catch (error) {
                 message.error('Failed to fetch vaccine data');
@@ -192,11 +196,11 @@ const Vaccine: React.FC = () => {
 
     const handleConfirmVaccine = async (approved: boolean) => {
         if (!selectedVaccine) return;
-        
+
         setLoading(true);
         try {
             await vaccineService.confirmVaccine(selectedVaccine.vaccineId, approved);
-            
+
             await fetchVaccineData();
             message.success(`Đã ${approved ? 'cho phép' : 'từ chối'} tiêm vaccine`);
             setConfirmModalVisible(false);
@@ -214,20 +218,20 @@ const Vaccine: React.FC = () => {
     };
 
     const getStatusColor = (status: string) => {
-        switch(status) {
+        switch (status) {
             case 'Đã tiêm': return 'success';
             case 'Cho phép tiêm': return '#faad14';
-            case 'Không cho phép tiêm': return '#ff4d4f';
+            case 'Không tiêm': return '#ff4d4f';
             case 'Chờ xác nhận': return '#fa8c16';
             default: return '#d9d9d9';
         }
     };
 
     const getTagColor = (status: string) => {
-        switch(status) {
+        switch (status) {
             case 'Đã tiêm': return 'success';
             case 'Cho phép tiêm': return 'warning';
-            case 'Không cho phép tiêm': return 'error';
+            case 'Không tiêm': return 'error';
             case 'Chờ xác nhận': return 'processing';
             default: return 'default';
         }
@@ -249,7 +253,7 @@ const Vaccine: React.FC = () => {
             </Card>
 
             <Row className='mt-4' gutter={[16, 16]}>
-                {students.map(student => {             
+                {students.map(student => {
                     return (
                         <Col xs={24} md={12} lg={8} key={student.id}>
                             <Card
@@ -264,7 +268,7 @@ const Vaccine: React.FC = () => {
                                 <p><Text type="secondary">Lớp:</Text> {student.class}</p>
                                 <p><Text type="secondary">Ngày sinh:</Text> {dayjs(student.dateOfBirth).format('DD/MM/YYYY')}</p>
                                 <p><Text type="secondary">Tổng vaccine đã tiêm:</Text> {student.totalVaccinated}</p>
-                                <p><Text type="secondary">Vaccine đang chờ xác nhận:</Text> {student.totalNeedConfirm}</p>                             
+                                <p><Text type="secondary">Vaccine đang chờ xác nhận:</Text> {student.totalNeedConfirm}</p>
                             </Card>
                         </Col>
                     );
@@ -288,7 +292,6 @@ const Vaccine: React.FC = () => {
             >
                 {selectedStudent && (
                     <div>
-                        {/* Thông tin học sinh */}
                         <Card size="small" style={{ marginBottom: 16 }}>
                             <Row gutter={16}>
                                 <Col span={6}>
@@ -308,27 +311,30 @@ const Vaccine: React.FC = () => {
                         <List
                             itemLayout="horizontal"
                             dataSource={selectedStudent.vaccineRecords}
+                            pagination={{
+                                pageSize: 5,
+                                showSizeChanger: false
+                            }}
                             renderItem={(vaccineRecord) => {
                                 const getBackgroundColor = () => {
-                                    switch(vaccineRecord.status) {
+                                    switch (vaccineRecord.status) {
                                         case 'Đã tiêm': return '#f6ffed';
                                         case 'Chờ xác nhận': return '#fff2e8';
                                         case 'Cho phép tiêm': return '#fffbe6';
-                                        case 'Không cho phép tiêm': return '#fff1f0';
+                                        case 'Không tiêm': return '#fff1f0';
                                         default: return '#fafafa';
                                     }
                                 };
 
                                 const getBorderColor = () => {
-                                    switch(vaccineRecord.status) {
+                                    switch (vaccineRecord.status) {
                                         case 'Đã tiêm': return '#b7eb8f';
                                         case 'Chờ xác nhận': return '#ffbb96';
                                         case 'Cho phép tiêm': return '#ffd591';
-                                        case 'Không cho phép tiêm': return '#ffa39e';
+                                        case 'Không tiêm': return '#ffa39e';
                                         default: return '#d9d9d9';
                                     }
                                 };
-
                                 return (
                                     <List.Item
                                         style={{
@@ -345,25 +351,47 @@ const Vaccine: React.FC = () => {
                                             avatar={
                                                 <Badge
                                                     count={
-                                                        vaccineRecord.status === 'Đã tiêm' ? 
+                                                        vaccineRecord.status === 'Đã tiêm' ?
                                                             <CheckCircleOutlined style={{ color: '#52c41a' }} /> :
-                                                        vaccineRecord.status === 'Chờ xác nhận' || vaccineRecord.status === 'Cho phép tiêm' ?
-                                                            <ExclamationCircleOutlined style={{ color: '#fa8c16' }} /> :
-                                                            <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+                                                            vaccineRecord.status === 'Chờ xác nhận' || vaccineRecord.status === 'Cho phép tiêm' ?
+                                                                <ExclamationCircleOutlined style={{ color: '#fa8c16' }} /> :
+                                                                <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
                                                     }
                                                 >
                                                     <Avatar
-                                                        style={{ 
-                                                            backgroundColor: vaccineRecord.status === 'Đã tiêm' ? '#52c41a' : 
-                                                                           vaccineRecord.status === 'Chờ xác nhận' || vaccineRecord.status === 'Cho phép tiêm' ? '#fa8c16' : '#d9d9d9'
+                                                        style={{
+                                                            backgroundColor:
+                                                                vaccineRecord.status === 'Đã tiêm'
+                                                                    ? '#f6ffed'
+                                                                    : vaccineRecord.status === 'Không tiêm'
+                                                                        ? '#fff1f0'
+                                                                        : vaccineRecord.status === 'Chờ xác nhận' || vaccineRecord.status === 'Cho phép tiêm'
+                                                                            ? '#fffbe6'
+                                                                            : '#d9d9d9',
+                                                            border: vaccineRecord.status === 'Đã tiêm'
+                                                                ? '1.5px solid #52c41a'
+                                                                : vaccineRecord.status === 'Không tiêm'
+                                                                    ? '1.5px solid #ff4d4f'
+                                                                    : undefined
                                                         }}
-                                                        icon={<MedicineBoxOutlined />}
-                                                    />
+                                                    >
+                                                        <MedicineBoxOutlined
+                                                            style={{
+                                                                color:
+                                                                    vaccineRecord.status === 'Đã tiêm'
+                                                                        ? '#52c41a'
+                                                                        : vaccineRecord.status === 'Không tiêm'
+                                                                            ? '#ff4d4f'
+                                                                            : '#faad14',
+                                                                fontSize: 20
+                                                            }}
+                                                        />
+                                                    </Avatar>
                                                 </Badge>
                                             }
                                             title={
                                                 <Space align="center">
-                                                    <Text strong style={{ 
+                                                    <Text strong style={{
                                                         color: getStatusColor(vaccineRecord.status)
                                                     }}>
                                                         {vaccineRecord.vaccineName}
@@ -380,6 +408,13 @@ const Vaccine: React.FC = () => {
                                                         <div>
                                                             <Text type="secondary" style={{ fontSize: 12 }}>
                                                                 Ngày tiêm: {dayjs(vaccineRecord.vaccinatedDate).format('DD/MM/YYYY')}
+                                                            </Text>
+                                                        </div>
+                                                    )}
+                                                    {(vaccineRecord.status === 'Đã tiêm' || vaccineRecord.status === 'Không tiêm') && (
+                                                        <div style={{ marginTop: 4 }}>
+                                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                                Ghi chú: {vaccineRecord.notes || 'Không có ghi chú'}
                                                             </Text>
                                                         </div>
                                                     )}
@@ -406,15 +441,15 @@ const Vaccine: React.FC = () => {
                 footer={
                     selectedVaccine?.status === 'Chờ xác nhận' ? (
                         <Space>
-                            <Button 
-                                onClick={() => handleConfirmVaccine(false)} 
+                            <Button
+                                onClick={() => handleConfirmVaccine(false)}
                                 danger
                                 loading={loading}
                             >
-                                Không cho phép tiêm
+                                Không tiêm
                             </Button>
-                            <Button 
-                                type="primary" 
+                            <Button
+                                type="primary"
                                 onClick={() => handleConfirmVaccine(true)}
                                 loading={loading}
                             >
@@ -429,7 +464,7 @@ const Vaccine: React.FC = () => {
                     <div>
                         <Row gutter={[0, 16]}>
                             <Col span={24}>
-                                <Card 
+                                <Card
                                     size="small"
                                     title={
                                         <Space>
@@ -444,7 +479,7 @@ const Vaccine: React.FC = () => {
                                             <br />
                                             <Tag color={
                                                 selectedVaccine.status === 'Đã tiêm' ? 'success' :
-                                                selectedVaccine.status === 'Chờ xác nhận' ? 'warning' : 'default'
+                                                    selectedVaccine.status === 'Chờ xác nhận' ? 'warning' : 'default'
                                             }>
                                                 {selectedVaccine.status}
                                             </Tag>
@@ -452,8 +487,8 @@ const Vaccine: React.FC = () => {
                                         <Col span={12}>
                                             <Text type="secondary">Ngày tiêm:</Text>
                                             <br />
-                                            <Text>{selectedVaccine.vaccinatedDate ? 
-                                                dayjs(selectedVaccine.vaccinatedDate).format('DD/MM/YYYY') : 
+                                            <Text>{selectedVaccine.vaccinatedDate ?
+                                                dayjs(selectedVaccine.vaccinatedDate).format('DD/MM/YYYY') :
                                                 'Chưa có'}</Text>
                                         </Col>
                                         {selectedVaccine.status === 'Đã tiêm' && (
@@ -476,7 +511,7 @@ const Vaccine: React.FC = () => {
                                     </Row>
                                 </Card>
                             </Col>
-                            
+
                             {selectedVaccine.status === 'Chờ xác nhận' && (
                                 <Col span={24}>
                                     <Alert

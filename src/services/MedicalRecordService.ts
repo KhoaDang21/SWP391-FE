@@ -12,23 +12,45 @@ export interface Allergy {
     name: string;
 }
 
-export interface PastIllness {
-    disease: string;
-    date: string;
-    treatment: string;
-}
 
 export interface MedicalRecord {
     ID: number;
     userId: number;
     fullname: string;
+    dateOfBirth: string;
+    gender: string;
+    Class: string;
     height: number;
     weight: number;
     bloodType: string;
+    chronicDiseases: string;
+    allergies: string;
     vaccines: Vaccine[];
-    chronicDiseases: ChronicDisease[];
-    allergies: Allergy[];
-    pastIllnesses: PastIllness[];
+    guardian?: {
+        fullname: string;
+        phoneNumber: string;
+        roleInFamily: string;
+        address: string;
+        isCallFirst: boolean;
+    };
+}
+
+export interface CreateStudentMedicalPayload {
+    guardianUserId: number;
+    student: {
+        fullname: string;
+        dateOfBirth: string;
+        gender: string;
+    };
+    medicalRecord: {
+        Class: string;
+        height: number;
+        weight: number;
+        bloodType: string;
+        chronicDiseases?: ChronicDisease[];
+        allergies?: Allergy[];
+        vaccines?: Vaccine[];
+    };
 }
 
 const API_URL = 'http://localhost:3333/api/v1/medical-records';
@@ -47,8 +69,8 @@ export async function getAllMedicalRecords(token: string): Promise<MedicalRecord
 export async function getMedicalRecordsByGuardian(token: string): Promise<MedicalRecord[]> {
     const res = await fetch(`${API_URL}/by-guardian`, {
         headers: {
-            Authorization: `Bearer ${token}`,
-        },
+            Authorization: `Bearer ${token}`
+        }
     });
 
     if (!res.ok) {
@@ -70,11 +92,8 @@ export async function getMedicalRecordById(id: number, token: string): Promise<M
     return data;
 }
 
-export async function createMedicalRecord(
-    record: Omit<MedicalRecord, 'ID'>,
-    token: string
-): Promise<MedicalRecord> {
-    const res = await fetch(API_URL, {
+export async function createMedicalRecord(record: Omit<MedicalRecord, 'ID'>, token: string): Promise<MedicalRecord> {
+    const res = await fetch(`${API_URL}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -90,10 +109,10 @@ export async function createMedicalRecord(
 
 export async function updateMedicalRecord(
     id: number,
-    record: Partial<MedicalRecord>,
+    record: CreateStudentMedicalPayload,
     token: string
 ): Promise<MedicalRecord> {
-    const res = await fetch(`${API_URL}/${id}`, {
+    const res = await fetch(`${API_URL}/student/${id}`, {
         method: 'PUT',
         headers: {
             Authorization: `Bearer ${token}`,
@@ -116,4 +135,21 @@ export async function deleteMedicalRecord(id: number, token: string): Promise<vo
     });
 
     if (!res.ok) throw new Error('Lỗi xóa hồ sơ y tế');
+}
+
+export async function createStudentWithMedicalRecord(
+    payload: CreateStudentMedicalPayload,
+    token: string
+): Promise<any> {
+    const res = await fetch(`${API_URL}/student`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error('Lỗi tạo học sinh và hồ sơ y tế');
+    return await res.json();
 }

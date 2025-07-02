@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Button, Skeleton, Tag, Modal, Form, Input } from 'antd';
 import { ArrowLeftOutlined, EditOutlined, UserOutlined, PhoneOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
-import { User, getUserById, getRoleName, updateUser, UpdateUserDto } from '../../../services/AccountService';
+import { User, getUserById, getRoleName, updateUser, UpdateUserDto, getAllGuardians, Guardian, updateGuardian, UpdateGuardianDto } from '../../../services/AccountService';
 import { notificationService } from '../../../services/NotificationService';
 
 const UserDetail: React.FC = () => {
@@ -13,6 +13,7 @@ const UserDetail: React.FC = () => {
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [form] = Form.useForm();
     const [updateLoading, setUpdateLoading] = useState(false);
+    const [guardian, setGuardian] = useState<Guardian | null>(null);
 
     const fetchUserDetail = async () => {
         try {
@@ -22,18 +23,30 @@ const UserDetail: React.FC = () => {
                 return;
             }
             if (!id) return;
-            const [userData] = await Promise.all([
+            const [userData, guardiansData] = await Promise.all([
                 getUserById(parseInt(id), token),
+                getAllGuardians(token)
             ]);
-
             setUser(userData);
-
-            form.setFieldsValue({
-                username: userData.username,
-                fullname: userData.fullname,
-                email: userData.email,
-                phoneNumber: userData.phoneNumber,
-            });
+            if (userData.roleId === 4) {
+                const foundGuardian = guardiansData.find((g: Guardian) => g.userId === userData.id);
+                setGuardian(foundGuardian || null);
+                form.setFieldsValue({
+                    username: userData.username,
+                    fullname: userData.fullname,
+                    email: userData.email,
+                    phoneNumber: userData.phoneNumber,
+                    address: foundGuardian?.address || '',
+                });
+            } else {
+                setGuardian(null);
+                form.setFieldsValue({
+                    username: userData.username,
+                    fullname: userData.fullname,
+                    email: userData.email,
+                    phoneNumber: userData.phoneNumber,
+                });
+            }
         } catch (error: any) {
             notificationService.error(error.message || 'Có lỗi xảy ra khi tải thông tin người dùng');
         } finally {
@@ -51,18 +64,27 @@ const UserDetail: React.FC = () => {
 
     const handleCancel = () => {
         setIsEditModalVisible(false);
-
         if (user) {
-            form.setFieldsValue({
-                username: user.username,
-                fullname: user.fullname,
-                email: user.email,
-                phoneNumber: user.phoneNumber,
-            });
+            if (user.roleId === 4 && guardian) {
+                form.setFieldsValue({
+                    username: user.username,
+                    fullname: user.fullname,
+                    email: user.email,
+                    phoneNumber: user.phoneNumber,
+                    address: guardian.address || '',
+                });
+            } else {
+                form.setFieldsValue({
+                    username: user.username,
+                    fullname: user.fullname,
+                    email: user.email,
+                    phoneNumber: user.phoneNumber,
+                });
+            }
         }
     };
 
-    const handleUpdate = async (values: UpdateUserDto) => {
+    const handleUpdate = async (values: UpdateUserDto & { address?: string }) => {
         try {
             setUpdateLoading(true);
             const token = localStorage.getItem('accessToken');
@@ -71,9 +93,27 @@ const UserDetail: React.FC = () => {
                 return;
             }
             if (!id) return;
-
-            await updateUser(parseInt(id), values, token);
-            notificationService.success('Cập nhật người dùng thành công');
+            if (user?.roleId === 4 && guardian) {
+                // Cập nhật guardian (bao gồm address và username)
+                const updateData: UpdateGuardianDto = {
+                    username: values.username,
+                    fullname: values.fullname,
+                    phoneNumber: values.phoneNumber,
+                    address: values.address,
+                };
+                const updatedGuardian = await updateGuardian(guardian.obId, updateData, token);
+                if (updatedGuardian?.user) {
+                    setUser((prev) => prev ? { ...prev, ...updatedGuardian.user } : updatedGuardian.user);
+                }
+                setGuardian(updatedGuardian.guardian || updatedGuardian);
+                notificationService.success('Cập nhật phụ huynh thành công');
+                setIsEditModalVisible(false);
+                return;
+            } else {
+                // Cập nhật user như cũ
+                await updateUser(parseInt(id), values, token);
+                notificationService.success('Cập nhật người dùng thành công');
+            }
             setIsEditModalVisible(false);
             // Refresh data after successful update
             await fetchUserDetail();
@@ -196,6 +236,19 @@ const UserDetail: React.FC = () => {
                                 {user.phoneNumber}
                             </Descriptions.Item>
                         )}
+
+                        {user.roleId === 4 && (
+                            <Descriptions.Item
+                                label={
+                                    <span className="flex items-center gap-2">
+                                        <i className="fas fa-map-marker-alt" style={{ color: '#f87171' }} />
+                                        Địa chỉ liên hệ
+                                    </span>
+                                }
+                            >
+                                {user.roleId === 4 ? (guardian?.address || 'Chưa cập nhật') : null}
+                            </Descriptions.Item>
+                        )}
                     </Descriptions>
                 </div>
             </Card>
@@ -215,6 +268,7 @@ const UserDetail: React.FC = () => {
                         fullname: user.fullname,
                         email: user.email,
                         phoneNumber: user.phoneNumber,
+                        ...(user.roleId === 4 && guardian ? { address: guardian.address || '' } : {}),
                     }}
                 >
                     <Form.Item
@@ -260,6 +314,16 @@ const UserDetail: React.FC = () => {
                     >
                         <Input prefix={<PhoneOutlined />} />
                     </Form.Item>
+
+                    {user.roleId === 4 && (
+                        <Form.Item
+                            name="address"
+                            label="Địa chỉ liên hệ"
+                            rules={[]}
+                        >
+                            <Input />
+                        </Form.Item>
+                    )}
 
                     <Form.Item className="mb-0 text-right">
                         <Button onClick={handleCancel} style={{ marginRight: 8 }}>

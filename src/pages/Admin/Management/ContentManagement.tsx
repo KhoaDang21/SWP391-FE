@@ -3,6 +3,8 @@ import { Typography, Table, Button, Modal, Form, Input, message, Popconfirm, Spa
 import { PlusOutlined } from '@ant-design/icons';
 import { getAllBlogs, createBlog, updateBlog, deleteBlog, Blog } from '../../../services/BlogService';
 import { getAllCategories, createCategory, updateCategory, deleteCategory, Category } from '../../../services/CategoryService';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -52,6 +54,14 @@ const ContentManagement: React.FC = () => {
         fetchBlogs();
         fetchCategories();
     }, []);
+
+    useEffect(() => {
+        if (modalOpen) {
+            form.setFieldsValue({
+                content: editingBlog?.content || '',
+            });
+        }
+    }, [modalOpen, editingBlog]);
 
     const handleCreate = () => {
         setEditingBlog(null);
@@ -122,6 +132,9 @@ const ContentManagement: React.FC = () => {
         }
     };
 
+
+
+
     // Reset form fields when modal is opened
     React.useEffect(() => {
         if (modalOpen && !editingBlog) {
@@ -163,7 +176,17 @@ const ContentManagement: React.FC = () => {
             key: 'action',
             render: (_: unknown, record: Blog) => (
                 <Space>
-                    <Button type="link" onClick={() => handleEdit(record)}>Sửa</Button>
+                    <Button
+                        type="default"
+                        onClick={() => handleEdit(record)}
+                        style={{
+                            backgroundColor: '#ffe58f',
+                            color: '#874d00',
+                            borderColor: '#ffd666'
+                        }}
+                    >
+                        Sửa
+                    </Button>
                     <Popconfirm
                         title="Bạn chắc chắn muốn xóa blog này?"
                         onConfirm={() => handleDelete(record.id!)}
@@ -171,7 +194,7 @@ const ContentManagement: React.FC = () => {
                         cancelText="Hủy"
                         placement="topRight"
                     >
-                        <Button type="link" danger>Xóa</Button>
+                        <Button type="primary" danger>Xóa</Button>
                     </Popconfirm>
                 </Space>
             ),
@@ -269,7 +292,17 @@ const ContentManagement: React.FC = () => {
             key: 'action',
             render: (_: unknown, record: Category) => (
                 <Space>
-                    <Button type="link" onClick={() => handleCatEdit(record)}>Sửa</Button>
+                    <Button
+                        type="default"
+                        onClick={() => handleCatEdit(record)}
+                        style={{
+                            backgroundColor: '#ffe58f',
+                            color: '#874d00',
+                            borderColor: '#ffd666'
+                        }}
+                    >
+                        Sửa
+                    </Button>
                     <Popconfirm
                         title="Bạn chắc chắn muốn xóa category này?"
                         onConfirm={() => handleCatDelete(record.Category_id!)}
@@ -277,7 +310,7 @@ const ContentManagement: React.FC = () => {
                         cancelText="Hủy"
                         placement="topRight"
                     >
-                        <Button type="link" danger>Xóa</Button>
+                        <Button type="primary" danger>Xóa</Button>
                     </Popconfirm>
                 </Space>
             ),
@@ -364,12 +397,39 @@ const ContentManagement: React.FC = () => {
                                     { required: true, message: 'Nhập nội dung' },
                                     { min: 10, message: 'Nội dung tối thiểu 10 ký tự' }
                                 ]}
-                                validateStatus={submitAttempted && form.getFieldError('content').length ? 'error' : ''}
-                                help={submitAttempted && form.getFieldError('content')[0]}
                             >
-                                <TextArea rows={5} placeholder="Nhập nội dung blog" minLength={10} />
+                                <div className="border border-gray-300 rounded-lg">
+                                    <CKEditor
+                                        key={editingBlog?.id || 'new'}
+                                        editor={ClassicEditor}
+                                        data={editingBlog?.content || ''}
+                                        config={{
+                                            placeholder: 'Nhập nội dung blog...',
+                                        }}
+
+                                        // onReady={(editor) => {
+                                        //     const editable = editor.ui.view.editable;
+                                        //     const editableElement = editable?.element;
+
+                                        //     if (editableElement) {
+                                        //         editableElement.style.height = '160px';
+                                        //         editableElement.style.minHeight = '160px';
+                                        //         editableElement.style.maxHeight = '160px';
+                                        //         editableElement.style.overflowY = 'auto';
+                                        //         editableElement.style.padding = '1rem';
+                                        //     }
+                                        // }}
+
+                                        onChange={(_, editor) => {
+                                            const data = editor.getData();
+                                            form.setFieldsValue({ content: data });
+                                        }}
+                                    />
+                                </div>
                             </Form.Item>
+
                         </Col>
+
                         <Col span={24}>
                             <Form.Item
                                 name="author"

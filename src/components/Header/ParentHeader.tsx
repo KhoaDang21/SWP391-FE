@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { UserOutlined } from "@ant-design/icons";
-import { Avatar, Dropdown, Menu, Badge } from "antd";
+import { Avatar, Dropdown, Menu, Badge, Modal, Form, Input, Button } from "antd";
 import { NavLink, useNavigate } from "react-router-dom";
 import Noti from "../../pages/Noti/Noti";
-import { logout } from "../../services/AuthServices";
+import { logout, changePassword } from "../../services/AuthServices";
 import { notificationService } from "../../services/NotificationService";
 
 const Header = () => {
-  // Class chung cho tất cả link
   const baseClass = "font-medium px-2 py-1 transition";
-  // Class khi active (xanh) và khi không active (xám)
   const activeClass = "text-blue-600";
   const inactiveClass = "text-gray-700 hover:text-blue-600";
   const userInfo = localStorage.getItem("user");
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
     const fetchNotifications = async () => {
       try {
         const response = await notificationService.getNotificationsForCurrentUser();
@@ -27,6 +30,9 @@ const Header = () => {
     };
 
     fetchNotifications();
+    intervalId = setInterval(fetchNotifications, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleLogout = async () => {
@@ -46,6 +52,9 @@ const Header = () => {
     <Menu>
       <Menu.Item key="profile">
         <button className="w-full text-left">Hồ sơ</button>
+      </Menu.Item>
+      <Menu.Item key="change-password">
+        <button onClick={() => setIsModalVisible(true)} className="w-full text-left">Đổi mật khẩu</button>
       </Menu.Item>
       <Menu.Item key="logout">
         <button onClick={handleLogout} className="w-full text-left">Đăng xuất</button>
@@ -109,6 +118,59 @@ const Header = () => {
           </Dropdown>
         </div>
       </div>
+
+      <Modal
+        title="Đổi mật khẩu"
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={async (values) => {
+            try {
+              setLoading(true);
+              const token = localStorage.getItem('accessToken');
+              if (!token) {
+                notificationService.error('Vui lòng đăng nhập lại');
+                return;
+              }
+              await changePassword(values.currentPassword, values.newPassword, token);
+              notificationService.success('Đổi mật khẩu thành công');
+              setIsModalVisible(false);
+              form.resetFields();
+            } catch (error: any) {
+              notificationService.error(error.message || 'Đổi mật khẩu thất bại');
+            } finally {
+              setLoading(false);
+            }
+          }}
+        >
+          <Form.Item
+            name="currentPassword"
+            label="Mật khẩu hiện tại"
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            name="newPassword"
+            label="Mật khẩu mới"
+            rules={[
+              { required: true, message: 'Vui lòng nhập mật khẩu mới' },
+              { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
+            ]}
+          >
+            <Input.Password />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={loading}>
+              Đổi mật khẩu
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </header>
   );
 };

@@ -30,7 +30,8 @@ import {
     SafetyOutlined
 } from '@ant-design/icons';
 import { getStudentsByGuardianUserId } from '../../services/AccountService';
-import { createMedicalRecord, deleteMedicalRecord, getAllMedicalRecords, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
+import { createStudentWithMedicalRecord, deleteMedicalRecord, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
+import { vaccineService, VaccineHistoryByMedicalRecordResponse } from '../../services/Vaccineservice';
 import type { MedicalRecord } from '../../services/MedicalRecordService';
 const { Option } = Select;
 const { TextArea } = Input;
@@ -39,30 +40,15 @@ const { Title, Text } = Typography;
 
 const Children = () => {
     const token = localStorage.getItem('accessToken') as string;
-    // const [children, setChildren] = useState([
-    //     {
-    //         id: 1,
-    //         name: 'Nguyễn Văn A',
-    //         dateOfBirth: '2018-05-15',
-    //         gender: 'Nam',
-    //         bloodType: 'O+',
-    //         height: 120,
-    //         weight: 30,
-    //         vaccines: [
-    //             { name: 'BCG', date: '2018-06-01', status: 'Đã tiêm' },
-    //             { name: 'Viêm gan B', date: '2018-07-15', status: 'Đã tiêm' },
-    //             { name: 'DPT', date: '2018-08-20', status: 'Đã tiêm' }
-    //         ],
-    //         chronicDiseases: ['Hen suyễn nhẹ'],
-    //         allergies: ['Phấn hoa', 'Tôm cua'],
-    //         pastIllnesses: [
-    //             { disease: 'Viêm phổi', date: '2020-12-10', treatment: 'Kháng sinh' },
-    //             { disease: 'Sốt xuất huyết', date: '2021-06-20', treatment: 'Nhập viện 5 ngày' }
-    //         ]
-    //     }
-    // ]);
 
+
+    const [loading, setLoading] = useState(false);
     const [children, setChildren] = useState<MedicalRecord[]>([]);
+    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [vaccineHistories, setVaccineHistories] = useState<{ [medicalRecordId: number]: VaccineHistoryByMedicalRecordResponse }>(
+        {}
+    );
 
     useEffect(() => {
         const fetchData = async () => {
@@ -129,8 +115,6 @@ const Children = () => {
 
     const [childrenList, setChildrenList] = useState<{ id: number; name: string }[]>([]);
 
-
-
     const vaccineOptions = [
         'BCG', 'Viêm gan B', 'DPT', 'Bại liệt', 'Sởi', 'Rubella',
         'Quai bị', 'Thủy đậu', 'Cúm', 'Phế cầu', 'Não mô cầu',
@@ -146,16 +130,17 @@ const Children = () => {
         'Phấn hoa', 'Bụi nhà', 'Lông động vật', 'Tôm cua', 'Sữa',
         'Trứng', 'Đậu phộng', 'Kháng sinh Penicillin', 'Aspirin'
     ];
+    const genderOptions = ['Nam', 'Nữ'];
     const showModal = (child: MedicalRecord | null = null) => {
         setEditingChild(child);
         setIsModalVisible(true);
+        console.log('Editing child:', child);
         if (child) {
             form.setFieldsValue({
                 ...child,
                 vaccines: child.vaccines || [],
                 chronicDiseases: child.chronicDiseases || [],
                 allergies: child.allergies || [],
-                pastIllnesses: child.pastIllnesses || []
             });
         } else {
             form.resetFields();
@@ -170,20 +155,42 @@ const Children = () => {
 
     useEffect(() => {
         if (editingChild) {
+            // chronicDiseases có thể là string hoặc mảng đối tượng
+            const chronicArr: string[] = [];
+            if (typeof editingChild.chronicDiseases === 'string') {
+                chronicArr.push(
+                    ...editingChild.chronicDiseases.split(',').map(s => s.trim()).filter(s => s)
+                );
+            }
+            // allergies tương tự
+            const allergyArr: string[] = [];
+            if (typeof editingChild.allergies === 'string') {
+                allergyArr.push(
+                    ...editingChild.allergies.split(',').map(s => s.trim()).filter(s => s)
+                );
+            }
+
             form.setFieldsValue({
                 ...editingChild,
-                chronicDiseases: editingChild.chronicDiseases?.map((item: any) =>
-                    typeof item.name === 'string' ? item.name : item.name?.name
-                ),
-                allergies: editingChild.allergies?.map((item: any) =>
-                    typeof item.name === 'string' ? item.name : item.name?.name
-                ),
-                pastIllnesses: editingChild.pastIllnesses || [],
+                chronicDiseases: chronicArr,
+                allergies: allergyArr,
                 vaccines: editingChild.vaccines || [],
+                // Nếu bạn dùng field "Class" trong Form.Item, nhớ setFieldsValue({ Class: editingChild.class || ... })
+                Class: (editingChild as any).class || (editingChild as any).Class || undefined
             });
         }
     }, [editingChild]);
 
+    const parseToObjArray = (val: any): { name: string }[] => {
+        if (!val) return [];
+        if (Array.isArray(val)) {
+            return val.map((d: string) => ({ name: d }));
+        }
+        if (typeof val === 'string') {
+            return val.split(',').map(s => ({ name: s.trim() })).filter(item => item.name);
+        }
+        return [];
+    };
 
     const handleSubmit = async (values: any) => {
         const token = localStorage.getItem('accessToken') as string;
@@ -191,46 +198,76 @@ const Children = () => {
             console.error('Không tìm thấy token');
             return;
         }
-        const newChild = {
-            ...values,
-            // userId: editingChild ? editingChild.userId : Date.now(),
-            height: Number(values.height),
-            weight: Number(values.weight),
-            chronicDiseases: values.chronicDiseases?.map((d: string) => ({ name: d })) || [],
-            allergies: values.allergies?.map((a: string) => ({ name: a })) || [],
-        };
 
-        console.log('Submitted values:', newChild);
+        const user = localStorage.getItem('user');
 
-        if (editingChild) {
-            await updateMedicalRecord(editingChild.ID!, newChild, token);
-        } else {
-            await createMedicalRecord(newChild, token);
+        const userIdStr = user ? JSON.parse(user).id : null;
+        console.log('User ID String:', userIdStr);
+
+        setLoading(true);
+
+        try {
+            const newChild = {
+                guardianUserId: userIdStr,
+                student: {
+                    fullname: values.fullname,
+                    dateOfBirth: values.dateOfBirth,
+                    gender: values.gender
+                },
+                medicalRecord: {
+                    Class: values.Class,
+                    height: Number(values.height),
+                    weight: Number(values.weight),
+                    bloodType: values.bloodType,
+                    chronicDiseases: parseToObjArray(values.chronicDiseases),
+                    allergies: parseToObjArray(values.allergies),
+                    pastIllnesses: values.pastIllnesses || []
+                }
+            };
+
+            console.log('Payload gửi BE:', newChild);
+
+            if (editingChild) {
+                await updateMedicalRecord(editingChild.ID!, newChild, token);
+            } else {
+                await createStudentWithMedicalRecord(newChild, token);
+            }
+
+            const updatedRecords = await getMedicalRecordsByGuardian(token);
+            setChildren(updatedRecords);
+
+            setIsModalVisible(false);
+            setEditingChild(null);
+            form.resetFields();
+            setLoading(false);
+        } catch (error) {
+            console.error('Lỗi khi gửi form:', error);
+            setLoading(false);
         }
-
-        const updatedRecords = await getMedicalRecordsByGuardian(token);
-        setChildren(updatedRecords);
-
-        setIsModalVisible(false);
-        setEditingChild(null);
-        form.resetFields();
     };
 
 
-    const deleteChild = async (id: number) => {
+    const showDeleteConfirm = (id: number) => {
+        setDeletingId(id);
+        setIsDeleteModalVisible(true);
+    };
+
+    const handleDelete = async () => {
         const token = localStorage.getItem('accessToken');
-        if (!token) return;
+        if (!token || deletingId === null) return;
 
         try {
-            await deleteMedicalRecord(id, token);
-
-            // Fetch lại danh sách sau khi xóa
+            await deleteMedicalRecord(deletingId, token);
             const updatedRecords = await getMedicalRecordsByGuardian(token);
             setChildren(updatedRecords);
         } catch (error) {
             console.error('Lỗi khi xóa hồ sơ y tế:', error);
+        } finally {
+            setIsDeleteModalVisible(false);
+            setDeletingId(null);
         }
     };
+
 
 
     const calculateAge = (dateOfBirth: string) => {
@@ -243,6 +280,29 @@ const Children = () => {
         }
         return age;
     };
+
+    useEffect(() => {
+        const fetchVaccineHistories = async () => {
+            try {
+                const histories: { [medicalRecordId: number]: VaccineHistoryByMedicalRecordResponse } = {};
+                for (const child of children) {
+                    if (child.ID) {
+                        try {
+                            const data = await vaccineService.getVaccineHistoryByMedicalRecordId(child.ID);
+                            histories[child.ID] = data;
+                            console.log(`Fetched vaccine history for child ID ${child.ID}:`, data);
+                        } catch (e) {
+                        }
+                    }
+                }
+                setVaccineHistories(histories);
+            } catch (error) {
+            }
+        };
+        if (children.length > 0) {
+            fetchVaccineHistories();
+        }
+    }, [children]);
 
     return (
         <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
@@ -287,7 +347,6 @@ const Children = () => {
                         </div>
 
 
-
                         <Row gutter={[16, 16]}>
                             {children.map(child => (
                                 <Col xs={24} lg={12} key={child.userId}>
@@ -295,7 +354,7 @@ const Children = () => {
                                         style={{ height: '100%' }}
                                         actions={[
                                             <EditOutlined key="edit" onClick={() => showModal(child)} />,
-                                            <DeleteOutlined key="delete" onClick={() => deleteChild(child.ID)} />
+                                            <DeleteOutlined key="delete" onClick={() => showDeleteConfirm(child.ID)} />
                                         ]}
                                     >
                                         <div style={{ marginBottom: '16px' }}>
@@ -303,6 +362,8 @@ const Children = () => {
                                                 <Avatar size={64} icon={<UserOutlined />} />
                                                 <div>
                                                     <Title level={4} style={{ margin: 0 }}>{child.fullname}</Title>
+                                                    <Text type="secondary">Lớp : {child.Class || 'Chưa xác định'}  • Tuổi: {calculateAge(child.dateOfBirth)}</Text>
+                                                    <br />
                                                     <Text type="secondary">Chiều cao: {child.height || 'Chưa xác định'} cm  • Cân nặng: {child.weight || 'Chưa xác định'} kg</Text>
                                                 </div>
                                             </Space>
@@ -311,60 +372,90 @@ const Children = () => {
                                         <Tabs size="small">
                                             <TabPane tab={<span><SafetyOutlined />Vaccine</span>} key="1">
                                                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {child.vaccines && child.vaccines.length > 0 ? (
-                                                        child.vaccines.map((vaccine, index) => (
-                                                            <div key={index} style={{ marginBottom: '8px', padding: '8px', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
-                                                                <Text strong>{vaccine.name}</Text>
-                                                                <br />
-                                                                <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                                    {vaccine.date} • {vaccine.status}
-                                                                </Text>
-                                                            </div>
-                                                        ))
+                                                    {vaccineHistories[child.ID] && vaccineHistories[child.ID].vaccineHistory.filter(v => v.Status === 'Đã tiêm').length > 0 ? (
+                                                        vaccineHistories[child.ID].vaccineHistory
+                                                            .filter(vaccine => vaccine.Status === 'Đã tiêm')
+                                                            .map((vaccine, index) => (
+                                                                <div
+                                                                    key={index}
+                                                                    style={{
+                                                                        marginBottom: '8px',
+                                                                        padding: '8px',
+                                                                        backgroundColor: '#f6ffed',
+                                                                        borderRadius: '4px',
+                                                                        border: '1px solid #b7eb8f'
+                                                                    }}
+                                                                >
+                                                                    <Text strong style={{ color: '#389e0d' }}>{vaccine.Vaccine_name}</Text>
+                                                                    <br />
+                                                                    <Text type="secondary" style={{ fontSize: '12px', color: '#389e0d' }}>
+                                                                       Ngày Tiêm: {vaccine.Date_injection ? new Date(vaccine.Date_injection).toLocaleDateString('vi-VN') : ''} 
+                                                                    </Text>
+                                                                </div>
+                                                            ))
                                                     ) : (
-                                                        <Text type="secondary">Chưa có thông tin vaccine</Text>
+                                                        <Text type="secondary">Chưa có thông tin vaccine đã tiêm</Text>
                                                     )}
                                                 </div>
                                             </TabPane>
 
                                             <TabPane tab={<div><MedicineBoxOutlined />Sức khỏe</div>} key="2">
                                                 <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {Array.isArray(child.chronicDiseases) && child.chronicDiseases.length > 0 && (
-                                                        <div style={{ marginBottom: '12px' }}>
-                                                            <Text strong>Bệnh nền:</Text>
-                                                            <div style={{ marginTop: '4px' }}>
-                                                                {child.chronicDiseases.map((disease, index) => (
-                                                                    <Tag key={index} color="orange">{disease.name}</Tag>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                                    {(() => {
+                                                        // Chuyển chronicDiseases thành array đối tượng { name: string }
+                                                        let chronicArr: { name: string }[] = [];
+                                                        if (Array.isArray(child.chronicDiseases)) {
+                                                            chronicArr = child.chronicDiseases;
+                                                        } else if (typeof child.chronicDiseases === 'string') {
+                                                            chronicArr = child.chronicDiseases
+                                                                .split(',')
+                                                                .map(s => ({ name: s.trim() }))
+                                                                .filter(item => item.name);
+                                                        }
+                                                        // Chuyển allergies thành array đối tượng { name: string }
+                                                        let allergyArr: { name: string }[] = [];
+                                                        if (Array.isArray(child.allergies)) {
+                                                            allergyArr = child.allergies;
+                                                        } else if (typeof child.allergies === 'string') {
+                                                            allergyArr = child.allergies
+                                                                .split(',')
+                                                                .map(s => ({ name: s.trim() }))
+                                                                .filter(item => item.name);
+                                                        }
+                                                        // Chuyển pastIllnesses thành array đối tượng { disease, date, treatment? }
 
-                                                    {Array.isArray(child.allergies) && child.allergies.length > 0 && (
-                                                        <div style={{ marginBottom: '12px' }}>
-                                                            <Text strong>Dị ứng:</Text>
-                                                            <div style={{ marginTop: '4px' }}>
-                                                                {child.allergies.map((allergy, index) => (
-                                                                    <Tag key={index} color="red">{allergy.name}</Tag>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
 
-                                                    {Array.isArray(child.pastIllnesses) && child.pastIllnesses.length > 0 && (
-                                                        <div>
-                                                            <Text strong>Bệnh đã mắc:</Text>
-                                                            <div style={{ marginTop: '4px' }}>
-                                                                {child.pastIllnesses.map((illness, index) => (
-                                                                    <div key={index} style={{ marginBottom: '4px', fontSize: '12px' }}>
-                                                                        <Text>{illness.disease}</Text> - <Text type="secondary">{illness.date}</Text>
+                                                        return (
+                                                            <>
+                                                                {chronicArr.length > 0 && (
+                                                                    <div style={{ marginBottom: 12 }}>
+                                                                        <Text strong>Bệnh nền:</Text>
+                                                                        <div style={{ marginTop: 4 }}>
+                                                                            {chronicArr.map((disease, idx) => (
+                                                                                <Tag key={idx} color="orange">{disease.name}</Tag>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                                                )}
+
+                                                                {allergyArr.length > 0 && (
+                                                                    <div style={{ marginBottom: 12 }}>
+                                                                        <Text strong>Dị ứng:</Text>
+                                                                        <div style={{ marginTop: 4 }}>
+                                                                            {allergyArr.map((allergy, idx) => (
+                                                                                <Tag key={idx} color="red">{allergy.name}</Tag>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </TabPane>
+
 
                                         </Tabs>
                                     </Card>
@@ -396,33 +487,75 @@ const Children = () => {
                         />
 
                         <Form.Item
-                            name="userId"
-                            label="Chọn con"
-                            rules={[{ required: true, message: 'Vui lòng chọn con!' }]}
+                            name="fullname"
+                            label="Họ và tên"
+                            rules={[{ required: true, message: 'Vui lòng nhập họ và tên!' }]}
                         >
-                            <Select placeholder="Chọn tên con">
-                                {childrenList
-                                    .filter(child => {
-                                        const alreadyUsed = children.some(record =>
-                                            record.userId === child.id && record.userId !== editingChild?.userId
-                                        );
-                                        return !alreadyUsed;
-                                    })
-                                    .map(child => (
-                                        <Select.Option key={child.id} value={child.id}>
-                                            {child.name}
-                                        </Select.Option>
-                                    ))}
+                            <Input placeholder="Nhập họ và tên" />
+                        </Form.Item>
+
+
+                        <Form.Item
+                            name="Class"
+                            label="Lớp"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập lớp!' },
+                                {
+                                    pattern: /^[1-5][A-Z]$/,
+                                    message: 'Lớp phải có định dạng như 1A, 2B... với số từ 1 đến 5 và một chữ cái in hoa.'
+                                }
+                            ]}
+                        >
+                            <Input placeholder="Nhập lớp (ví dụ: 1A, 5E)" />
+                        </Form.Item>
+
+
+
+                        <Form.Item
+                            name="gender"
+                            label="Giới tính"
+                            rules={[{ required: true, message: 'Vui lòng chọn giới tính!' }]}
+                        >
+                            <Select placeholder="Chọn giới tính">
+                                {genderOptions.map(gender => (
+                                    <Select.Option key={gender} value={gender}>{gender}</Select.Option>
+                                ))}
                             </Select>
                         </Form.Item>
 
                         <Form.Item
-                            name="class"
-                            label="Lớp"
-                            rules={[{ required: true, message: 'Vui lòng nhập lớp!' }]}
+                            name="dateOfBirth"
+                            label="Ngày sinh"
+                            rules={[
+                                { required: true, message: 'Vui lòng chọn ngày sinh!' },
+                                ({ getFieldValue }) => ({
+                                    validator(_, value) {
+                                        if (!value) return Promise.resolve();
+
+                                        const birthDate = new Date(value);
+                                        const today = new Date();
+                                        const age = today.getFullYear() - birthDate.getFullYear();
+                                        const m = today.getMonth() - birthDate.getMonth();
+
+                                        const isBirthdayPassed =
+                                            m > 0 || (m === 0 && today.getDate() >= birthDate.getDate());
+                                        const actualAge = isBirthdayPassed ? age : age - 1;
+
+                                        if (actualAge < 5 || actualAge > 13) {
+                                            return Promise.reject(new Error('Độ tuổi phải từ 5 đến 13 tuổi!'));
+                                        }
+
+                                        return Promise.resolve();
+                                    }
+                                })
+                            ]}
                         >
-                            <Input placeholder="Nhập lớp" />
+                            <Input
+                                type="date"
+                                max={new Date().toISOString().split("T")[0]}
+                            />
                         </Form.Item>
+
 
                         <Form.Item
                             name="height"
@@ -568,70 +701,39 @@ const Children = () => {
                             </Select>
                         </Form.Item>
 
-                        <Form.List name="pastIllnesses">
-                            {(fields, { add, remove }) => (
-                                <>
-                                    {fields.map(field => (
-                                        <Row key={field.key} gutter={16} align="middle">
-                                            <Col span={8}>
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, 'disease']}
-                                                    label={field.key === 0 ? "Bệnh đã mắc" : ""}
-                                                >
-                                                    <Input placeholder="Tên bệnh" />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col span={6}>
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, 'date']}
-                                                    label={field.key === 0 ? "Ngày mắc" : ""}
-                                                >
-                                                    <Input
-                                                        type="date"
-                                                        max={new Date().toISOString().split("T")[0]}
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col span={6}>
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, 'treatment']}
-                                                    label={field.key === 0 ? "Điều trị" : ""}
-                                                >
-                                                    <Input placeholder="Cách điều trị" />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col span={4}>
-                                                {field.key === 0 && <div style={{ height: '22px' }} />}
-                                                <Button className='mb-4' onClick={() => remove(field.name)}>
-                                                    Xóa
-                                                </Button>
-                                            </Col>
-                                        </Row>
-                                    ))}
-                                    <Form.Item>
-                                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                                            Thêm Bệnh Đã Mắc
-                                        </Button>
-                                    </Form.Item>
-                                </>
-                            )}
-                        </Form.List>
 
                         <Form.Item style={{ marginTop: '24px', textAlign: 'right' }}>
                             <Space>
                                 <Button onClick={handleCancel}>
                                     Hủy
                                 </Button>
-                                <Button type="primary" htmlType="submit">
+                                <Button type="primary" htmlType="submit" loading={loading}>
                                     {editingChild ? 'Cập Nhật' : 'Thêm Mới'}
                                 </Button>
                             </Space>
                         </Form.Item>
                     </Form>
                 </Modal>
+
+                <Modal
+                    title={
+                        <span className="text-lg font-bold">
+                            Xác nhận xóa
+                        </span>
+                    }
+                    open={isDeleteModalVisible}
+                    onOk={handleDelete}
+                    onCancel={() => setIsDeleteModalVisible(false)}
+                    okText="Xóa"
+                    cancelText="Hủy"
+                    okType="danger"
+                >
+                    <p className="text-base font-semibold text-gray-800">Bạn có chắc chắn muốn xóa hồ sơ y tế của học sinh này không?</p>
+                    <Text type="danger" className='text-sm'>
+                        * Nếu xóa hồ sơ này, học sinh cũng sẽ bị xóa khỏi hệ thống. Hãy kiểm tra kỹ trước khi thực hiện.
+                    </Text>
+                </Modal>
+
             </div>
         </div>
     );

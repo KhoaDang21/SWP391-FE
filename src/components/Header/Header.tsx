@@ -43,10 +43,9 @@ const Header = () => {
           <NavLink
             to="/login"
             className={({ isActive }) =>
-              `px-4 py-2 rounded transition ${
-                isActive
-                  ? "bg-blue-700 text-white"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
+              `px-4 py-2 rounded transition ${isActive
+                ? "bg-blue-700 text-white"
+                : "bg-blue-600 text-white hover:bg-blue-700"
               }`
             }
           >

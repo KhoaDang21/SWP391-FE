@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Search } from 'lucide-react';
+import SearchMedicalRecordModal from './SearchMedicalRecordModal';
 
 interface ModalProps {
   isOpen: boolean;
@@ -8,16 +9,35 @@ interface ModalProps {
 }
 
 interface FormData {
-  MR_ID: string;
+  ID: string;
   Decription: string;
   Handle: string;
   Image: File | null;
   Is_calLOb: boolean;
 }
 
+interface StudentGuardianInfo {
+  ID: number;
+  fullname: string;
+  Class: string;
+  height: number;
+  weight: number;
+  bloodType: string;
+  chronicDiseases: string;
+  allergies: string;
+  pastIllnesses?: string;
+  guardian?: {
+    fullname: string;
+    phoneNumber: string;
+    roleInFamily: string;
+    address: string;
+    isCallFirst: boolean;
+  };
+}
+
 const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState<FormData>({
-    MR_ID: '',
+    ID: '',
     Decription: '',
     Handle: '',
     Image: null,
@@ -25,19 +45,20 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [selectedInfo, setSelectedInfo] = useState<StudentGuardianInfo | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFormData(prev => ({ ...prev, Image: file }));
       
-      // Create preview URL
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     }
   };
 
-  // Cleanup preview URL on unmount
   useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -47,7 +68,7 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
   }, [previewUrl]);
 
   const initialFormData = {
-    MR_ID: '',
+    ID: '',
     Decription: '',
     Handle: '',
     Image: null,
@@ -62,14 +83,34 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(null);
     try {
       await onSubmit(formData);
       resetForm();
+    } catch (err: any) {
+      const msg = err?.message || (err?.error && err.error.message) || 'Có lỗi xảy ra';
+      setErrorMessage(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
+
+  const handleSelectRecord = (info: StudentGuardianInfo) => {
+    setSelectedInfo(info);
+    setFormData(prev => ({ ...prev, ID: info.ID.toString() }));
+    setShowSearch(false);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedInfo(null);
+      setFormData(initialFormData);
+      setPreviewUrl(null);
+      setErrorMessage(null);
+    }
+  }, [isOpen]);
+  
   if (!isOpen) return null;
 
   return (
@@ -86,17 +127,77 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          {errorMessage && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded border border-red-300">
+              {errorMessage}
+            </div>
+          )}
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              ID Hồ sơ y tế
+              Thông tin học sinh & phụ huynh
             </label>
-            <input
-              type="text"
-              value={formData.MR_ID}
-              onChange={e => setFormData(prev => ({ ...prev, MR_ID: e.target.value }))}
-              className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
+            {selectedInfo ? (
+              <div className="border rounded-lg p-4 bg-gradient-to-br from-blue-50 to-white mb-2 relative shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedInfo(null); setFormData(prev => ({ ...prev, ID: '' })); }}
+                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
+                  title="Chọn lại hồ sơ"
+                >
+                  <X size={18} />
+                </button>
+                <div className="mb-2 flex flex-col gap-1">
+                  <div>
+                    <span className="font-semibold text-blue-700">Tên học sinh:</span>
+                    <span className="ml-2 text-gray-900">{selectedInfo.fullname}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-blue-700">Lớp:</span>
+                    <span className="ml-2 text-gray-900">{selectedInfo.Class}</span>
+                  </div>
+                </div>
+                {selectedInfo.guardian && (
+                  <div className="mt-2 border-t pt-2 flex flex-col gap-1">
+                    <div>
+                      <span className="font-semibold text-blue-700">Tên phụ huynh:</span>
+                      <span className="ml-2 text-gray-900">{selectedInfo.guardian.fullname}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-blue-700">Số điện thoại:</span>
+                      <span className="ml-2 text-gray-900">{selectedInfo.guardian.phoneNumber}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-blue-700">Địa chỉ:</span>
+                      <span className="ml-2 text-gray-900">{selectedInfo.guardian.address}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-blue-700">Vai trò trong gia đình:</span>
+                      <span className="ml-2 text-gray-900">{selectedInfo.guardian.roleInFamily}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.ID}
+                  readOnly
+                  placeholder="Chọn hồ sơ y tế"
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-100 cursor-pointer"
+                  required
+                  onClick={() => setShowSearch(true)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSearch(true)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  tabIndex={-1}
+                >
+                  <Search className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-6">
@@ -207,6 +308,14 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
           </div>
         </form>
       </div>
+
+      {showSearch && (
+        <SearchMedicalRecordModal
+          isOpen={showSearch}
+          onClose={() => setShowSearch(false)}
+          onSelect={handleSelectRecord}
+        />
+      )}
     </div>
   );
 };
