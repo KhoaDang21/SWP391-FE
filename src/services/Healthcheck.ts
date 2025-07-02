@@ -11,6 +11,7 @@ export interface HealthCheckEvent {
     dateEvent: string;
     type: string;
   };
+  status?: string;
 }
 
 export interface CreateHealthCheckRequest {

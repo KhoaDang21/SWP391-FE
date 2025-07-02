@@ -235,6 +235,7 @@ const ManageHealthcheck: React.FC = () => {
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Năm học</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày khám</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại</th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
             </tr>
@@ -270,6 +271,37 @@ const ManageHealthcheck: React.FC = () => {
                       {event.Event?.dateEvent ? new Date(event.Event.dateEvent).toLocaleDateString() : ''}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Event?.type}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {/* Trạng thái đợt khám */}
+                      {(() => {
+                        let color = '';
+                        let label = '';
+                        switch (event.status) {
+                          case 'created':
+                            color = 'bg-gray-400 text-white';
+                            label = 'Chờ gửi';
+                            break;
+                          case 'pending':
+                            color = 'bg-orange-400 text-white';
+                            label = 'Chờ xác nhận';
+                            break;
+                          case 'inProgress':
+                            color = 'bg-blue-500 text-white';
+                            label = 'Đang diễn ra';
+                            break;
+                          case 'checked':
+                            color = 'bg-yellow-400 text-gray-900';
+                            label = 'Đã có kết quả';
+                            break;
+                          default:
+                            color = 'bg-gray-200 text-gray-700';
+                            label = event.status || '';
+                        }
+                        return (
+                          <span className={`inline-block px-3 py-1 rounded-full font-semibold text-xs ${color}`}>{label}</span>
+                        );
+                      })()}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.description}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <div className="flex items-center space-x-3">
