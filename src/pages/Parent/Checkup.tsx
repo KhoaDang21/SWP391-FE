@@ -186,12 +186,19 @@ const Checkup: React.FC = () => {
                                     dataSource={[...studentForms].sort((a, b) => new Date(b.dateEvent).getTime() - new Date(a.dateEvent).getTime())}
                                     renderItem={(form: any) => {
                                         let tagColor = 'default';
-                                        switch (form.status) {
-                                            case 'pending': tagColor = 'warning'; break;
-                                            case 'approved': tagColor = 'success'; break;
-                                            case 'checked': tagColor = 'warning'; break;
-                                            case 'rejected': tagColor = 'error'; break;
-                                            default: tagColor = 'default';
+                                        let displayStatus = form.status;
+                                        // Nếu là 'created' thì hiển thị như 'pending' và cho phép xác nhận
+                                        if (form.status === 'created') {
+                                            tagColor = 'orange';
+                                            displayStatus = 'pending';
+                                        } else {
+                                            switch (form.status) {
+                                                case 'pending': tagColor = 'orange'; break;
+                                                case 'approved': tagColor = 'green'; break;
+                                                case 'checked': tagColor = 'yellow'; break;
+                                                case 'rejected': tagColor = 'red'; break;
+                                                default: tagColor = 'default';
+                                            }
                                         }
                                         return (
                                             <List.Item key={form.formId} style={{ padding: 0, border: 'none', cursor: 'pointer' }}
@@ -226,10 +233,10 @@ const Checkup: React.FC = () => {
                                                         <Col xs={12} md={4}>
                                                             <Space>
                                                                 <Tag color={tagColor} style={{ fontWeight: 500, fontSize: 14, padding: '2px 10px' }}>
-                                                                    {form.status === 'pending' ? 'Chờ xác nhận' : 
-                                                                     form.status === 'approved' ? 'Đã xác nhận' : 
-                                                                     form.status === 'checked' ? 'Đã có kết quả khám' :
-                                                                     form.status === 'rejected' ? 'Từ chối' : form.status}
+                                                                    {displayStatus === 'pending' ? 'Chờ xác nhận' : 
+                                                                     displayStatus === 'approved' ? 'Đã xác nhận' : 
+                                                                     displayStatus === 'checked' ? 'Đã có kết quả khám' :
+                                                                     displayStatus === 'rejected' ? 'Từ chối' : form.status}
                                                                 </Tag>
                                                             </Space>
                                                         </Col>
@@ -349,12 +356,12 @@ const Checkup: React.FC = () => {
                             <Col span={24}><Text strong>Ngày khám:</Text> {selectedForm.dateEvent ? dayjs(selectedForm.dateEvent).format('DD/MM/YYYY') : '-'}</Col>
                             <Col span={24}><Text strong>Mô tả:</Text> {selectedForm.description}</Col>
                             <Col span={24}><Text strong>Trạng thái hiện tại:</Text> <Tag color={
-                                selectedForm.status === 'pending' ? 'orange' :
+                                selectedForm.status === 'created' || selectedForm.status === 'pending' ? 'orange' :
                                 selectedForm.status === 'approved' ? 'green' :
                                 selectedForm.status === 'checked' ? 'yellow' :
                                 selectedForm.status === 'rejected' ? 'red' : 'default'
                             }>
-                                {selectedForm.status === 'pending' ? 'Chờ xác nhận' :
+                                {(selectedForm.status === 'created' || selectedForm.status === 'pending') ? 'Chờ xác nhận' :
                                  selectedForm.status === 'approved' ? 'Đã xác nhận' :
                                  selectedForm.status === 'checked' ? 'Đã có kết quả khám' :
                                  selectedForm.status === 'rejected' ? 'Từ chối' : selectedForm.status}
@@ -362,7 +369,7 @@ const Checkup: React.FC = () => {
                         </Row>
                         <Divider />
                         <Space style={{ width: '100%', justifyContent: 'center' }}>
-                            {selectedForm.status === 'pending' && (
+                            {(selectedForm.status === 'pending' || selectedForm.status === 'created') && (
                                 <>
                                     <Button
                                         type="primary"
@@ -383,7 +390,7 @@ const Checkup: React.FC = () => {
                                                 setConfirmLoading(false);
                                             }
                                         }}
-                                    >Xác nhận khám</Button>
+                                    >Đồng ý khám</Button>
                                     <Button
                                         danger
                                         loading={confirmLoading}
