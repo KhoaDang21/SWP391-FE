@@ -136,9 +136,21 @@ const Event = () => {
             align: 'center',
             render: (val: string) =>
                 val === 'Có' ? (
-                    <Tag color="green" icon={<CheckCircleOutlined />}>Đã gọi</Tag>
+                    <Tag
+                        color="#52c41a"
+                        icon={<CheckCircleOutlined />}
+                        style={{ fontWeight: 500, fontSize: 14, padding: '4px 16px', borderRadius: 8 }}
+                    >
+                        Đã gọi
+                    </Tag>
                 ) : (
-                    <Tag color="default" icon={<MinusCircleOutlined />}>Chưa gọi</Tag>
+                    <Tag
+                        color="#bfbfbf"
+                        icon={<MinusCircleOutlined />}
+                        style={{ fontWeight: 500, fontSize: 14, padding: '4px 16px', borderRadius: 8 }}
+                    >
+                        Không gọi
+                    </Tag>
                 ),
         },
         {

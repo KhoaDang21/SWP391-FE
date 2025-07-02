@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Button, Table, Card, Row, Col, Statistic, Spin, Tag, Input } from 'antd';
+import { Button, Table, Card, Row, Col, Statistic, Spin, Tag, Input, Select } from 'antd';
 import { ArrowLeft, Users, CheckCircle, Clock, AlertCircle, Pencil } from 'lucide-react';
 import { vaccineService, VaccinePayload } from '../../services/Vaccineservice';
 import { notificationService } from '../../services/NotificationService';
@@ -20,7 +20,7 @@ const VaccineEventStudents: React.FC = () => {
     pending: 0,
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [noteInputs, setNoteInputs] = useState<{ [key: number]: string }>({});
+  const [noteInputs, setNoteInputs] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (eventName) {
@@ -44,7 +44,7 @@ const VaccineEventStudents: React.FC = () => {
       const total = records.length;
       const confirmed = records.filter(s => s.Status === 'Đã tiêm').length;
       const allowed = records.filter(s => s.Status === 'Cho phép tiêm').length;
-      const rejected = records.filter(s => s.Status === 'Không cho phép tiêm').length;
+      const rejected = records.filter(s => s.Status === 'Không tiêm').length;
       const pending = records.filter(s => s.Status === 'Chờ xác nhận').length;
       setStats({ total, confirmed, allowed, rejected, pending });
     } catch (error) {
@@ -55,17 +55,17 @@ const VaccineEventStudents: React.FC = () => {
     }
   };
 
-  const editableStudents = students.filter(s => s.Status === 'Cho phép tiêm' || s.Status === 'Đã tiêm');
+  const editableStudents = students.filter(s => s.Status === 'Cho phép tiêm' || s.Status === 'Đã tiêm' || s.Status === 'Không tiêm');
 
   const handleEditSave = async () => {
     if (isEditing) {
       try {
         const updates = editableStudents
-          .filter(record => noteInputs[record.VH_ID] !== undefined)
+          .filter(record => noteInputs[record.VH_ID] !== undefined || noteInputs[`status_${record.VH_ID}`] !== undefined)
           .map(record => ({
             VH_ID: record.VH_ID,
-            status: "Cho phép tiêm",
-            note_affter_injection: noteInputs[record.VH_ID] || record.note_affter_injection || ''
+            status: noteInputs[`status_${record.VH_ID}`] || record.Status,
+            note_affter_injection: noteInputs[record.VH_ID] ?? record.note_affter_injection ?? ''
           }));
 
         if (updates.length === 0) {
@@ -118,7 +118,7 @@ const VaccineEventStudents: React.FC = () => {
               ? 'green'
               : status === 'Cho phép tiêm'
                 ? 'blue'
-                : status === 'Không cho phép tiêm'
+                : status === 'Không tiêm'
                   ? 'red'
                   : 'orange'
           }
@@ -146,10 +146,10 @@ const VaccineEventStudents: React.FC = () => {
               Cho phép tiêm
             </>
           )}
-          {status === 'Không cho phép tiêm' && (
+          {status === 'Không tiêm' && (
             <>
               <AlertCircle className="w-3 h-3 text-red-500" />
-              Không cho phép tiêm
+              Không tiêm
             </>
           )}
           {status === 'Đã tiêm' && (
@@ -158,7 +158,7 @@ const VaccineEventStudents: React.FC = () => {
               Đã tiêm
             </>
           )}
-          {status !== 'Chờ xác nhận' && status !== 'Cho phép tiêm' && status !== 'Không cho phép tiêm' && status !== 'Đã tiêm' && (
+          {status !== 'Chờ xác nhận' && status !== 'Cho phép tiêm' && status !== 'Không tiêm' && status !== 'Đã tiêm' && (
             <>
               <AlertCircle className="w-3 h-3" />
               {status}
@@ -172,17 +172,75 @@ const VaccineEventStudents: React.FC = () => {
       dataIndex: 'note_affter_injection',
       key: 'note_affter_injection',
       render: (_: string, record: VaccinePayload) =>
-        isEditing && (record.Status === 'Cho phép tiêm' || record.Status === 'Đã tiêm') ? (
-          <Input
-            defaultValue={record.note_affter_injection || ''}
-            onChange={e =>
-              setNoteInputs(prev => ({
-                ...prev,
-                [record.VH_ID]: e.target.value
-              }))
-            }
-            placeholder="Nhập ghi chú sau tiêm"
-          />
+        isEditing && (record.Status === 'Cho phép tiêm' || record.Status === 'Đã tiêm' || record.Status === 'Không tiêm') ? (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Input
+              defaultValue={record.note_affter_injection || ''}
+              onChange={e =>
+                setNoteInputs(prev => ({
+                  ...prev,
+                  [record.VH_ID]: e.target.value
+                }))
+              }
+              placeholder="Ghi chú sau tiêm (ví dụ: Đã tiêm, không có phản ứng...)"
+              style={{
+                flex: 1,
+                borderRadius: 6,
+                border: '1px solid #d9d9d9',
+                padding: '6px 12px',
+                fontSize: 13
+              }}
+            />
+            <Select
+              defaultValue="Đã tiêm"
+              style={{
+                width: 150,
+                borderRadius: 8,
+                background: '#f6ffed',
+                border: '1.5px solid #b7eb8f',
+                fontWeight: 600,
+                fontSize: 14,
+                boxShadow: '0 2px 8px #b7eb8f22'
+              }}
+              dropdownStyle={{
+                borderRadius: 12,
+                boxShadow: '0 4px 16px #36cfc933',
+                padding: 8
+              }}
+              onChange={value => {
+                setNoteInputs(prev => ({
+                  ...prev,
+                  [`status_${record.VH_ID}`]: value
+                }));
+              }}
+              options={[
+                {
+                  value: 'Đã tiêm',
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CheckCircle size={18} style={{ color: '#389e0d' }} />
+                      <span style={{ color: '#389e0d', fontWeight: 600 }}>Đã tiêm</span>
+                    </div>
+                  )
+                },
+                {
+                  value: 'Không tiêm',
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <AlertCircle size={18} style={{ color: '#cf1322' }} />
+                      <span style={{ color: '#cf1322', fontWeight: 600 }}>Không tiêm</span>
+                    </div>
+                  )
+                }
+              ]}
+              placeholder={
+                <span style={{ color: '#389e0d', fontWeight: 600 }}>
+                  <CheckCircle size={16} style={{ marginRight: 4, color: '#389e0d' }} />
+                  Đã tiêm
+                </span>
+              }
+            />
+          </div>
         ) : (
           <div className="text-gray-600">{record.note_affter_injection || 'Không có'}</div>
         ),
@@ -288,7 +346,7 @@ const VaccineEventStudents: React.FC = () => {
         <Col span={5}>
           <Card>
             <Statistic
-              title="Không cho phép tiêm"
+              title="Không tiêm"
               value={stats.rejected}
               prefix={<AlertCircle className="w-5 h-5 text-red-500" />}
               valueStyle={{ color: '#ef4444' }}

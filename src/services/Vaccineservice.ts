@@ -183,7 +183,6 @@ export const vaccineService = {
     }
     const data = await response.json();
     return data.data;
-    return data.data;
   },
 
   getVaccineByName: async (vaccineName: string, grade?: string, eventDate?: string): Promise<VaccinePayload[]> => {
@@ -369,6 +368,29 @@ export const vaccineService = {
     }
     const result = await response.json();
     return result;
+  },
+
+  deleteVaccineByNameDateGrade: async (params: { vaccineName: string; dateInjection: string }): Promise<any> => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+    const response = await fetch(`${API_URL}/vaccine/delete-by-name-date-grade`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(params)
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result?.message || 'Failed to delete vaccine event');
+    }
+    return {
+      message: result?.message,
+      data: {
+        deletedCount: result?.data?.deletedCount ?? 0
+      }
+    };
   },
 };
 

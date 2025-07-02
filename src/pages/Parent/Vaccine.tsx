@@ -127,7 +127,8 @@ const Vaccine: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const shouldOpenModal = searchParams.get('openModal') === 'true';                const studentNameParam = searchParams.get('studentName');
+                const shouldOpenModal = searchParams.get('openModal') === 'true';                
+                const studentNameParam = searchParams.get('studentName');
 
                 const response = await vaccineService.getVaccinesByGuardian();
                 const transformedStudents = response.histories.map(history => ({
@@ -220,7 +221,7 @@ const Vaccine: React.FC = () => {
         switch (status) {
             case 'Đã tiêm': return 'success';
             case 'Cho phép tiêm': return '#faad14';
-            case 'Không cho phép tiêm': return '#ff4d4f';
+            case 'Không tiêm': return '#ff4d4f';
             case 'Chờ xác nhận': return '#fa8c16';
             default: return '#d9d9d9';
         }
@@ -230,7 +231,7 @@ const Vaccine: React.FC = () => {
         switch (status) {
             case 'Đã tiêm': return 'success';
             case 'Cho phép tiêm': return 'warning';
-            case 'Không cho phép tiêm': return 'error';
+            case 'Không tiêm': return 'error';
             case 'Chờ xác nhận': return 'processing';
             default: return 'default';
         }
@@ -320,7 +321,7 @@ const Vaccine: React.FC = () => {
                                         case 'Đã tiêm': return '#f6ffed';
                                         case 'Chờ xác nhận': return '#fff2e8';
                                         case 'Cho phép tiêm': return '#fffbe6';
-                                        case 'Không cho phép tiêm': return '#fff1f0';
+                                        case 'Không tiêm': return '#fff1f0';
                                         default: return '#fafafa';
                                     }
                                 };
@@ -330,11 +331,10 @@ const Vaccine: React.FC = () => {
                                         case 'Đã tiêm': return '#b7eb8f';
                                         case 'Chờ xác nhận': return '#ffbb96';
                                         case 'Cho phép tiêm': return '#ffd591';
-                                        case 'Không cho phép tiêm': return '#ffa39e';
+                                        case 'Không tiêm': return '#ffa39e';
                                         default: return '#d9d9d9';
                                     }
                                 };
-
                                 return (
                                     <List.Item
                                         style={{
@@ -360,11 +360,33 @@ const Vaccine: React.FC = () => {
                                                 >
                                                     <Avatar
                                                         style={{
-                                                            backgroundColor: vaccineRecord.status === 'Đã tiêm' ? '#f6ffed' :
-                                                                vaccineRecord.status === 'Chờ xác nhận' || vaccineRecord.status === 'Cho phép tiêm' ? '#fa8c16' : '#d9d9d9'
+                                                            backgroundColor:
+                                                                vaccineRecord.status === 'Đã tiêm'
+                                                                    ? '#f6ffed'
+                                                                    : vaccineRecord.status === 'Không tiêm'
+                                                                        ? '#fff1f0'
+                                                                        : vaccineRecord.status === 'Chờ xác nhận' || vaccineRecord.status === 'Cho phép tiêm'
+                                                                            ? '#fffbe6'
+                                                                            : '#d9d9d9',
+                                                            border: vaccineRecord.status === 'Đã tiêm'
+                                                                ? '1.5px solid #52c41a'
+                                                                : vaccineRecord.status === 'Không tiêm'
+                                                                    ? '1.5px solid #ff4d4f'
+                                                                    : undefined
                                                         }}
-                                                        icon={<MedicineBoxOutlined />}
-                                                    />
+                                                    >
+                                                        <MedicineBoxOutlined
+                                                            style={{
+                                                                color:
+                                                                    vaccineRecord.status === 'Đã tiêm'
+                                                                        ? '#52c41a'
+                                                                        : vaccineRecord.status === 'Không tiêm'
+                                                                            ? '#ff4d4f'
+                                                                            : '#faad14',
+                                                                fontSize: 20
+                                                            }}
+                                                        />
+                                                    </Avatar>
                                                 </Badge>
                                             }
                                             title={
@@ -386,6 +408,13 @@ const Vaccine: React.FC = () => {
                                                         <div>
                                                             <Text type="secondary" style={{ fontSize: 12 }}>
                                                                 Ngày tiêm: {dayjs(vaccineRecord.vaccinatedDate).format('DD/MM/YYYY')}
+                                                            </Text>
+                                                        </div>
+                                                    )}
+                                                    {(vaccineRecord.status === 'Đã tiêm' || vaccineRecord.status === 'Không tiêm') && (
+                                                        <div style={{ marginTop: 4 }}>
+                                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                                Ghi chú: {vaccineRecord.notes || 'Không có ghi chú'}
                                                             </Text>
                                                         </div>
                                                     )}
@@ -417,7 +446,7 @@ const Vaccine: React.FC = () => {
                                 danger
                                 loading={loading}
                             >
-                                Không cho phép tiêm
+                                Không tiêm
                             </Button>
                             <Button
                                 type="primary"

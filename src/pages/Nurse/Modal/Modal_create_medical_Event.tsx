@@ -102,6 +102,15 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
     setShowSearch(false);
   };
 
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedInfo(null);
+      setFormData(initialFormData);
+      setPreviewUrl(null);
+      setErrorMessage(null);
+    }
+  }, [isOpen]);
+  
   if (!isOpen) return null;
 
   return (
