@@ -12,6 +12,9 @@ export interface User {
   students?: Student[];
   obId?: number;
   roleInFamily?: string;
+  isCallFirst?: boolean;
+  gender?: string;
+  dateOfBirth?: string;
 }
 
 export interface Student {

@@ -16,24 +16,24 @@ const News: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 ">
       {/* Hero Section */}
       <HeroNews />
-      
+
       {/* Search and Category Section */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <NewsSearchContainer 
+          <NewsSearchContainer
             onSearch={handleSearch}
             onCategoryChange={handleCategoryChange}
           />
         </div>
       </section>
-      
+
       {/* News Cards Section */}
       <section className="py-8">
         <div className="container mx-auto px-4">
-          <NewsCardsContainer 
+          <NewsCardsContainer
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
           />

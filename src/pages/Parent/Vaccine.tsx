@@ -411,13 +411,13 @@ const Vaccine: React.FC = () => {
                                                             </Text>
                                                         </div>
                                                     )}
-                                                    {(vaccineRecord.status === 'Đã tiêm' || vaccineRecord.status === 'Không tiêm') && (
+                                                    {/* {(vaccineRecord.status === 'Đã tiêm' || vaccineRecord.status === 'Không tiêm') && (
                                                         <div style={{ marginTop: 4 }}>
                                                             <Text type="secondary" style={{ fontSize: 12 }}>
                                                                 Ghi chú: {vaccineRecord.notes || 'Không có ghi chú'}
                                                             </Text>
                                                         </div>
-                                                    )}
+                                                    )} */}
                                                 </div>
                                             }
                                         />
@@ -460,53 +460,206 @@ const Vaccine: React.FC = () => {
                 }
                 width={600}
             >
-                {selectedVaccine && (
-                    <div>
-                        <Row gutter={[0, 16]}>
+                {selectedVaccine && selectedStudent && (
+                    <div >
+                        <Row gutter={[0, 24]}>
                             <Col span={24}>
                                 <Card
-                                    size="small"
-                                    title={
-                                        <Space>
-                                            <Text strong>{selectedVaccine.vaccineName}</Text>
-                                            <Tag color="blue">{selectedVaccine.vaccineType}</Tag>
-                                        </Space>
-                                    }
+                                    style={{
+                                        background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+                                        borderRadius: 12,
+                                        border: "1px solid #e2e8f0",
+                                        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                                        overflow: 'hidden'
+                                    }}
+                                    bodyStyle={{ padding: 0 }}
                                 >
-                                    <Row gutter={[16, 8]}>
-                                        <Col span={12}>
-                                            <Text type="secondary">Trạng thái:</Text>
-                                            <br />
-                                            <Tag color={
-                                                selectedVaccine.status === 'Đã tiêm' ? 'success' :
-                                                    selectedVaccine.status === 'Chờ xác nhận' ? 'warning' : 'default'
-                                            }>
-                                                {selectedVaccine.status}
-                                            </Tag>
+                                    <div style={{ 
+                                        background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                                        padding: '20px 24px',
+                                        color: 'white'
+                                    }}>
+                                        <Row gutter={20} align="middle">
+                                            <Col>
+                                                <div style={{
+                                                    background: 'rgba(255,255,255,0.15)',
+                                                    borderRadius: '50%',
+                                                    padding: 12,
+                                                    backdropFilter: 'blur(10px)'
+                                                }}>
+                                                    <Avatar
+                                                        style={{
+                                                            background: "rgba(255,255,255,0.9)",
+                                                            color: "#3b82f6"
+                                                        }}
+                                                        size={44}
+                                                        icon={<UserOutlined style={{ fontSize: 20 }} />}
+                                                    />
+                                                </div>
+                                            </Col>
+                                            <Col flex={1}>
+                                                <Text strong style={{ fontSize: 20, color: "white", display: 'block', marginBottom: 6 }}>
+                                                    {selectedStudent.name}
+                                                </Text>
+                                                <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 14 }}>
+                                                    Lớp {selectedStudent.class} • Ngày sinh {dayjs(selectedStudent.dateOfBirth).format('DD/MM/YYYY')} • Mã sổ sức khỏe {selectedStudent.studentCode}
+                                                </Text>
+                                            </Col>
+                                        </Row>
+                                    </div>
+                                </Card>
+                            </Col>
+                            
+                            <Col span={24}>
+                                <Card
+                                    style={{
+                                        borderRadius: 12,
+                                        border: "1px solid #e2e8f0",
+                                        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                                        background: 'white'
+                                    }}
+                                    bodyStyle={{ padding: 24 }}
+                                >
+                                    <div style={{ marginBottom: 24 }}>
+                                        <Row gutter={16} align="middle">
+                                            <Col>
+                                                <div style={{
+                                                    background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                                                    borderRadius: 10,
+                                                    padding: 12,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                                                }}>
+                                                    <MedicineBoxOutlined style={{ color: "white", fontSize: 22 }} />
+                                                </div>
+                                            </Col>
+                                            <Col flex={1}>
+                                                <Text strong style={{ fontSize: 18, color: "#1e293b", display: 'block', marginBottom: 4 }}>
+                                                    {selectedVaccine.vaccineName}
+                                                </Text>
+                                                <Tag 
+                                                    style={{ 
+                                                        fontSize: 12, 
+                                                        padding: '4px 12px',
+                                                        borderRadius: 16,
+                                                        background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+                                                        color: '#1e40af',
+                                                        border: 'none'
+                                                    }}
+                                                >
+                                                    {selectedVaccine.vaccineType}
+                                                </Tag>
+                                            </Col>
+                                        </Row>
+                                    </div>
+
+                                    <Row gutter={[20, 20]}>
+                                        <Col xs={24} sm={12}>
+                                            <div style={{
+                                                background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                                                borderRadius: 10,
+                                                padding: 18,
+                                                border: '1px solid #bbf7d0',
+                                                position: 'relative',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: -10,
+                                                    right: -10,
+                                                    width: 40,
+                                                    height: 40,
+                                                    background: 'rgba(34, 197, 94, 0.1)',
+                                                    borderRadius: '50%'
+                                                }} />
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative' }}>
+                                                    <Text strong style={{ color: '#15803d', fontSize: 14 }}>Trạng thái</Text>
+                                                </div>
+                                                <Tag
+                                                    style={{ 
+                                                        fontSize: 13, 
+                                                        padding: "6px 14px", 
+                                                        borderRadius: 20,
+                                                        border: 'none',
+                                                        fontWeight: 500,
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                        position: 'relative'
+                                                    }}
+                                                    color={
+                                                        selectedVaccine.status === 'Đã tiêm' ? 'success' :
+                                                        selectedVaccine.status === 'Chờ xác nhận' ? 'orange' :
+                                                        selectedVaccine.status === 'Không tiêm' ? 'red' :
+                                                        selectedVaccine.status === 'Cho phép tiêm' ? 'blue' : 'default'
+                                                    }
+                                                >
+                                                    {selectedVaccine.status}
+                                                </Tag>
+                                            </div>
                                         </Col>
-                                        <Col span={12}>
-                                            <Text type="secondary">Ngày tiêm:</Text>
-                                            <br />
-                                            <Text>{selectedVaccine.vaccinatedDate ?
-                                                dayjs(selectedVaccine.vaccinatedDate).format('DD/MM/YYYY') :
-                                                'Chưa có'}</Text>
+
+                                        <Col xs={24} sm={12}>
+                                            <div style={{
+                                                background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                                                borderRadius: 10,
+                                                padding: 18,
+                                                border: '1px solid #fcd34d',
+                                                position: 'relative',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: -10,
+                                                    right: -10,
+                                                    width: 40,
+                                                    height: 40,
+                                                    background: 'rgba(245, 158, 11, 0.1)',
+                                                    borderRadius: '50%'
+                                                }} />
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative' }}>                                           
+                                                    <Text strong style={{ color: '#d97706', fontSize: 14 }}>Ngày tiêm</Text>
+                                                </div>
+                                                <div style={{
+                                                    background: 'rgba(255,255,255,0.8)',
+                                                    borderRadius: 8,
+                                                    padding: '10px 12px',
+                                                    backdropFilter: 'blur(4px)',
+                                                    position: 'relative'
+                                                }}>
+                                                    <Text style={{ fontSize: 14, fontWeight: 500, color: '#92400e' }}>
+                                                        {selectedVaccine.vaccinatedDate ?
+                                                            dayjs(selectedVaccine.vaccinatedDate).format('DD/MM/YYYY') :
+                                                            <span style={{ color: "#9ca3af", fontStyle: 'italic' }}>Chưa có thông tin</span>}
+                                                    </Text>
+                                                </div>
+                                            </div>
                                         </Col>
-                                        {selectedVaccine.status === 'Đã tiêm' && (
-                                            <>
-                                                <Col span={24}>
-                                                    <Divider style={{ margin: '12px 0' }} />
-                                                    <Text type="secondary">Ghi chú sau tiêm:</Text>
-                                                    <br />
-                                                    <Text>{selectedVaccine.notes || 'Không có ghi chú'}</Text>
-                                                </Col>
-                                                {selectedVaccine.location && (
-                                                    <Col span={24}>
-                                                        <Text type="secondary">Địa điểm tiêm:</Text>
-                                                        <br />
-                                                        <Text>{selectedVaccine.location}</Text>
-                                                    </Col>
-                                                )}
-                                            </>
+
+                                        {selectedVaccine.notes && (
+                                            <Col span={24}>
+                                                <div style={{
+                                                    background: 'linear-gradient(135deg, #fef7ff 0%, #f3e8ff 100%)',
+                                                    borderRadius: 10,
+                                                    padding: 20,
+                                                    border: '1px solid #d8b4fe',
+                                                    position: 'relative'
+                                                }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                                                        <Text strong style={{ color: '#7c3aed', fontSize: 15 }}>Ghi chú</Text>
+                                                    </div>
+                                                    <div style={{
+                                                        background: 'rgba(255,255,255,0.7)',
+                                                        borderRadius: 8,
+                                                        padding: '12px 16px',
+                                                        backdropFilter: 'blur(4px)'
+                                                    }}>
+                                                        <Text style={{ fontSize: 14, lineHeight: 1.6, color: '#581c87' }}>
+                                                            {selectedVaccine.notes}
+                                                        </Text>
+                                                    </div>
+                                                </div>
+                                            </Col>
                                         )}
                                     </Row>
                                 </Card>
@@ -514,13 +667,44 @@ const Vaccine: React.FC = () => {
 
                             {selectedVaccine.status === 'Chờ xác nhận' && (
                                 <Col span={24}>
-                                    <Alert
-                                        message="Xác nhận tiêm vaccine"
-                                        description="Vui lòng xem xét thông tin và quyết định cho phép tiêm vaccine này."
-                                        type="warning"
-                                        showIcon
-                                        icon={<ExclamationCircleFilled />}
-                                    />
+                                    <div style={{
+                                        background: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)',
+                                        borderRadius: 12,
+                                        padding: 20,
+                                        border: '2px solid #fb923c',
+                                        boxShadow: '0 4px 16px rgba(251, 146, 60, 0.2)',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: -5,
+                                            right: -5,
+                                            width: 60,
+                                            height: 60,
+                                            background: 'rgba(251, 146, 60, 0.1)',
+                                            borderRadius: '50%'
+                                        }} />
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, position: 'relative' }}>
+                                            <div style={{
+                                                background: '#fb923c',
+                                                borderRadius: '50%',
+                                                padding: 8,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                boxShadow: '0 2px 8px rgba(251, 146, 60, 0.3)'
+                                            }}>
+                                                <ExclamationCircleFilled style={{ color: 'white', fontSize: 18 }} />
+                                            </div>
+                                            <Text strong style={{ fontSize: 16, color: '#9a3412' }}>
+                                                Cần xác nhận tiêm vaccine
+                                            </Text>
+                                        </div>
+                                        <Text style={{ fontSize: 14, color: '#7c2d12', lineHeight: 1.5, position: 'relative' }}>
+                                            Vui lòng xem xét thông tin vaccine và quyết định cho phép tiêm vaccine này cho học sinh.
+                                        </Text>
+                                    </div>
                                 </Col>
                             )}
                         </Row>

@@ -91,6 +91,7 @@ export interface HealthCheckForm {
   GuardianUserId: number | null;
   Student: Student;
   status?: string;
+  image?: string;
 }
 
 export interface GetStudentsByHealthCheckResponse {
@@ -128,6 +129,7 @@ export interface SubmitHealthCheckResultRequest {
   skin_status: string;
   general_conclusion: string;
   is_need_meet: boolean;
+  image?: string;
 }
 
 export interface HealthCheckResult {
@@ -148,6 +150,7 @@ export interface HealthCheckResult {
   createdAt: string;
   updatedAt: string;
   GuardianUserId: number | null;
+  image?: string;
 }
 
 const API_URL = 'http://localhost:3333/api/v1';
@@ -393,23 +396,48 @@ export const healthCheckService = {
   },
 
   // Update health check result
-  updateHealthCheckResult: async (hcId: number, studentId: number, data: SubmitHealthCheckResultRequest): Promise<{ success: boolean; message: string }> => {
+  updateHealthCheckResult: async (
+    hcId: number,
+    studentId: number,
+    data: SubmitHealthCheckResultRequest
+  ): Promise<{ success: boolean; message: string }> => {
     const token = localStorage.getItem('accessToken');
     if (!token) throw new Error('Access token is missing');
+
+    const formData = new FormData();
+    formData.append('student_id', String(data.student_id));
+    formData.append('height', String(data.height));
+    formData.append('weight', String(data.weight));
+    formData.append('blood_pressure', data.blood_pressure);
+    formData.append('vision_left', String(data.vision_left));
+    formData.append('vision_right', String(data.vision_right));
+    formData.append('dental_status', data.dental_status);
+    formData.append('ent_status', data.ent_status);
+    formData.append('skin_status', data.skin_status);
+    formData.append('general_conclusion', data.general_conclusion);
+    formData.append('is_need_meet', String(data.is_need_meet));
+
+    // Nếu có ảnh thì thêm vào formData
+    if (Array.isArray(data.image) && data.image[0]?.originFileObj) {
+      formData.append('image', data.image[0].originFileObj);
+    }
+
     const response = await fetch(`${API_URL}/health-check/${hcId}/form-result?student_id=${studentId}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': '*/*',
+        // ❌ Không set 'Content-Type' khi dùng FormData
       },
-      body: JSON.stringify(data),
+      body: formData,
     });
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
+
     return response.json();
   }
+
 };
 
 export const getHealthCheckFormsByStudent = async (studentId: number): Promise<GetHealthCheckFormsByStudentResponse> => {

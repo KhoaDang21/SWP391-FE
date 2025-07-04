@@ -207,6 +207,7 @@ const VaccineEventStudents: React.FC = () => {
                 boxShadow: '0 4px 16px #36cfc933',
                 padding: 8
               }}
+              value={noteInputs[`status_${record.VH_ID}`] ?? record.Status ?? 'Đã tiêm'}
               onChange={value => {
                 setNoteInputs(prev => ({
                   ...prev,
@@ -233,7 +234,7 @@ const VaccineEventStudents: React.FC = () => {
                   )
                 }
               ]}
-              placeholder={
+              placeholder={               
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <CheckCircle size={18} style={{ color: '#389e0d' }} />
                   <span style={{ color: '#389e0d', fontWeight: 600 }}>Đã tiêm</span>

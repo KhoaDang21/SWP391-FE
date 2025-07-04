@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Table, Card, Row, Col, Statistic, Spin, Tag, Modal, Form, Input, Switch, Space } from 'antd';
+import { Button, Table, Card, Row, Col, Statistic, Spin, Tag, Modal, Form, Input, Switch, Space, Upload } from 'antd';
 import { ArrowLeft, Users, CheckCircle, Clock, AlertCircle, Edit, Send } from 'lucide-react';
 import { healthCheckService, HealthCheckForm, SubmitHealthCheckResultRequest, HealthCheckResult } from '../../services/Healthcheck';
 import { notificationService } from '../../services/NotificationService';
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 
 const HealthCheckStudents: React.FC = () => {
   const { hcId } = useParams<{ hcId: string }>();
   const navigate = useNavigate();
+  const { Dragger } = Upload;
+
   const [students, setStudents] = useState<HealthCheckForm[]>([]);
   const [healthEventDetail, setHealthEventDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +54,7 @@ const HealthCheckStudents: React.FC = () => {
       const confirmed = studentsData.data.filter(s => s.status === 'approved').length;
       const pending = studentsData.data.filter(s => s.status === 'pending' || !s.status).length;
       const reject = studentsData.data.filter(s => s.status === 'rejected').length;
-      
+
       setStats({
         total,
         confirmed,
@@ -69,7 +72,7 @@ const HealthCheckStudents: React.FC = () => {
   const handleInputResult = async (student: HealthCheckForm) => {
     setSelectedStudent(student);
     setIsEditMode(false);
-    
+
     try {
       // Check if result already exists
       const existingResult = await healthCheckService.getHealthCheckResult(parseInt(hcId!), student.Student_ID);
@@ -83,7 +86,15 @@ const HealthCheckStudents: React.FC = () => {
         ent_status: existingResult.ENT_Status,
         skin_status: existingResult.Skin_Status,
         general_conclusion: existingResult.General_Conclusion,
-        is_need_meet: existingResult.Is_need_meet
+        is_need_meet: existingResult.Is_need_meet,
+        image: existingResult.image
+          ? [{
+            uid: '-1',
+            name: 'ảnh khám',
+            status: 'done',
+            url: existingResult.image
+          }]
+          : []
       });
       setIsEditMode(true);
     } catch (error) {
@@ -98,17 +109,19 @@ const HealthCheckStudents: React.FC = () => {
         ent_status: '',
         skin_status: '',
         general_conclusion: '',
-        is_need_meet: false
+        is_need_meet: false,
+        image: undefined
       });
       setIsEditMode(false);
     }
-    
+
     setResultModalVisible(true);
   };
 
   const handleSubmitResult = async (values: any) => {
     if (!selectedStudent || !hcId) return;
-    
+    console.log('Existing result found:', values.image);
+
     setSubmittingResult(true);
     try {
       const payload: SubmitHealthCheckResultRequest = {
@@ -122,7 +135,9 @@ const HealthCheckStudents: React.FC = () => {
         ent_status: values.ent_status,
         skin_status: values.skin_status,
         general_conclusion: values.general_conclusion,
-        is_need_meet: values.is_need_meet
+        is_need_meet: values.is_need_meet,
+        image: values.image
+
       };
 
       if (isEditMode) {
@@ -138,7 +153,7 @@ const HealthCheckStudents: React.FC = () => {
         await healthCheckService.submitHealthCheckResult(parseInt(hcId), payload);
         notificationService.success('Nhập kết quả khám thành công!');
       }
-      
+
       setResultModalVisible(false);
       await fetchData(); // Refresh data
     } catch (error) {
@@ -151,7 +166,7 @@ const HealthCheckStudents: React.FC = () => {
 
   const handleSendResult = async (studentId: number) => {
     if (!hcId) return;
-    
+
     setSendingResult(studentId);
     try {
       await healthCheckService.sendHealthCheckResult(parseInt(hcId));
@@ -296,10 +311,10 @@ const HealthCheckStudents: React.FC = () => {
       title: 'Kết quả khám',
       key: 'results',
       render: (record: HealthCheckForm) => {
-        const hasResults = record.Height || record.Weight || record.Blood_Pressure || 
-                          record.Vision_Left || record.Vision_Right || record.Dental_Status ||
-                          record.ENT_Status || record.Skin_Status || record.General_Conclusion;
-        
+        const hasResults = record.Height || record.Weight || record.Blood_Pressure ||
+          record.Vision_Left || record.Vision_Right || record.Dental_Status ||
+          record.ENT_Status || record.Skin_Status || record.General_Conclusion;
+
         return (
           <Tag
             color={hasResults ? 'blue' : 'default'}
@@ -346,7 +361,7 @@ const HealthCheckStudents: React.FC = () => {
         const canInputResult = record.status === 'approved' || record.status === 'checked';
         const hasResult = record.Height || record.Weight || record.Blood_Pressure;
         const isChecked = record.status === 'checked';
-        
+
         return (
           <Space>
             {canInputResult && !hasResult && (
@@ -362,7 +377,7 @@ const HealthCheckStudents: React.FC = () => {
                 Nhập kết quả
               </Button>
             )}
-            
+
             {canInputResult && hasResult && (
               <Button
                 type="default"
@@ -376,7 +391,7 @@ const HealthCheckStudents: React.FC = () => {
                 Chỉnh sửa
               </Button>
             )}
-            
+
             {canInputResult && hasResult && (
               isChecked ? (
                 <Tag color="green" style={{ margin: 0 }}>
@@ -604,6 +619,27 @@ const HealthCheckStudents: React.FC = () => {
           >
             <Switch />
           </Form.Item>
+
+          <Form.Item
+            name="image"
+            label="Hình ảnh đính kèm"
+            valuePropName="fileList"
+            getValueFromEvent={e => Array.isArray(e) ? e : e?.fileList}
+          >
+            <Dragger
+              listType="picture-card"
+              beforeUpload={() => false}
+              accept="image/*"
+              maxCount={1}
+              style={{ marginBottom: 16 }}
+            >
+              <div>
+                <UploadOutlined />
+                <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
+              </div>
+            </Dragger>
+          </Form.Item>
+
 
           <Form.Item>
             <Space>

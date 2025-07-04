@@ -13,14 +13,14 @@ interface NewsCardProps {
   Category_id: number;
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({ 
-  title, 
-  description, 
-  image, 
-  date, 
-  author, 
+const NewsCard: React.FC<NewsCardProps> = ({
+  title,
+  description,
+  image,
+  date,
+  author,
   slug,
-  Category_id 
+  Category_id
 }) => {
   const navigate = useNavigate();
   const [category, setCategory] = useState<Category | null>(null);
@@ -69,24 +69,29 @@ const NewsCard: React.FC<NewsCardProps> = ({
       bodyStyle={{ padding: '12px 16px' }}
     >
       <div className="flex flex-col flex-1">
-        <div className="flex-none h-[60px]">
+        <div className="flex-none h-[30px]">
           <h3 className="text-xl font-semibold line-clamp-2">{title}</h3>
         </div>
-        <div className="flex-none h-[72px] my-2">
-          <p className="text-gray-600 line-clamp-3">{description}</p>
-        </div>
-        <div className="mt-auto space-y-2">
-          <div className="flex justify-between items-center text-sm text-gray-500">
-            <span>{formatDate(date)}</span>
-            <span>{author}</span>
-          </div>
+        <div className="flex-none  my-2">
           {category && (
-            <div className="pt-2 border-t border-gray-100">
-              <Tag color="blue" className="w-full text-center">
+            <div className=" border-gray-100">
+              <Tag color="blue" className=" text-center">
                 {category.Name}
               </Tag>
             </div>
           )}
+        </div>
+        <div className="flex-none h-[72px] my-2">
+          <div
+            className="text-gray-600 text-sm line-clamp-3"
+            dangerouslySetInnerHTML={{ __html: description }}
+          />
+        </div>
+        <div className="mt-auto space-y-2">
+          <div className="flex justify-between items-center text-sm text-gray-500">
+            <span>{formatDate(date)}</span>
+          </div>
+
         </div>
       </div>
     </Card>
