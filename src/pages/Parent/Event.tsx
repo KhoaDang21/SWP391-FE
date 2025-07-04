@@ -145,9 +145,17 @@ const Event = () => {
                     </Tag>
                 ) : (
                     <Tag
-                        color="#bfbfbf"
+                        color="warning"
                         icon={<MinusCircleOutlined />}
-                        style={{ fontWeight: 500, fontSize: 14, padding: '4px 16px', borderRadius: 8 }}
+                        style={{ 
+                            fontWeight: 500, 
+                            fontSize: 13, 
+                            padding: '6px 12px', 
+                            borderRadius: 6,
+                            border: 'none',
+                            background: '#fff7e6',
+                            color: '#d46b08'
+                        }}
                     >
                         Không gọi
                     </Tag>
@@ -220,31 +228,281 @@ const Event = () => {
 
             <Modal
                 open={detailModal.open}
-                title="Chi tiết sự kiện y tế"
+                title={
+                    <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 12,
+                        background: '#4f46e5',
+                        color: 'white',
+                        margin: '-24px -24px 0 -24px',
+                        padding: '20px 24px',
+                        borderRadius: '8px 8px 0 0'
+                    }}>
+                        <div style={{ 
+                            background: 'rgba(255,255,255,0.15)', 
+                            padding: 8, 
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <MedicineBoxOutlined style={{ fontSize: 20 }} />
+                        </div>
+                        <span style={{ fontSize: 20, fontWeight: 600 }}>Chi tiết sự kiện y tế</span>
+                    </div>
+                }
                 onCancel={() => setDetailModal({ open: false })}
                 footer={null}
                 centered
+                width={1000}
+                styles={{
+                    header: { padding: 0, border: 'none' },
+                    body: { paddingTop: 32, background: '#f8f9fa' }
+                }}
             >
                 {detailModal.event && (
-                    <Descriptions column={1} bordered size="middle">
-                        <Descriptions.Item label="Tên học sinh">{detailModal.event.name}</Descriptions.Item>
-                        <Descriptions.Item label="Lớp">{detailModal.event.class}</Descriptions.Item>
-                        <Descriptions.Item label="Sự kiện y tế">{detailModal.event.event}</Descriptions.Item>
-                        <Descriptions.Item label="Biện pháp xử lý">{detailModal.event.solution}</Descriptions.Item>
-                        <Descriptions.Item label="Gọi bố mẹ">{detailModal.event.callParent}</Descriptions.Item>
-                        <Descriptions.Item label="Ngày tạo">
-                            {detailModal.event.createdAt
-                                ? dayjs(detailModal.event.createdAt).isValid()
-                                    ? dayjs(detailModal.event.createdAt).format('DD/MM/YYYY')
-                                    : detailModal.event.createdAt
-                                : ''}
-                        </Descriptions.Item>
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: detailModal.event.image ? '1fr 400px' : '1fr',
+                        gap: 28,
+                        minHeight: '400px'
+                    }}>
+                        <div style={{
+                            background: 'white',
+                            borderRadius: 12,
+                            padding: 24,
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                            border: '1px solid #e2e8f0'
+                        }}>
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 12, 
+                                marginBottom: 24,
+                                paddingBottom: 16,
+                                borderBottom: '2px solid #f1f5f9'
+                            }}>
+                                <div style={{
+                                    background: '#6366f1',
+                                    padding: 10,
+                                    borderRadius: 8,
+                                    color: 'white'
+                                }}>
+                                    📋
+                                </div>
+                                <Text strong style={{ fontSize: 18, color: '#1e293b' }}>
+                                    Thông tin sự kiện
+                                </Text>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                                <div style={{
+                                    background: '#f8fafc',
+                                    borderRadius: 8,
+                                    padding: 16,
+                                    border: '1px solid #e2e8f0'
+                                }}>
+                                    <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
+                                        Học sinh
+                                    </Text>
+                                    <Text strong style={{ fontSize: 16, color: '#374151' }}>
+                                        {detailModal.event.name}
+                                    </Text>
+                                </div>
+
+                                <div style={{
+                                    background: '#f8fafc',
+                                    borderRadius: 8,
+                                    padding: 16,
+                                    border: '1px solid #e2e8f0'
+                                }}>
+                                    <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
+                                        Lớp học
+                                    </Text>
+                                    <Tag 
+                                        color="blue" 
+                                        style={{ 
+                                            fontSize: 14, 
+                                            padding: '4px 12px',
+                                            borderRadius: 6,
+                                            border: 'none'
+                                        }}
+                                    >
+                                        {detailModal.event.class}
+                                    </Tag>
+                                </div>
+
+                                <div style={{
+                                    background: '#f8fafc',
+                                    borderRadius: 8,
+                                    padding: 16,
+                                    border: '1px solid #e2e8f0'
+                                }}>
+                                    <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
+                                        Sự kiện y tế
+                                    </Text>
+                                    <Text style={{ fontSize: 14, lineHeight: 1.6, color: '#374151' }}>
+                                        {detailModal.event.event}
+                                    </Text>
+                                </div>
+
+                                <div style={{
+                                    background: '#f8fafc',
+                                    borderRadius: 8,
+                                    padding: 16,
+                                    border: '1px solid #e2e8f0'
+                                }}>
+                                    <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
+                                        Biện pháp xử lý
+                                    </Text>
+                                    <Text style={{ fontSize: 14, lineHeight: 1.6, color: '#374151' }}>
+                                        {detailModal.event.solution}
+                                    </Text>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                    <div style={{
+                                        background: '#f8fafc',
+                                        borderRadius: 8,
+                                        padding: 16,
+                                        border: '1px solid #e2e8f0'
+                                    }}>
+                                        <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
+                                            Liên hệ phụ huynh
+                                        </Text>
+                                        {detailModal.event.callParent === 'Có' ? (
+                                            <Tag
+                                                color="success"
+                                                icon={<CheckCircleOutlined />}
+                                                style={{ 
+                                                    fontWeight: 500, 
+                                                    fontSize: 13, 
+                                                    padding: '6px 12px', 
+                                                    borderRadius: 6,
+                                                    border: 'none'
+                                                }}
+                                            >
+                                                Đã gọi
+                                            </Tag>
+                                        ) : (
+                                            <Tag
+                                                color="warning"
+                                                icon={<MinusCircleOutlined />}
+                                                style={{ 
+                                                    fontWeight: 500, 
+                                                    fontSize: 13, 
+                                                    padding: '6px 12px', 
+                                                    borderRadius: 6,
+                                                    border: 'none',
+                                                    background: '#fff7e6',
+                                                    color: '#d46b08'
+                                                }}
+                                            >
+                                                Không gọi
+                                            </Tag>
+                                        )}
+                                    </div>
+
+                                    <div style={{
+                                        background: '#f8fafc',
+                                        borderRadius: 8,
+                                        padding: 16,
+                                        border: '1px solid #e2e8f0'
+                                    }}>
+                                        <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
+                                            Thời gian
+                                        </Text>
+                                        <Text style={{ 
+                                            fontSize: 13, 
+                                            fontWeight: 500, 
+                                            color: '#6366f1',
+                                            background: 'white',
+                                            padding: '4px 8px',
+                                            borderRadius: 4,
+                                            display: 'inline-block',
+                                            border: '1px solid #e5e7eb'
+                                        }}>
+                                            {detailModal.event.createdAt
+                                                ? dayjs(detailModal.event.createdAt).isValid()
+                                                    ? dayjs(detailModal.event.createdAt).format('DD/MM/YYYY')
+                                                    : detailModal.event.createdAt
+                                                : ''}
+                                        </Text>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         {detailModal.event.image && (
-                            <Descriptions.Item label="Hình ảnh">
-                                <Image src={detailModal.event.image} alt="event" width={200} />
-                            </Descriptions.Item>
+                            <div style={{
+                                background: 'white',
+                                borderRadius: 12,
+                                padding: 24,
+                                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                                border: '1px solid #e2e8f0',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 12, 
+                                    marginBottom: 20,
+                                    paddingBottom: 16,
+                                    borderBottom: '2px solid #f1f5f9'
+                                }}>
+                                    <div style={{
+                                        background: '#6b7280',
+                                        padding: 10,
+                                        borderRadius: 8,
+                                        color: 'white'
+                                    }}>
+                                        🖼️
+                                    </div>
+                                    <Text strong style={{ fontSize: 18, color: '#1e293b' }}>
+                                        Hình ảnh minh họa
+                                    </Text>
+                                </div>
+                                
+                                <div style={{ 
+                                    flex: 1,
+                                    display: 'flex', 
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: '#f8fafc',
+                                    borderRadius: 8,
+                                    padding: 16,
+                                    border: '2px dashed #d1d5db'
+                                }}>
+                                    <Image 
+                                        src={detailModal.event.image} 
+                                        alt="event" 
+                                        style={{ 
+                                            maxWidth: '100%', 
+                                            maxHeight: '300px',
+                                            borderRadius: 6,
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                        }}
+                                        preview={{
+                                            mask: (
+                                                <div style={{ 
+                                                    background: 'rgba(0,0,0,0.6)', 
+                                                    color: 'white',
+                                                    padding: '8px 16px',
+                                                    borderRadius: 4,
+                                                    fontSize: 14,
+                                                    fontWeight: 500
+                                                }}>
+                                                    <EyeOutlined style={{ marginRight: 6 }} /> Xem phóng to
+                                                </div>
+                                            )
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         )}
-                    </Descriptions>
+                    </div>
                 )}
             </Modal>
         </div>

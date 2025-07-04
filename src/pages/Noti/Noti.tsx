@@ -57,7 +57,7 @@ const Noti: React.FC = () => {
         setOpen(false);
         return;
       }
-      const match = notification.title.match(/Con bạn có vài vấn đề về sức khỏe vào ngày (\d{1,2})\/(\d{1,2})\/(\d{4})/i);
+      const match = notification.title.match(/ vấn đề về sức khỏe vào ngày (\d{1,2})\/(\d{1,2})\/(\d{4})/i);
       if (match) { 
         const day = match[1].padStart(2, '0');
         const month = match[2].padStart(2, '0');
