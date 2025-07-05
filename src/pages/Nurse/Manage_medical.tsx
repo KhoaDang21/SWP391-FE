@@ -6,11 +6,13 @@ import {
   getMedicalSentById,
   updateMedicalSent,
   MedicalSent,
-  MedicalSentStatus
+  MedicalSentStatus,
+  createMedicalSent,
+  deleteMedicalSent
 } from '../../services/MedicalSentService';
-import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message, Image } from 'antd';
+import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message, Image, Form, Input, Upload, Select, Space, Tooltip, Popconfirm } from 'antd';
 import dayjs from 'dayjs';
-import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined } from '@ant-design/icons';
+import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { getAllMedicalRecords, MedicalRecord } from '../../services/MedicalRecordService';
 import { getAllGuardians, Guardian } from '../../services/AccountService';
 
@@ -29,13 +31,18 @@ const statusText: Record<string, string> = {
 };
 
 const MedicineManagement: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [medicineRecords, setMedicineRecords] = useState<MedicalSent[]>([]);
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [loading, setLoading] = useState(false);
   const [detailModal, setDetailModal] = useState<{ open: boolean; record: MedicalSent | null }>({ open: false, record: null });
   const token = localStorage.getItem('accessToken') || '';
+  const [createModal, setCreateModal] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [nurseForm] = Form.useForm();
+  const timeOptions = ['Trước ăn sáng', 'Sau ăn sáng', 'Trước ăn trưa', 'Sau ăn trưa', 'Trước ăn chiều', 'Sau ăn chiều'];
+  const [editRecord, setEditRecord] = useState<MedicalSent | null>(null);
 
   const medicalRecordMap = React.useMemo(() => {
     const map: Record<number, MedicalRecord> = {};
@@ -138,6 +145,20 @@ const MedicineManagement: React.FC = () => {
     return [];
   };
 
+  const handleDelete = async (id: number) => {
+    setLoading(true);
+    try {
+      await deleteMedicalSent(id, token);
+      message.success('Xóa đơn thuốc thành công!');
+      const medicalSents = await getAllMedicalSents(token);
+      setMedicineRecords(medicalSents.sort((a, b) => dayjs(b.createdAt).unix() - dayjs(a.createdAt).unix()));
+    } catch (err) {
+      message.error('Lỗi khi xóa đơn thuốc.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const columns = [
     {
       title: 'STT',
@@ -172,21 +193,7 @@ const MedicineManagement: React.FC = () => {
       title: 'SĐT Phụ huynh',
       dataIndex: 'Guardian_phone',
       key: 'Guardian_phone',
-      render: (_: any, record: MedicalSent) => {
-        const phoneVariants = [
-          normalizePhone(record.Guardian_phone),
-          normalizePhone('0' + record.Guardian_phone),
-          normalizePhone(record.Guardian_phone?.replace(/^\+84/, '0')),
-        ];
-        let found = null;
-        for (const v of phoneVariants) {
-          if (guardianMap[v]) {
-            found = guardianMap[v].phoneNumber;
-            break;
-          }
-        }
-        return found || record.Guardian_phone || 'Không có';
-      },
+      render: (_: any, record: MedicalSent) => record.Guardian_phone || 'Không có',
     },
     {
       title: 'Thời gian uống thuốc',
@@ -225,10 +232,21 @@ const MedicineManagement: React.FC = () => {
       title: 'Thao tác',
       key: 'action',
       render: (_: any, record: MedicalSent) => (
-        <Button type="link" onClick={() => handleViewDetail(record)}>
-          Chi tiết
-        </Button>
-      ),
+        <Space>
+          <Tooltip title="Xem chi tiết"><Button type="text" icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} /></Tooltip>
+          <Tooltip title="Sửa"><Button type="text" icon={<EditOutlined />} onClick={() => { setEditRecord(record); setCreateModal(true); nurseForm.setFieldsValue({ studentName: medicalRecordMap[record.User_ID]?.fullname || '', className: record.Class, deliveryTimeNote: record.Delivery_time?.split(' - ')[1], prescriptionImage: [] }); }} /></Tooltip>
+          <Popconfirm
+            title="Xác nhận xóa"
+            description="Bạn chắc chắn muốn xóa đơn thuốc này?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+            placement="topRight"
+          >
+            <Tooltip title="Xóa"><Button type="text" danger icon={<DeleteOutlined />} /></Tooltip>
+          </Popconfirm>
+        </Space>
+      )
     },
   ];
 
@@ -236,12 +254,9 @@ const MedicineManagement: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Quản lý đơn thuốc</h1>
-        {/* <button
-          className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-blue-500/30"
-          type="button"
-          onClick={handleCreateSent}>
-          + Tạo đơn gửi thuốc
-        </button> */}
+        <Button type="primary" onClick={() => { nurseForm.resetFields(); setCreateModal(true); }}>
+          + Tạo đơn
+        </Button>
       </div>
 
       <div className="mb-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
@@ -266,9 +281,6 @@ const MedicineManagement: React.FC = () => {
           />
         </Spin>
       </div>
-
-
-
 
       <Modal
         open={detailModal.open}
@@ -315,17 +327,6 @@ const MedicineManagement: React.FC = () => {
               </div>
             </div>
 
-            {/* Thuốc & liều lượng */}
-            <div className="bg-purple-50 border border-purple-200 rounded-md p-4 shadow-sm">
-              <div className="flex items-center space-x-2 mb-3">
-                <MedicineBoxOutlined className="text-purple-600" />
-                <span className="text-purple-800 font-semibold">Thuốc & Liều Lượng</span>
-              </div>
-              <div className="bg-white border border-purple-100 rounded-lg p-4 text-gray-700 whitespace-pre-wrap leading-relaxed">
-                <div dangerouslySetInnerHTML={{ __html: detailModal.record.Medications.replace(/\n/g, '<br />') }} />
-              </div>
-            </div>
-
             {/* Ảnh toa thuốc */}
             <div className="bg-indigo-50 border border-indigo-200 rounded-md p-4 shadow-sm">
               <div className="flex items-center space-x-2 mb-3">
@@ -347,7 +348,6 @@ const MedicineManagement: React.FC = () => {
                   <p>Không có ảnh toa thuốc</p>
                 </div>
               )}
-
             </div>
 
             {/* Ghi chú */}
@@ -364,6 +364,109 @@ const MedicineManagement: React.FC = () => {
             )}
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={createModal}
+        onCancel={() => { setCreateModal(false); setEditRecord(null); }}
+        title="Tạo đơn gửi thuốc mới"
+        footer={null}
+        destroyOnClose
+      >
+        <Form
+          form={nurseForm}
+          layout="vertical"
+          onFinish={async (values) => {
+            setCreateLoading(true);
+            try {
+              const { studentName, deliveryTimeNote, prescriptionImage, className, guardianPhone } = values;
+              if (!studentName || !prescriptionImage || !deliveryTimeNote || !className || !guardianPhone) {
+                message.error('Vui lòng nhập đầy đủ thông tin!');
+                setCreateLoading(false);
+                return;
+              }
+              const formData = new FormData();
+              formData.append('fullname', studentName);
+              formData.append('Class', className);
+              formData.append('guardianPhone', guardianPhone);
+              formData.append('prescriptionImage', prescriptionImage[0].originFileObj);
+              formData.append('deliveryTime', `${dayjs().format('YYYY-MM-DD')} - ${deliveryTimeNote}`);
+              formData.append('status', 'received');
+              await createMedicalSent(formData, token);
+              message.success('Tạo đơn gửi thuốc thành công!');
+              setCreateModal(false);
+              nurseForm.resetFields();
+              const medicalSents = await getAllMedicalSents(token);
+              setMedicineRecords(medicalSents.sort((a, b) => dayjs(b.createdAt).unix() - dayjs(a.createdAt).unix()));
+            } catch (err) {
+              message.error('Có lỗi xảy ra, vui lòng thử lại!');
+            } finally {
+              setCreateLoading(false);
+            }
+          }}
+        >
+          <Form.Item name="studentName" label="Tên học sinh" rules={[{ required: true, message: 'Vui lòng nhập tên học sinh!' }]}>
+            <Input placeholder="Nhập tên học sinh" onChange={() => nurseForm.setFields([{ name: 'studentName', errors: [] }])} />
+          </Form.Item>
+          <Form.Item
+            name="deliveryTimeNote"
+            label="Buổi uống"
+            rules={[{ required: true, message: 'Vui lòng chọn buổi uống!' }]}
+          >
+            <Select placeholder="Chọn buổi">
+              {timeOptions.map((time) => (<Select.Option key={time} value={time}>{time}</Select.Option>))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="prescriptionImage"
+            label="Hình ảnh toa thuốc"
+            valuePropName="fileList"
+            getValueFromEvent={e => (Array.isArray(e) ? e : e?.fileList)}
+            rules={[
+              { required: true, message: 'Vui lòng tải lên hình ảnh toa thuốc' },
+              { validator: (_, value) => value && value.length > 0 ? Promise.resolve() : Promise.reject(new Error('Vui lòng tải lên ít nhất một hình ảnh')) }
+            ]}
+          >
+            <Upload listType="picture-card" beforeUpload={() => false} maxCount={1}>
+              <div>
+                <PlusOutlined />
+                <div style={{ marginTop: 8 }}>Upload</div>
+              </div>
+            </Upload>
+          </Form.Item>
+          <Form.Item
+            name="className"
+            label="Lớp"
+            rules={[
+              { required: true, message: 'Vui lòng nhập lớp!' },
+              { pattern: /^[1-9][0-2]?[A-Z]$/, message: 'Lớp phải có định dạng như 1A, 5E...' }
+            ]}
+          >
+            <Input placeholder="Nhập lớp (ví dụ: 1A, 5E)" onChange={() => nurseForm.setFields([{ name: 'className', errors: [] }])} />
+          </Form.Item>
+          <Form.Item
+            name="guardianPhone"
+            label="SĐT Phụ huynh"
+            rules={[
+              { required: true, message: 'Vui lòng nhập SĐT phụ huynh!' },
+              { pattern: /^0\d{9,10}$/, message: 'SĐT không hợp lệ!' }
+            ]}
+          >
+            <Input
+              placeholder="Nhập số điện thoại phụ huynh"
+              maxLength={11}
+              onChange={e => {
+                if (nurseForm.getFieldError('guardianPhone').length) {
+                  nurseForm.setFields([{ name: 'guardianPhone', errors: [] }]);
+                }
+              }}
+            />
+          </Form.Item>
+          <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
+            <Button onClick={() => setCreateModal(false)} style={{ marginRight: 8 }}>Hủy</Button>
+            <Button type="primary" htmlType="submit" loading={createLoading}>Tạo đơn</Button>
+          </Form.Item>
+        </Form>
       </Modal>
 
     </div>
