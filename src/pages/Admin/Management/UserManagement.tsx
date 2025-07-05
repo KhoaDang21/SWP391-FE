@@ -69,6 +69,7 @@ const UserManagement: React.FC = () => {
 
     useEffect(() => {
         const filtered = users.filter(user => {
+            if (user.roleId === 1) return false; // Ẩn user admin
             const matchesSearchText = (
                 (user?.username?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
                 (user?.fullname?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
@@ -513,6 +514,14 @@ const UserManagement: React.FC = () => {
                             <Select.Option value={true}>Có</Select.Option>
                             <Select.Option value={false}>Không</Select.Option>
                         </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        name="address"
+                        label="Địa chỉ"
+                        rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
+                    >
+                        <Input placeholder="Nhập địa chỉ phụ huynh" />
                     </Form.Item>
 
                     <Form.Item className="mb-0 text-right">

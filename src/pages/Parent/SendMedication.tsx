@@ -116,7 +116,6 @@ const SendMedication: React.FC = () => {
             const timeNote = record.Delivery_time.split(' - ')[1];
             const initialValues: any = {
                 studentId: record.User_ID,
-                medications: record.Medications,
                 deliveryTimeNote: timeNote,
                 notes: record.Notes
             };
@@ -167,10 +166,13 @@ const SendMedication: React.FC = () => {
                 formData.append('guardianPhone', values.guardianPhone);
                 formData.append('Class', student.className || '');
                 if (fileObj) formData.append('prescriptionImage', fileObj);
-                formData.append('medications', values.medications);
                 formData.append('deliveryTime', deliveryTime);
                 formData.append('status', 'pending');
-                if (values.notes) formData.append('notes', values.notes);
+                if (values.notes) {
+                    formData.append('notes', values.notes.trim());
+                } else {
+                    formData.append('notes', '');
+                }
 
                 await createMedicalSent(formData, token);
                 message.success('Tạo đơn gửi thuốc thành công!');
@@ -181,11 +183,10 @@ const SendMedication: React.FC = () => {
                 if (fileObj) {
                     formData.append('prescriptionImage', fileObj);
                 }
-                formData.append('medications', values.medications);
                 formData.append('deliveryTime', deliveryTime);
                 formData.append('status', modalState.record.Status);
                 if (values.notes) {
-                    formData.append('notes', values.notes);
+                    formData.append('notes', values.notes.trim());
                 } else {
                     formData.append('notes', '');
                 }
@@ -297,9 +298,6 @@ const SendMedication: React.FC = () => {
                         </Select>
                     </Form.Item>
 
-                    <Form.Item name="medications" label="Tên và liều lượng thuốc" rules={[{ required: true, message: 'Vui lòng nhập thông tin thuốc!' }]}>
-                        <TextArea rows={3} placeholder="Ví dụ: Paracetamol 500mg, 1 viên" />
-                    </Form.Item>
                     <Form.Item name="deliveryTimeNote" label="Buổi uống" rules={[{ required: true, message: 'Vui lòng chọn buổi uống!' }]}>
                         <Select placeholder="Chọn buổi">
                             {timeOptions.map((time) => (<Select.Option key={time} value={time}>{time}</Select.Option>))}
@@ -332,7 +330,16 @@ const SendMedication: React.FC = () => {
                         </Upload>
                     </Form.Item>
 
-                    <Form.Item name="notes" label="Ghi chú thêm"><TextArea rows={2} placeholder="Dặn dò thêm cho y tá..." /></Form.Item>
+                    <Form.Item
+                        name="notes"
+                        label="Ghi chú thêm"
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập ghi chú!' },
+                            { validator: (_, value) => (value && value.trim() !== '' ? Promise.resolve() : Promise.reject(new Error('Vui lòng nhập ghi chú!'))) }
+                        ]}
+                    >
+                        <TextArea rows={2} placeholder="Dặn dò thêm cho y tá..." />
+                    </Form.Item>
                     <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
                         <Space>
                             <Button onClick={handleModalCancel}>Hủy</Button>
@@ -441,43 +448,6 @@ const SendMedication: React.FC = () => {
                                 </Row>
                             </Card>
 
-                            {/* Thuốc & liều lượng */}
-                            <Card
-                                size="small"
-                                className="shadow-sm border-0"
-                                styles={{ body: { padding: '16px' } }}
-                            >
-                                <div className="flex items-center mb-3">
-                                    <MedicineBoxOutlined className="text-purple-600 mr-2" />
-                                    <Text strong className="text-purple-800">Thuốc & liều lượng</Text>
-                                </div>
-                                <div className="bg-purple-50 border border-purple-100 rounded-lg p-4">
-                                    <Text className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                                        {selectedRecord.Medications}
-                                    </Text>
-                                </div>
-                            </Card>
-
-                            {/* Ghi chú */}
-                            {selectedRecord.Notes && (
-                                <Card
-                                    size="small"
-                                    className="shadow-sm border-0"
-                                    styles={{ body: { padding: '16px' } }}
-                                >
-                                    <div className="flex items-center mb-3">
-                                        <FileTextOutlined className="text-orange-600 mr-2" />
-                                        <Text strong className="text-orange-800">Ghi chú đặc biệt</Text>
-                                    </div>
-                                    <Alert
-                                        message={selectedRecord.Notes}
-                                        type="warning"
-                                        showIcon
-                                        className="bg-orange-50 border-orange-200"
-                                    />
-                                </Card>
-                            )}
-
                             {/* Ảnh toa thuốc */}
                             <Card
                                 size="small"
@@ -520,6 +490,11 @@ const SendMedication: React.FC = () => {
                                     )}
                                 </div>
                             </Card>
+
+                            {/* Ghi chú */}
+                            {selectedRecord.Notes && (
+                                <Alert style={{ marginTop: 16 }} message={selectedRecord.Notes} type="info" showIcon />
+                            )}
 
                         </Space>
                     </div>
