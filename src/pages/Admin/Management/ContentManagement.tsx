@@ -111,6 +111,7 @@ const ContentManagement: React.FC = () => {
                 return;
             }
             setSubmitting(true);
+
             if (editingBlog) {
                 await updateBlog(editingBlog.id!, { ...values }, token, imageFile);
                 message.success('Đã cập nhật blog');
@@ -359,6 +360,87 @@ const ContentManagement: React.FC = () => {
                     initialValues={{ title: '', content: '', author: '', Category_id: undefined }}
                 >
                     <Row gutter={16}>
+
+                        <Col span={24}>
+                            <Form.Item
+                                label="Ảnh minh họa"
+                                required
+                                validateStatus={submitAttempted && !imageFile && !editingBlog ? 'error' : ''}
+                                help={submitAttempted && !imageFile && !editingBlog ? 'Vui lòng upload ảnh minh họa' : ''}
+                            >
+                                <div
+                                    style={{
+                                        border: '1px dashed #d9d9d9',
+                                        borderRadius: '8px',
+                                        padding: '20px',
+                                        textAlign: 'center',
+                                        cursor: 'pointer',
+                                        backgroundColor: '#fafafa',
+                                        transition: 'border-color 0.3s',
+                                    }}
+                                >
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        id="upload-input"
+                                        onChange={(e) => {
+                                            const file = e.target.files && e.target.files[0];
+                                            if (!file) return;
+                                            setImageFile(file);
+                                        }}
+                                    />
+                                    <label htmlFor="upload-input" style={{ cursor: 'pointer' }}>
+                                        {imageFile ? (
+                                            <div>
+                                                <img
+                                                    src={URL.createObjectURL(imageFile)}
+                                                    alt="blog cover"
+                                                    style={{
+                                                        width: '100%',
+                                                        maxHeight: '300px',
+                                                        objectFit: 'contain',
+                                                        marginBottom: '16px',
+                                                        borderRadius: '4px'
+                                                    }}
+                                                />
+                                                <Button type="primary" onClick={() => document.getElementById('upload-input')?.click()}>
+                                                    Thay đổi ảnh
+                                                </Button>
+                                            </div>
+                                        ) : editingBlog && editingBlog.image ? (
+                                            <div>
+                                                <img
+                                                    src={editingBlog.image}
+                                                    alt="blog cover"
+                                                    style={{
+                                                        width: '100%',
+                                                        maxHeight: '300px',
+                                                        objectFit: 'contain',
+                                                        marginBottom: '16px',
+                                                        borderRadius: '4px'
+                                                    }}
+                                                />
+                                                <Button type="primary" onClick={() => document.getElementById('upload-input')?.click()}>
+                                                    Thay đổi ảnh
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <PlusOutlined style={{ fontSize: '24px', color: '#1890ff', marginBottom: '8px' }} />
+                                                <div style={{ marginTop: '8px' }}>
+                                                    <div>Nhấn để tải ảnh lên</div>
+                                                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                        Hỗ trợ tất cả định dạng ảnh
+                                                    </Text>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </label>
+                                </div>
+                            </Form.Item>
+                        </Col>
+
                         <Col span={24}>
                             <Form.Item
                                 name="title"
@@ -400,128 +482,46 @@ const ContentManagement: React.FC = () => {
                             >
                                 <div className="border border-gray-300 rounded-lg">
                                     <CKEditor
-                                        key={editingBlog?.id || 'new'}
                                         editor={ClassicEditor}
+                                        config={{ removePlugins: ['AutoGrow'] }}
                                         data={editingBlog?.content || ''}
-                                        config={{
-                                            placeholder: 'Nhập nội dung blog...',
+                                        onReady={editor => {
+                                            const editableEl = editor.ui.view.editable.element!;
+
+                                            // Hàm set lại height
+                                            const setFixedHeight = () => {
+                                                const lh = parseFloat(getComputedStyle(editableEl).lineHeight);
+                                                const rows = 10;
+                                                const h = lh * rows;
+                                                editableEl.style.height = `${h}px`;
+                                                editableEl.style.maxHeight = `${h}px`;
+                                                editableEl.style.overflowY = 'auto';
+                                                editableEl.style.padding = '0.5rem';
+                                            };
+
+                                            // set lần đầu
+                                            setFixedHeight();
+
+                                            // mỗi lần focus/blur lại set lại
+                                            editor.ui.focusTracker.on('change:isFocused', (_evt, _name, isFocused) => {
+                                                if (isFocused) {
+                                                    setFixedHeight();
+                                                }
+                                            });
                                         }}
-
-                                        // onReady={(editor) => {
-                                        //     const editable = editor.ui.view.editable;
-                                        //     const editableElement = editable?.element;
-
-                                        //     if (editableElement) {
-                                        //         editableElement.style.height = '160px';
-                                        //         editableElement.style.minHeight = '160px';
-                                        //         editableElement.style.maxHeight = '160px';
-                                        //         editableElement.style.overflowY = 'auto';
-                                        //         editableElement.style.padding = '1rem';
-                                        //     }
-                                        // }}
-
                                         onChange={(_, editor) => {
-                                            const data = editor.getData();
-                                            form.setFieldsValue({ content: data });
+                                            form.setFieldsValue({ content: editor.getData() });
                                         }}
                                     />
+
                                 </div>
                             </Form.Item>
 
                         </Col>
 
-                        <Col span={24}>
-                            <Form.Item
-                                name="author"
-                                label="Tác giả"
-                                rules={[
-                                    { required: true, message: 'Nhập tên tác giả' },
-                                    { max: 100, message: 'Tên tác giả tối đa 100 ký tự' }
-                                ]}
-                                validateStatus={submitAttempted && form.getFieldError('author').length ? 'error' : ''}
-                                help={submitAttempted && form.getFieldError('author')[0]}
-                            >
-                                <Input placeholder="Nhập tên tác giả" maxLength={100} />
-                            </Form.Item>
-                        </Col>
+
                     </Row>
-                    <Form.Item
-                        label="Ảnh minh họa"
-                        required
-                        validateStatus={submitAttempted && !imageFile && !editingBlog ? 'error' : ''}
-                        help={submitAttempted && !imageFile && !editingBlog ? 'Vui lòng upload ảnh minh họa' : ''}
-                    >
-                        <div
-                            style={{
-                                border: '1px dashed #d9d9d9',
-                                borderRadius: '8px',
-                                padding: '20px',
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                backgroundColor: '#fafafa',
-                                transition: 'border-color 0.3s',
-                            }}
-                        >
-                            <input
-                                type="file"
-                                accept="image/*"
-                                style={{ display: 'none' }}
-                                id="upload-input"
-                                onChange={(e) => {
-                                    const file = e.target.files && e.target.files[0];
-                                    if (!file) return;
-                                    setImageFile(file);
-                                }}
-                            />
-                            <label htmlFor="upload-input" style={{ cursor: 'pointer' }}>
-                                {imageFile ? (
-                                    <div>
-                                        <img
-                                            src={URL.createObjectURL(imageFile)}
-                                            alt="blog cover"
-                                            style={{
-                                                width: '100%',
-                                                maxHeight: '300px',
-                                                objectFit: 'contain',
-                                                marginBottom: '16px',
-                                                borderRadius: '4px'
-                                            }}
-                                        />
-                                        <Button type="primary" onClick={() => document.getElementById('upload-input')?.click()}>
-                                            Thay đổi ảnh
-                                        </Button>
-                                    </div>
-                                ) : editingBlog && editingBlog.image ? (
-                                    <div>
-                                        <img
-                                            src={editingBlog.image}
-                                            alt="blog cover"
-                                            style={{
-                                                width: '100%',
-                                                maxHeight: '300px',
-                                                objectFit: 'contain',
-                                                marginBottom: '16px',
-                                                borderRadius: '4px'
-                                            }}
-                                        />
-                                        <Button type="primary" onClick={() => document.getElementById('upload-input')?.click()}>
-                                            Thay đổi ảnh
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <PlusOutlined style={{ fontSize: '24px', color: '#1890ff', marginBottom: '8px' }} />
-                                        <div style={{ marginTop: '8px' }}>
-                                            <div>Nhấn để tải ảnh lên</div>
-                                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                                                Hỗ trợ tất cả định dạng ảnh
-                                            </Text>
-                                        </div>
-                                    </div>
-                                )}
-                            </label>
-                        </div>
-                    </Form.Item>
+
                 </Form>
             </Modal>
         </>

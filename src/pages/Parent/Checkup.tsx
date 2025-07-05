@@ -21,12 +21,16 @@ import {
     ExclamationCircleFilled,
     FileTextOutlined,
     CalendarOutlined,
-    InfoCircleOutlined
+    InfoCircleOutlined,
+    HeartOutlined,
+    TeamOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getStudentsByGuardianUserId } from '../../services/AccountService';
 import { getHealthCheckFormsByStudent, healthCheckService } from '../../services/Healthcheck';
 import { notificationService } from '../../services/NotificationService';
+import { User, getUserById } from '../../services/AccountService';
+
 
 const { Title, Text } = Typography;
 
@@ -47,6 +51,8 @@ const Checkup: React.FC = () => {
     const [resultModalVisible, setResultModalVisible] = useState(false);
     const [selectedResult, setSelectedResult] = useState<any>(null);
     const [resultLoading, setResultLoading] = useState(false);
+    const [studentInfo, setStudentInfo] = useState<User | null>(null);
+    console.log("Student Info:", studentInfo);
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -69,6 +75,22 @@ const Checkup: React.FC = () => {
         fetchStudents();
     }, []);
 
+    useEffect(() => {
+        const token = localStorage.getItem('accessToken') || '';
+
+        if (selectedResult?.Student_ID) {
+            getUserById(selectedResult.Student_ID, token)
+                .then((res) => setStudentInfo(res))
+                .catch((err) => {
+                    console.error('Lỗi khi lấy thông tin học sinh:', err);
+                    setStudentInfo(null);
+                });
+        } else {
+            setStudentInfo(null);
+        }
+    }, [selectedResult?.Student_ID]);
+
+
     const handleViewDetail = async (student: any) => {
         setSelectedStudent(student);
         setDetailModalVisible(true);
@@ -89,10 +111,13 @@ const Checkup: React.FC = () => {
         setCheckupModalVisible(true);
     };
 
+    const userInfo = localStorage.getItem("user");
+
     const handleViewResult = async (form: any) => {
+        // console.log('Fetching health check result for form:', form);
         setResultLoading(true);
         try {
-            const result = await healthCheckService.getHealthCheckResult(form.eventId, form.studentId);
+            const result = await healthCheckService.getHealthCheckResult(form.healthCheckId, form.studentId);
             setSelectedResult(result);
             setResultModalVisible(true);
         } catch (error) {
@@ -233,10 +258,10 @@ const Checkup: React.FC = () => {
                                                         <Col xs={12} md={4}>
                                                             <Space>
                                                                 <Tag color={tagColor} style={{ fontWeight: 500, fontSize: 14, padding: '2px 10px' }}>
-                                                                    {displayStatus === 'pending' ? 'Chờ xác nhận' : 
-                                                                     displayStatus === 'approved' ? 'Đã xác nhận' : 
-                                                                     displayStatus === 'checked' ? 'Đã có kết quả khám' :
-                                                                     displayStatus === 'rejected' ? 'Từ chối' : form.status}
+                                                                    {displayStatus === 'pending' ? 'Chờ xác nhận' :
+                                                                        displayStatus === 'approved' ? 'Đã xác nhận' :
+                                                                            displayStatus === 'checked' ? 'Đã có kết quả khám' :
+                                                                                displayStatus === 'rejected' ? 'Từ chối' : form.status}
                                                                 </Tag>
                                                             </Space>
                                                         </Col>
@@ -357,14 +382,14 @@ const Checkup: React.FC = () => {
                             <Col span={24}><Text strong>Mô tả:</Text> {selectedForm.description}</Col>
                             <Col span={24}><Text strong>Trạng thái hiện tại:</Text> <Tag color={
                                 selectedForm.status === 'created' || selectedForm.status === 'pending' ? 'orange' :
-                                selectedForm.status === 'approved' ? 'green' :
-                                selectedForm.status === 'checked' ? 'yellow' :
-                                selectedForm.status === 'rejected' ? 'red' : 'default'
+                                    selectedForm.status === 'approved' ? 'green' :
+                                        selectedForm.status === 'checked' ? 'yellow' :
+                                            selectedForm.status === 'rejected' ? 'red' : 'default'
                             }>
                                 {(selectedForm.status === 'created' || selectedForm.status === 'pending') ? 'Chờ xác nhận' :
-                                 selectedForm.status === 'approved' ? 'Đã xác nhận' :
-                                 selectedForm.status === 'checked' ? 'Đã có kết quả khám' :
-                                 selectedForm.status === 'rejected' ? 'Từ chối' : selectedForm.status}
+                                    selectedForm.status === 'approved' ? 'Đã xác nhận' :
+                                        selectedForm.status === 'checked' ? 'Đã có kết quả khám' :
+                                            selectedForm.status === 'rejected' ? 'Từ chối' : selectedForm.status}
                             </Tag></Col>
                         </Row>
                         <Divider />
@@ -419,86 +444,182 @@ const Checkup: React.FC = () => {
             </Modal>
 
             <Modal
-                title={<Space><FileTextOutlined /> Kết quả khám sức khỏe</Space>}
+                title={
+                    <div className="flex items-center gap-2 text-lg font-semibold">
+                        <FileTextOutlined className="text-blue-500" />
+                        Kết quả khám sức khỏe
+                    </div>
+                }
                 open={resultModalVisible}
                 onCancel={() => setResultModalVisible(false)}
                 footer={null}
-                width={600}
+                width={700}
+                className="health-check-modal"
             >
                 {resultLoading ? (
-                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <div className="flex flex-col items-center justify-center py-12">
                         <Spin size="large" />
-                        <div style={{ marginTop: '10px' }}>Đang tải kết quả khám...</div>
+                        <div className="mt-4 text-gray-600">Đang tải kết quả khám...</div>
                     </div>
                 ) : selectedResult ? (
-                    <div>
-                        <Row gutter={[16, 16]}>
-                            <Col span={12}>
-                                <Text strong>Chiều cao:</Text>
-                                <br />
-                                <Text>{selectedResult.Height} cm</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Cân nặng:</Text>
-                                <br />
-                                <Text>{selectedResult.Weight} kg</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Huyết áp:</Text>
-                                <br />
-                                <Text>{selectedResult.Blood_Pressure}</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Thị lực mắt trái:</Text>
-                                <br />
-                                <Text>{selectedResult.Vision_Left}/10</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Thị lực mắt phải:</Text>
-                                <br />
-                                <Text>{selectedResult.Vision_Right}/10</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Tình trạng răng:</Text>
-                                <br />
-                                <Text>{selectedResult.Dental_Status}</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Tai mũi họng:</Text>
-                                <br />
-                                <Text>{selectedResult.ENT_Status}</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Tình trạng da:</Text>
-                                <br />
-                                <Text>{selectedResult.Skin_Status}</Text>
-                            </Col>
-                            <Col span={24}>
-                                <Text strong>Kết luận chung:</Text>
-                                <br />
-                                <Text>{selectedResult.General_Conclusion}</Text>
-                            </Col>
-                            <Col span={24}>
-                                <Text strong>Cần gặp phụ huynh:</Text>
-                                <br />
-                                <Tag color={selectedResult.Is_need_meet ? 'red' : 'green'}>
-                                    {selectedResult.Is_need_meet ? 'Có' : 'Không'}
-                                </Tag>
-                            </Col>
-                            <Col span={24}>
-                                <Divider />
-                                <Text type="secondary">
-                                    Ngày khám: {selectedResult.createdAt ? dayjs(selectedResult.createdAt).format('DD/MM/YYYY HH:mm') : '-'}
-                                </Text>
-                            </Col>
-                        </Row>
+                    <div className="space-y-6">
+                        {/* Thông tin học sinh */}
+                        <div className="bg-blue-50 rounded-lg p-4">
+                            <h3 className="text-lg font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                                <UserOutlined /> Thông tin học sinh
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Họ tên học sinh</span>
+                                    <span className="font-medium">{studentInfo?.fullname || '---'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Ngày sinh</span>
+                                    <span className="font-medium">{studentInfo?.dateOfBirth || '---'}</span>
+
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Giới tính</span>
+                                    <span className="font-medium">{studentInfo?.gender || '---'}</span>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Thông tin phụ huynh */}
+                        <div className="bg-green-50 rounded-lg p-4">
+                            <h3 className="text-lg font-semibold text-green-800 mb-3 flex items-center gap-2">
+                                <TeamOutlined /> Thông tin phụ huynh
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Họ tên phụ huynh</span>
+                                    <span className="font-medium">{userInfo ? JSON.parse(userInfo).username : '---'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Số điện thoại</span>
+                                    <span className="font-medium">{userInfo ? JSON.parse(userInfo).phone : '---'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Email phụ huynh</span>
+                                    <span className="font-medium">{userInfo ? JSON.parse(userInfo).email : '---'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Thông tin y tá */}
+                        <div className="bg-purple-50 rounded-lg p-4">
+                            <h3 className="text-lg font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                                <MedicineBoxOutlined /> Y tá phụ trách
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Họ tên y tá</span>
+                                    <span className="font-medium">{selectedResult?.Nurse?.fullname || '---'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Email y tá</span>
+                                    <span className="font-medium">{selectedResult?.Nurse?.email || '---'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Kết quả khám */}
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                <HeartOutlined /> Kết quả khám sức khỏe
+                            </h3>
+
+                            {/* Chỉ số cơ bản */}
+                            <div className="grid grid-cols-3 gap-4 mb-6">
+                                <div className="bg-white rounded-lg p-3 text-center border">
+                                    <div className="text-2xl font-bold text-blue-600">{selectedResult.Height}</div>
+                                    <div className="text-sm text-gray-600">Chiều cao (cm)</div>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 text-center border">
+                                    <div className="text-2xl font-bold text-green-600">{selectedResult.Weight}</div>
+                                    <div className="text-sm text-gray-600">Cân nặng (kg)</div>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 text-center border">
+                                    <div className="text-lg font-bold text-red-600">{selectedResult.Blood_Pressure}</div>
+                                    <div className="text-sm text-gray-600">Huyết áp</div>
+                                </div>
+                            </div>
+
+                            {/* Các chỉ số khác */}
+                            <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-white rounded-lg p-3 border">
+                                        <span className="text-sm text-gray-600 block">Thị lực mắt trái</span>
+                                        <span className="font-semibold text-lg">{selectedResult.Vision_Left}/10</span>
+                                    </div>
+                                    <div className="bg-white rounded-lg p-3 border">
+                                        <span className="text-sm text-gray-600 block">Thị lực mắt phải</span>
+                                        <span className="font-semibold text-lg">{selectedResult.Vision_Right}/10</span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-white rounded-lg p-3 border">
+                                        <span className="text-sm text-gray-600 block">Tình trạng răng</span>
+                                        <span className="font-medium">{selectedResult.Dental_Status}</span>
+                                    </div>
+                                    <div className="bg-white rounded-lg p-3 border">
+                                        <span className="text-sm text-gray-600 block">Tai mũi họng</span>
+                                        <span className="font-medium">{selectedResult.ENT_Status}</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white rounded-lg p-3 border">
+                                    <span className="text-sm text-gray-600 block">Tình trạng da</span>
+                                    <span className="font-medium">{selectedResult.Skin_Status}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Kết luận */}
+                        <div className="bg-amber-50 rounded-lg p-4">
+                            <h3 className="text-lg font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                                <FileTextOutlined /> Kết luận
+                            </h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Kết luận chung</span>
+                                    <div className="font-medium bg-white rounded p-3 mt-1">
+                                        {selectedResult.General_Conclusion}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-600">Cần gặp phụ huynh:</span>
+                                    <Tag
+                                        color={selectedResult.Is_need_meet ? 'red' : 'green'}
+                                        className="text-sm font-medium"
+                                    >
+                                        {selectedResult.Is_need_meet ? 'Có' : 'Không'}
+                                    </Tag>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Thông tin ngày khám */}
+                        <div className="text-center text-gray-500 text-sm border-t pt-4">
+                            <CalendarOutlined className="mr-2" />
+                            Ngày khám: {selectedResult.createdAt
+                                ? dayjs(selectedResult.createdAt).format('DD/MM/YYYY HH:mm')
+                                : '---'}
+                        </div>
                     </div>
                 ) : (
-                    <div style={{ textAlign: 'center', padding: '20px' }}>
-                        <Text type="secondary">Không tìm thấy kết quả khám</Text>
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <div className="text-gray-400 text-6xl mb-4">
+                            <FileTextOutlined />
+                        </div>
+                        <span className="text-gray-500">Không tìm thấy kết quả khám</span>
                     </div>
                 )}
             </Modal>
+
         </div>
     );
 };
