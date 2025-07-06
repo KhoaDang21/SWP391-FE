@@ -153,7 +153,7 @@ const Checkup: React.FC = () => {
                         <Col xs={24} md={12} lg={8} key={student.id}>
                             <Card
                                 title={<Text strong>{student.fullname}</Text>}
-                                extra={<Text type="secondary">Mã học sinh: {student.username}</Text>}
+                                // extra={<Text type="secondary">Mã học sinh: {student.username}</Text>}
                                 actions={[
                                     <Button type="link" onClick={() => handleViewDetail(student)}>
                                         Chi tiết
@@ -185,9 +185,9 @@ const Checkup: React.FC = () => {
                     <div>
                         <Card size="small" style={{ marginBottom: 16 }}>
                             <Row gutter={16}>
-                                <Col span={6}>
+                                {/* <Col span={6}>
                                     <Text strong>Mã học sinh:</Text> {selectedStudent.username}
-                                </Col>
+                                </Col> */}
                                 <Col span={6}>
                                     <Text strong>Lớp:</Text> {selectedStudent.className || '-'}
                                 </Col>
