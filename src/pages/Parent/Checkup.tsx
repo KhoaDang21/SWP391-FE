@@ -52,7 +52,8 @@ const Checkup: React.FC = () => {
     const [selectedResult, setSelectedResult] = useState<any>(null);
     const [resultLoading, setResultLoading] = useState(false);
     const [studentInfo, setStudentInfo] = useState<User | null>(null);
-    console.log("Student Info:", studentInfo);
+    const [nurseInfo, setNurseInfo] = useState<User | null>(null);
+    console.log("Student Info:", nurseInfo);
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -89,6 +90,21 @@ const Checkup: React.FC = () => {
             setStudentInfo(null);
         }
     }, [selectedResult?.Student_ID]);
+
+    useEffect(() => {
+        const token = localStorage.getItem('accessToken') || '';
+
+        if (selectedResult?.Nurse_ID) {
+            getUserById(selectedResult.Nurse_ID, token)
+                .then((res) => setNurseInfo(res))
+                .catch((err) => {
+                    console.error('Lỗi khi lấy thông tin y tá:', err);
+                    setNurseInfo(null);
+                });
+        } else {
+            setNurseInfo(null);
+        }
+    }, [selectedResult?.Nurse_ID]);
 
 
     const handleViewDetail = async (student: any) => {
@@ -515,12 +531,29 @@ const Checkup: React.FC = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <span className="text-sm text-gray-600 block">Họ tên y tá</span>
-                                    <span className="font-medium">{selectedResult?.Nurse?.fullname || '---'}</span>
+                                    <span className="font-medium">{nurseInfo?.fullname || 'Chưa cập nhật'}</span>
                                 </div>
                                 <div>
                                     <span className="text-sm text-gray-600 block">Email y tá</span>
-                                    <span className="font-medium">{selectedResult?.Nurse?.email || '---'}</span>
+                                    <span className="font-medium">{nurseInfo?.email || 'Chưa cập nhật'}</span>
                                 </div>
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Địa chỉ y tá</span>
+                                    <span className="font-medium">{nurseInfo?.address || 'Chưa cập nhật'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Số điện thoại y tá</span>
+                                    <span className="font-medium">{nurseInfo?.phoneNumber || 'Chưa cập nhật'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Ngày sinh y tá</span>
+                                    <span className="font-medium">{nurseInfo?.dateOfBirth || 'Chưa cập nhật'}</span>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-gray-600 block">Giới tính y tá</span>
+                                    <span className="font-medium">{nurseInfo?.gender || 'Chưa cập nhật'}</span>
+                                </div>
+
                             </div>
                         </div>
 
