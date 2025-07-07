@@ -409,6 +409,16 @@ const MedicineManagement: React.FC = () => {
             <Input placeholder="Nhập tên học sinh" onChange={() => nurseForm.setFields([{ name: 'studentName', errors: [] }])} />
           </Form.Item>
           <Form.Item
+            name="className"
+            label="Lớp"
+            rules={[
+              { required: true, message: 'Vui lòng nhập lớp!' },
+              { pattern: /^[1-9][0-2]?[A-Z]$/, message: 'Lớp phải có định dạng như 1A, 2B... với số từ 1 đến 5 và một chữ cái in hoa.' }
+            ]}
+          >
+            <Input placeholder="Nhập lớp (ví dụ: 1A, 5E)" onChange={() => nurseForm.setFields([{ name: 'className', errors: [] }])} />
+          </Form.Item>
+          <Form.Item
             name="deliveryTimeNote"
             label="Buổi uống"
             rules={[{ required: true, message: 'Vui lòng chọn buổi uống!' }]}
@@ -433,16 +443,6 @@ const MedicineManagement: React.FC = () => {
                 <div style={{ marginTop: 8 }}>Upload</div>
               </div>
             </Upload>
-          </Form.Item>
-          <Form.Item
-            name="className"
-            label="Lớp"
-            rules={[
-              { required: true, message: 'Vui lòng nhập lớp!' },
-              { pattern: /^[1-9][0-2]?[A-Z]$/, message: 'Lớp phải có định dạng như 1A, 5E...' }
-            ]}
-          >
-            <Input placeholder="Nhập lớp (ví dụ: 1A, 5E)" onChange={() => nurseForm.setFields([{ name: 'className', errors: [] }])} />
           </Form.Item>
           <Form.Item
             name="guardianPhone"
