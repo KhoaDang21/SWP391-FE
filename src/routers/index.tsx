@@ -16,8 +16,6 @@ import HealthOverview from "../pages/Admin/Dashboard/HealthOverview";
 import ExportExcel from "../pages/Admin/Dashboard/ExportExcel";
 import HealthEvents from "../pages/Admin/Reports/HealthEvents";
 import VaccinationReports from "../pages/Admin/Reports/VaccinationReports";
-import StudentHealthRecords from "../pages/Admin/Students/HealthRecords";
-import CreateForm from "../pages/Admin/Forms/CreateForm";
 import UserManagement from "../pages/Admin/Management/UserManagement";
 import UserDetail from "../pages/Admin/Management/UserDetail";
 import ContentManagement from "../pages/Admin/Management/ContentManagement";
@@ -65,12 +63,6 @@ export default function AppRoutes() {
                 <Route path="reports">
                     <Route path="health-events" element={<HealthEvents />} />
                     <Route path="vaccination" element={<VaccinationReports />} />
-                </Route>
-                <Route path="students">
-                    <Route path="health-records" element={<StudentHealthRecords />} />
-                </Route>
-                <Route path="forms">
-                    <Route path="create" element={<CreateForm />} />
                 </Route>
                 <Route path="management">
                     <Route path="users" element={<UserManagement />} />

@@ -18,7 +18,8 @@ import {
     Typography,
     Alert,
     Checkbox,
-    InputNumber
+    InputNumber,
+    Tooltip
 } from 'antd';
 import {
     PlusOutlined,
@@ -351,113 +352,153 @@ const Children = () => {
                             {children.map(child => (
                                 <Col xs={24} lg={12} key={child.userId}>
                                     <Card
-                                        style={{ height: '100%' }}
+                                        hoverable
+                                        bordered={false}
+                                        style={{
+                                            height: '100%',
+                                            borderRadius: 20,
+                                            boxShadow: '0 6px 32px rgba(24, 144, 255, 0.10)',
+                                            marginBottom: 24,
+                                            background: '#fff',
+                                            padding: 0
+                                        }}
                                         actions={[
-                                            <EditOutlined key="edit" onClick={() => showModal(child)} />,
-                                            <DeleteOutlined key="delete" onClick={() => showDeleteConfirm(child.ID)} />
+                                            <Tooltip title="Chỉnh sửa" key="edit">
+                                                <EditOutlined
+                                                    style={{ fontSize: 22, color: '#2563eb' }}
+                                                    onClick={() => showModal(child)}
+                                                />
+                                            </Tooltip>,
+                                            <Tooltip title="Xóa" key="delete">
+                                                <DeleteOutlined
+                                                    style={{ fontSize: 22, color: '#ff4d4f' }}
+                                                    onClick={() => showDeleteConfirm(child.ID)}
+                                                />
+                                            </Tooltip>
                                         ]}
                                     >
-                                        <div style={{ marginBottom: '16px' }}>
-                                            <Space>
-                                                <Avatar size={64} icon={<UserOutlined />} />
+                                        <div style={{ display: 'flex', alignItems: 'center', padding: 24, paddingBottom: 0 }}>
+                                            <Avatar
+                                                size={80}
+                                                icon={<UserOutlined />}
+                                                style={{
+                                                    background: 'linear-gradient(135deg, #bae6fd 0%, #2563eb 100%)',
+                                                    marginRight: 28,
+                                                    border: '3px solid #fff',
+                                                    boxShadow: '0 2px 8px #91d5ff'
+                                                }}
+                                            />
+                                            <div>
+                                                <Title level={4} style={{ margin: 0, color: '#2563eb', fontWeight: 700 }}>{child.fullname}</Title>
+                                                <div style={{ margin: '8px 0' }}>
+                                                    <Tag color="blue" style={{ fontSize: 15, padding: '2px 12px' }}>Lớp: {child.Class || 'Chưa xác định'}</Tag>
+                                                    <Tag color="geekblue" style={{ fontSize: 15, padding: '2px 12px' }}>Tuổi: {calculateAge(child.dateOfBirth)}</Tag>
+                                                </div>
                                                 <div>
-                                                    <Title level={4} style={{ margin: 0 }}>{child.fullname}</Title>
-                                                    <Text type="secondary">Lớp : {child.Class || 'Chưa xác định'}  • Tuổi: {calculateAge(child.dateOfBirth)}</Text>
-                                                    <br />
-                                                    <Text type="secondary">Chiều cao: {child.height || 'Chưa xác định'} cm  • Cân nặng: {child.weight || 'Chưa xác định'} kg</Text>
+                                                    <Tag color="cyan" style={{ fontSize: 15, padding: '2px 12px' }}>Chiều cao: {child.height || 'Chưa xác định'} cm</Tag>
+                                                    <Tag color="cyan" style={{ fontSize: 15, padding: '2px 12px' }}>Cân nặng: {child.weight || 'Chưa xác định'} kg</Tag>
                                                 </div>
-                                            </Space>
+                                            </div>
                                         </div>
-
-                                        <Tabs size="small">
-                                            <TabPane tab={<span><SafetyOutlined />Vaccine</span>} key="1">
-                                                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {vaccineHistories[child.ID] && vaccineHistories[child.ID].vaccineHistory.filter(v => v.Status === 'Đã tiêm').length > 0 ? (
-                                                        vaccineHistories[child.ID].vaccineHistory
-                                                            .filter(vaccine => vaccine.Status === 'Đã tiêm')
-                                                            .map((vaccine, index) => (
-                                                                <div
-                                                                    key={index}
-                                                                    style={{
-                                                                        marginBottom: '8px',
-                                                                        padding: '8px',
-                                                                        backgroundColor: '#f6ffed',
-                                                                        borderRadius: '4px',
-                                                                        border: '1px solid #b7eb8f'
-                                                                    }}
-                                                                >
-                                                                    <Text strong style={{ color: '#389e0d' }}>{vaccine.Vaccine_name}</Text>
-                                                                    <br />
-                                                                    <Text type="secondary" style={{ fontSize: '12px', color: '#389e0d' }}>
-                                                                       Ngày Tiêm: {vaccine.Date_injection ? new Date(vaccine.Date_injection).toLocaleDateString('vi-VN') : ''} 
-                                                                    </Text>
-                                                                </div>
-                                                            ))
-                                                    ) : (
-                                                        <Text type="secondary">Chưa có thông tin vaccine đã tiêm</Text>
-                                                    )}
-                                                </div>
-                                            </TabPane>
-
-                                            <TabPane tab={<div><MedicineBoxOutlined />Sức khỏe</div>} key="2">
-                                                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {(() => {
-                                                        // Chuyển chronicDiseases thành array đối tượng { name: string }
-                                                        let chronicArr: { name: string }[] = [];
-                                                        if (Array.isArray(child.chronicDiseases)) {
-                                                            chronicArr = child.chronicDiseases;
-                                                        } else if (typeof child.chronicDiseases === 'string') {
-                                                            chronicArr = child.chronicDiseases
-                                                                .split(',')
-                                                                .map(s => ({ name: s.trim() }))
-                                                                .filter(item => item.name);
-                                                        }
-                                                        // Chuyển allergies thành array đối tượng { name: string }
-                                                        let allergyArr: { name: string }[] = [];
-                                                        if (Array.isArray(child.allergies)) {
-                                                            allergyArr = child.allergies;
-                                                        } else if (typeof child.allergies === 'string') {
-                                                            allergyArr = child.allergies
-                                                                .split(',')
-                                                                .map(s => ({ name: s.trim() }))
-                                                                .filter(item => item.name);
-                                                        }
-                                                        // Chuyển pastIllnesses thành array đối tượng { disease, date, treatment? }
-
-
-                                                        return (
-                                                            <>
-                                                                {chronicArr.length > 0 && (
-                                                                    <div style={{ marginBottom: 12 }}>
-                                                                        <Text strong>Bệnh nền:</Text>
-                                                                        <div style={{ marginTop: 4 }}>
-                                                                            {chronicArr.map((disease, idx) => (
-                                                                                <Tag key={idx} color="orange">{disease.name}</Tag>
-                                                                            ))}
+                                        <Divider style={{ margin: '16px 0' }} />
+                                        <Tabs
+                                            size="large"
+                                            tabBarGutter={40}
+                                            items={[
+                                                {
+                                                    key: '1',
+                                                    label: (
+                                                        <span style={{ fontSize: 16 }}>
+                                                            <SafetyOutlined /> Vaccine
+                                                        </span>
+                                                    ),
+                                                    children: (
+                                                        <div style={{ minHeight: 60, padding: '0 16px' }}>
+                                                            {vaccineHistories[child.ID] && vaccineHistories[child.ID].vaccineHistory.filter(v => v.Status === 'Đã tiêm').length > 0 ? (
+                                                                vaccineHistories[child.ID].vaccineHistory
+                                                                    .filter(vaccine => vaccine.Status === 'Đã tiêm')
+                                                                    .map((vaccine, index) => (
+                                                                        <div
+                                                                            key={index}
+                                                                            style={{
+                                                                                marginBottom: 10,
+                                                                                padding: 10,
+                                                                                backgroundColor: '#f6ffed',
+                                                                                borderRadius: 6,
+                                                                                border: '1px solid #b7eb8f'
+                                                                            }}
+                                                                        >
+                                                                            <Text strong style={{ color: '#389e0d', fontSize: 15 }}>{vaccine.Vaccine_name}</Text>
+                                                                            <br />
+                                                                            <Text type="secondary" style={{ fontSize: 13, color: '#389e0d' }}>
+                                                                                Ngày Tiêm: {vaccine.Date_injection ? new Date(vaccine.Date_injection).toLocaleDateString('vi-VN') : ''}
+                                                                            </Text>
                                                                         </div>
-                                                                    </div>
-                                                                )}
-
-                                                                {allergyArr.length > 0 && (
-                                                                    <div style={{ marginBottom: 12 }}>
-                                                                        <Text strong>Dị ứng:</Text>
-                                                                        <div style={{ marginTop: 4 }}>
-                                                                            {allergyArr.map((allergy, idx) => (
-                                                                                <Tag key={idx} color="red">{allergy.name}</Tag>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </div>
-                                            </TabPane>
-
-
-                                        </Tabs>
+                                                                    ))
+                                                            ) : (
+                                                                <Text type="secondary"><SafetyOutlined /> Chưa có thông tin vaccine đã tiêm</Text>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                },
+                                                {
+                                                    key: '2',
+                                                    label: (
+                                                        <span style={{ fontSize: 16 }}>
+                                                            <MedicineBoxOutlined /> Sức khỏe
+                                                        </span>
+                                                    ),
+                                                    children: (
+                                                        <div style={{ minHeight: 60, padding: '0 16px' }}>
+                                                            {(() => {
+                                                                let chronicArr: { name: string }[] = [];
+                                                                if (Array.isArray(child.chronicDiseases)) {
+                                                                    chronicArr = child.chronicDiseases;
+                                                                } else if (typeof child.chronicDiseases === 'string') {
+                                                                    chronicArr = child.chronicDiseases
+                                                                        .split(',')
+                                                                        .map(s => ({ name: s.trim() }))
+                                                                        .filter(item => item.name);
+                                                                }
+                                                                let allergyArr: { name: string }[] = [];
+                                                                if (Array.isArray(child.allergies)) {
+                                                                    allergyArr = child.allergies;
+                                                                } else if (typeof child.allergies === 'string') {
+                                                                    allergyArr = child.allergies
+                                                                        .split(',')
+                                                                        .map(s => ({ name: s.trim() }))
+                                                                        .filter(item => item.name);
+                                                                }
+                                                                return (
+                                                                    <>
+                                                                        {chronicArr.length > 0 && (
+                                                                            <div style={{ marginBottom: 12 }}>
+                                                                                <Text strong>Bệnh nền:</Text>
+                                                                                <div style={{ marginTop: 4 }}>
+                                                                                    {chronicArr.map((disease, idx) => (
+                                                                                        <Tag key={idx} color="orange" style={{ fontSize: 14, padding: '2px 10px' }}>{disease.name}</Tag>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                        {allergyArr.length > 0 && (
+                                                                            <div style={{ marginBottom: 12 }}>
+                                                                                <Text strong>Dị ứng:</Text>
+                                                                                <div style={{ marginTop: 4 }}>
+                                                                                    {allergyArr.map((allergy, idx) => (
+                                                                                        <Tag key={idx} color="red" style={{ fontSize: 14, padding: '2px 10px' }}>{allergy.name}</Tag>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    )
+                                                }
+                                            ]}
+                                        />
                                     </Card>
                                 </Col>
                             ))}
