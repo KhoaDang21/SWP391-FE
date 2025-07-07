@@ -120,7 +120,7 @@ function Nurse() {
   const menu = (
     <Menu>
       <Menu.Item key="profile">
-        <button className="w-full text-left">Hồ sơ</button>
+        <button className="w-full text-left" onClick={() => navigate('/nurse/profile')}>Hồ sơ cá nhân</button>
       </Menu.Item>
       <Menu.Item key="change-password">
         <button onClick={() => setIsModalVisible(true)} className="w-full text-left">Đổi mật khẩu</button>
@@ -149,9 +149,13 @@ function Nurse() {
             return;
           }
           await changePassword(values.currentPassword, values.newPassword, token);
-          notificationService.success('Đổi mật khẩu thành công');
+          notificationService.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại');
           setIsModalVisible(false);
-          form.resetFields();
+          // Tự động logout sau khi đổi mật khẩu thành công
+          localStorage.removeItem("user");
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          navigate('/login');
         } catch (error: any) {
           notificationService.error(error.message || 'Đổi mật khẩu thất bại');
         } finally {
