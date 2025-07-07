@@ -87,7 +87,7 @@ const HealthCheckStudents: React.FC = () => {
         skin_status: existingResult.Skin_Status,
         general_conclusion: existingResult.General_Conclusion,
         is_need_meet: existingResult.Is_need_meet,
-        image: existingResult.image
+        image: existingResult?.image
           ? [{
             uid: '-1',
             name: 'ảnh khám',
@@ -136,7 +136,7 @@ const HealthCheckStudents: React.FC = () => {
         skin_status: values.skin_status,
         general_conclusion: values.general_conclusion,
         is_need_meet: values.is_need_meet,
-        image: values.image
+        image: values?.image
 
       };
 
