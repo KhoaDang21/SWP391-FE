@@ -82,6 +82,14 @@ export interface VaccineCreateRequest {
   Date_injection: string;
   Grade: string;
 }
+export interface VaccineCreateEvidenceRequest {
+  ID: string;
+  Vaccine_name: string;
+  Vaccince_type: string;
+  Date_injection: string;
+  note_affter_injection: string;
+  evidence: File | File[] | string | string[];
+}
 
 export interface VaccineUpdateItem {
   VH_ID: number;
@@ -123,6 +131,7 @@ export interface VaccineHistoryByMedicalRecordResponse {
     Date_injection: string;
     note_affter_injection: string | null;
     Status: string;
+    Is_created_by_guardian: boolean;
   }[];
 }
 
@@ -392,5 +401,32 @@ export const vaccineService = {
       }
     };
   },
+  createVaccineEvidence: async (formData: FormData): Promise<any> => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+
+    try {
+      const response = await fetch(`${API_URL}/vaccine/evidence`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        const msg = result?.message || (result?.error && result.error.message) || 'Failed to create vaccine';
+        throw new Error(msg);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error creating vaccine:', error);
+      throw error;
+    }
+  },
+
+
 };
 
