@@ -420,6 +420,7 @@ const ManageHealthcheck: React.FC = () => {
               selected={createDate}
               onChange={date => setCreateDate(date)}
               dateFormat="yyyy-MM-dd"
+              minDate={new Date()}
               className="w-full border border-gray-300 rounded px-3 py-2"
               placeholderText="Chọn ngày khám"
               minDate={(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()}
