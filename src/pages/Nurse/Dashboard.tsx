@@ -327,7 +327,7 @@ const NurseDashboard: React.FC = () => {
                 <Col span={6}>
                     <Card>
                         <Statistic
-                            title="Đơn thuốc chờ duyệt"
+                            title="Đơn thuốc gửi đến"
                             value={medicines.filter(m => m.status === 'pending').length}
                             valueStyle={{ color: '#f5222d' }}
                             prefix={<MedicineBoxOutlined />}
