@@ -19,6 +19,14 @@ function formatDate(date: Date | null) {
   return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
 }
 
+// Hàm kiểm tra ngày hợp lệ (chỉ cho chọn ngày lớn hơn hôm nay)
+const isFutureDate = (date: Date | null) => {
+  if (!date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date > today;
+};
+
 const ManageHealthcheck: React.FC = () => {
   const [healthEvents, setHealthEvents] = useState<HealthCheckEvent[]>([]);
   const [schoolYears, setSchoolYears] = useState<string[]>([]);
@@ -286,13 +294,13 @@ const ManageHealthcheck: React.FC = () => {
                             color = 'bg-orange-400 text-white';
                             label = 'Chờ xác nhận';
                             break;
-                          case 'inProgress':
+                          case 'in progress':
                             color = 'bg-blue-500 text-white';
                             label = 'Đang diễn ra';
                             break;
                           case 'checked':
-                            color = 'bg-yellow-400 text-gray-900';
-                            label = 'Đã có kết quả';
+                            color = 'bg-green-500 text-white';
+                            label = 'Kết thúc';
                             break;
                           default:
                             color = 'bg-gray-200 text-gray-700';
@@ -306,26 +314,30 @@ const ManageHealthcheck: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.description}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <div className="flex items-center space-x-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            showEditModal(event);
-                          }}
-                          className="inline-flex items-center px-3 py-1.5 bg-yellow-400 text-white text-sm rounded-lg hover:bg-yellow-500 transition-colors duration-200"
-                          title="Sửa đợt khám"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(event);
-                          }}
-                          className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors duration-200"
-                          title="Xoá đợt khám"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {!(event.status === 'in progress' || event.status === 'checked') && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                showEditModal(event);
+                              }}
+                              className="inline-flex items-center px-3 py-1.5 bg-yellow-400 text-white text-sm rounded-lg hover:bg-yellow-500 transition-colors duration-200"
+                              title="Sửa đợt khám"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(event);
+                              }}
+                              className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors duration-200"
+                              title="Xoá đợt khám"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                         {isSent ? (
                           <div className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-800 text-sm rounded-lg border border-green-200">
                             <Check className="h-4 w-4 mr-1" />
@@ -394,7 +406,15 @@ const ManageHealthcheck: React.FC = () => {
           <Form.Item
             name="dateEvent"
             label="Ngày khám"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.reject('Vui lòng chọn ngày khám');
+                  if (!isFutureDate(value)) return Promise.reject('Chỉ được chọn ngày lớn hơn ngày hôm nay');
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <DatePicker
               selected={createDate}
@@ -403,6 +423,7 @@ const ManageHealthcheck: React.FC = () => {
               minDate={new Date()}
               className="w-full border border-gray-300 rounded px-3 py-2"
               placeholderText="Chọn ngày khám"
+              minDate={(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()}
             />
           </Form.Item>
 
@@ -470,7 +491,15 @@ const ManageHealthcheck: React.FC = () => {
           <Form.Item
             name="dateEvent"
             label="Ngày khám"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày khám' }]}
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.reject('Vui lòng chọn ngày khám');
+                  if (!isFutureDate(value)) return Promise.reject('Chỉ được chọn ngày lớn hơn ngày hôm nay');
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <DatePicker
               selected={editDate}
@@ -478,6 +507,7 @@ const ManageHealthcheck: React.FC = () => {
               dateFormat="yyyy-MM-dd"
               className="w-full border border-gray-300 rounded px-3 py-2"
               placeholderText="Chọn ngày khám"
+              minDate={(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()}
             />
           </Form.Item>
           <Form.Item

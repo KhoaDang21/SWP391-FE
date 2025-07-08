@@ -17,8 +17,6 @@ import {
     Tooltip,
     Select,
     Popconfirm,
-    Empty,
-    Alert
 } from 'antd';
 import {
     PlusOutlined,
@@ -35,7 +33,7 @@ import {
     UserOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import type { UploadProps } from 'antd';
+import type { UploadFile } from 'antd/es/upload/interface';
 import dayjs from 'dayjs';
 import {
     getMedicalSentsByGuardian,
@@ -68,6 +66,11 @@ const SendMedication: React.FC = () => {
     const [deliveries, setDeliveries] = useState<MedicalSent[]>([]);
     const [students, setStudents] = useState<{ id: number; name: string; className: string; phone: string }[]>([]);
     const [fetching, setFetching] = useState(false);
+    const [fileList, setFileList] = useState<UploadFile<any>[]>([]);
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewImage, setPreviewImage] = useState('');
+    const [detailPreviewVisible, setDetailPreviewVisible] = useState(false);
+    const [detailPreviewImage, setDetailPreviewImage] = useState('');
 
     const studentInfoMap = useMemo(() => {
         const map = new Map<number, { name: string; className: string }>();
@@ -218,16 +221,16 @@ const SendMedication: React.FC = () => {
         setViewModalVisible(true);
     };
 
-    const uploadProps: UploadProps = {
-        name: 'prescriptionImage', listType: 'picture-card', maxCount: 1,
-        beforeUpload: file => {
-            const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-            if (!isJpgOrPng) message.error('Chỉ có thể upload file JPG/PNG!');
-            const isLt2M = file.size / 1024 / 1024 < 2;
-            if (!isLt2M) message.error('Hình ảnh phải nhỏ hơn 2MB!');
-            return isJpgOrPng && isLt2M ? true : Upload.LIST_IGNORE;
-        },
-        customRequest: ({ onSuccess }) => setTimeout(() => onSuccess && onSuccess('ok'), 0)
+    const handlePreview = async (file: UploadFile<any>) => {
+        if (!file.url && !file.preview && file.originFileObj) {
+            file.preview = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file.originFileObj!);
+                reader.onload = () => resolve(reader.result as string);
+            });
+        }
+        setPreviewImage(file.url || file.preview || '');
+        setPreviewVisible(true);
     };
 
     const timeOptions = ['Trước ăn sáng', 'Sau ăn sáng', 'Trước ăn trưa', 'Sau ăn trưa', 'Trước ăn chiều', 'Sau ăn chiều'];
@@ -283,6 +286,7 @@ const SendMedication: React.FC = () => {
                 onCancel={handleModalCancel}
                 footer={null}
                 destroyOnHidden
+                width={1000}
             >
                 <Form form={form} layout="vertical" onFinish={handleFormSubmit} style={{ marginTop: 24 }}>
                     <Form.Item name="studentId" label="Chọn học sinh" rules={[{ required: true, message: 'Vui lòng chọn học sinh!' }]}>
@@ -307,28 +311,42 @@ const SendMedication: React.FC = () => {
                         name="prescriptionImage"
                         label="Hình ảnh toa thuốc"
                         valuePropName="fileList"
-                        getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
+                        getValueFromEvent={e => (Array.isArray(e) ? e : e?.fileList)}
                         rules={[
-                            {
-                                required: true,
-                                message: 'Vui lòng tải lên hình ảnh toa thuốc',
-                            },
-                            {
-                                validator: (_, value) => {
-                                    return value && value.length > 0
-                                        ? Promise.resolve()
-                                        : Promise.reject(new Error('Vui lòng tải lên ít nhất một hình ảnh'));
-                                },
-                            },
+                            { required: true, message: 'Vui lòng tải lên hình ảnh toa thuốc' }
                         ]}
                     >
-                        <Upload {...uploadProps} listType="picture-card">
-                            <div>
-                                <PlusOutlined />
-                                <div style={{ marginTop: 8 }}>Upload</div>
-                            </div>
+                        <Upload
+                            listType="picture-card"
+                            accept="image/*"
+                            beforeUpload={file => {
+                                const isImage = file.type.startsWith('image/');
+                                if (!isImage) {
+                                    message.error('Chỉ cho phép upload file ảnh!');
+                                }
+                                const isLt5M = file.size / 1024 / 1024 < 5;
+                                if (!isLt5M) {
+                                    message.error('Ảnh phải nhỏ hơn 5MB!');
+                                }
+                                return isImage && isLt5M ? false : Upload.LIST_IGNORE;
+                            }}
+                            maxCount={1}
+                            fileList={fileList}
+                            onChange={({ fileList }) => setFileList(fileList)}
+                            onPreview={handlePreview}
+                            style={{ width: '100%' }}
+                        >
+                            {fileList.length >= 1 ? null : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <PlusOutlined />
+                                    <span>Upload</span>
+                                </div>
+                            )}
                         </Upload>
                     </Form.Item>
+                    <Modal open={previewVisible} footer={null} onCancel={() => setPreviewVisible(false)}>
+                        <img alt="preview" style={{ width: '100%' }} src={previewImage} />
+                    </Modal>
 
                     <Form.Item
                         name="notes"
@@ -458,47 +476,43 @@ const SendMedication: React.FC = () => {
                                     <PictureOutlined className="text-indigo-600 mr-2" />
                                     <Text strong className="text-indigo-800">Ảnh toa thuốc</Text>
                                 </div>
-                                <div className="text-center">
-                                    {selectedRecord.Image_prescription ? (
-                                        <div>
-                                            <Image
-                                                width={280}
-                                                src={selectedRecord.Image_prescription}
-                                                alt="Toa thuốc"
-                                                className="rounded-lg shadow-sm"
-                                                preview={{
-                                                    mask: (
-                                                        <div className="text-white">
-                                                            <EyeOutlined className="text-lg mb-1" />
-                                                            <div className="text-sm">Xem chi tiết</div>
-                                                        </div>
-                                                    )
-                                                }}
-                                            />
-                                            <Text type="secondary" className="text-xs mt-2 block">
-                                                Nhấn vào ảnh để phóng to
-                                            </Text>
-                                        </div>
-                                    ) : (
-                                        <Empty
-                                            description={
-                                                <Text type="secondary">Không có ảnh toa thuốc</Text>
-                                            }
-                                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                            className="py-6"
+                                {selectedRecord?.Image_prescription ? (
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <Image
+                                            width={220}
+                                            style={{ maxWidth: 220, height: 'auto', display: 'block', margin: '0 auto', cursor: 'pointer' }}
+                                            src={selectedRecord.Image_prescription}
+                                            alt="Ảnh minh chứng"
+                                            className="rounded-lg border border-gray-200 shadow-sm object-contain"
+                                            preview={false}
+                                            onClick={() => {
+                                                setDetailPreviewImage(selectedRecord.Image_prescription);
+                                                setDetailPreviewVisible(true);
+                                            }}
                                         />
-                                    )}
-                                </div>
+                                    </div>
+                                ) : (
+                                    <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa' }}>
+                                        <PictureOutlined style={{ fontSize: 40, marginBottom: 8 }} />
+                                        <p>Không có ảnh minh chứng</p>
+                                    </div>
+                                )}
                             </Card>
 
                             {/* Ghi chú */}
                             {selectedRecord.Notes && (
-                                <Alert style={{ marginTop: 16 }} message={selectedRecord.Notes} type="info" showIcon />
+                                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                    <p className="text-sm text-blue-800 font-medium mb-1">Ghi chú:</p>
+                                    <p className="text-sm text-blue-800">{selectedRecord.Notes}</p>
+                                </div>
                             )}
 
                         </Space>
                     </div>
                 )}
+            </Modal>
+            <Modal open={detailPreviewVisible} footer={null} onCancel={() => setDetailPreviewVisible(false)}>
+                <img alt="preview" style={{ width: '100%' }} src={detailPreviewImage} />
             </Modal>
 
         </div>
