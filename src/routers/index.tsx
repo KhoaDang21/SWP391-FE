@@ -14,8 +14,8 @@ import AdminLayout from "../components/Layout/AdminLayout";
 // Admin pages
 import HealthOverview from "../pages/Admin/Dashboard/HealthOverview";
 import ExportExcel from "../pages/Admin/Dashboard/ExportExcel";
-import HealthEvents from "../pages/Admin/Reports/HealthEvents";
-import VaccinationReports from "../pages/Admin/Reports/VaccinationReports";
+// import HealthEvents from "../pages/Admin/Reports/HealthEvents";
+// import VaccinationReports from "../pages/Admin/Reports/VaccinationReports";
 import UserManagement from "../pages/Admin/Management/UserManagement";
 import UserDetail from "../pages/Admin/Management/UserDetail";
 import ContentManagement from "../pages/Admin/Management/ContentManagement";
@@ -61,8 +61,8 @@ export default function AppRoutes() {
                 <Route path="health-overview" element={<HealthOverview />} />
                 <Route path="export-excel" element={<ExportExcel />} />
                 <Route path="reports">
-                    <Route path="health-events" element={<HealthEvents />} />
-                    <Route path="vaccination" element={<VaccinationReports />} />
+                    {/* <Route path="health-events" element={<HealthEvents />} /> */}
+                    {/* <Route path="vaccination" element={<VaccinationReports />} /> */}
                 </Route>
                 <Route path="management">
                     <Route path="users" element={<UserManagement />} />
