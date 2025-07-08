@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Table, Card, Row, Col, Statistic, Spin, Tag, Modal, Form, Input, Switch, Space, Upload } from 'antd';
-import { ArrowLeft, Users, CheckCircle, Clock, AlertCircle, Edit, Send } from 'lucide-react';
-import { healthCheckService, HealthCheckForm, SubmitHealthCheckResultRequest, HealthCheckResult } from '../../services/Healthcheck';
+import { ArrowLeft, Users, CheckCircle, Clock, AlertCircle, Edit } from 'lucide-react';
+import { healthCheckService, HealthCheckForm, SubmitHealthCheckResultRequest } from '../../services/Healthcheck';
 import { notificationService } from '../../services/NotificationService';
-import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import { UploadOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
+
+// Định nghĩa biến global để tránh lặp thông báo
+declare global {
+  interface Window {
+    __healthCheckCheckedNotified?: boolean;
+  }
+}
 
 const HealthCheckStudents: React.FC = () => {
   const { hcId } = useParams<{ hcId: string }>();
@@ -28,9 +35,10 @@ const HealthCheckStudents: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<HealthCheckForm | null>(null);
   const [resultForm] = Form.useForm();
   const [submittingResult, setSubmittingResult] = useState(false);
-  const [sendingResult, setSendingResult] = useState<number | null>(null);
-  const [sentResults, setSentResults] = useState<Set<number>>(new Set());
   const [isEditMode, setIsEditMode] = useState(false);
+  const [sendAllModalVisible, setSendAllModalVisible] = useState(false);
+  const [studentsNotCompleted, setStudentsNotCompleted] = useState<HealthCheckForm[]>([]);
+  const [sendingAll, setSendingAll] = useState(false);
 
   useEffect(() => {
     if (hcId) {
@@ -48,7 +56,6 @@ const HealthCheckStudents: React.FC = () => {
 
       setStudents(studentsData.data);
       setHealthEventDetail(healthEventDetailRes.data);
-
       // Calculate stats
       const total = studentsData.data.length;
       const confirmed = studentsData.data.filter(s => s.status === 'approved').length;
@@ -61,6 +68,18 @@ const HealthCheckStudents: React.FC = () => {
         pending,
         reject
       });
+
+      // Nếu trạng thái đã là 'checked', chỉ thông báo một lần khi vào detail
+      if (
+        healthEventDetailRes.data &&
+        typeof healthEventDetailRes.data === 'object' &&
+        'status' in healthEventDetailRes.data &&
+        (healthEventDetailRes.data as any).status === 'checked' &&
+        !window.__healthCheckCheckedNotified
+      ) {
+        notificationService.success('Tất cả học sinh đã được nhập kết quả. Đợt khám đã kết thúc!');
+        window.__healthCheckCheckedNotified = true;
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       notificationService.error('Có lỗi xảy ra khi tải dữ liệu');
@@ -76,6 +95,20 @@ const HealthCheckStudents: React.FC = () => {
     try {
       // Check if result already exists
       const existingResult = await healthCheckService.getHealthCheckResult(parseInt(hcId!), student.Student_ID);
+      // Kiểm tra thực sự có dữ liệu kết quả khám
+      const hasResult =
+        existingResult &&
+        (
+          existingResult.Height !== null ||
+          existingResult.Weight !== null ||
+          !!existingResult.Blood_Pressure ||
+          existingResult.Vision_Left !== null ||
+          existingResult.Vision_Right !== null ||
+          !!existingResult.Dental_Status ||
+          !!existingResult.ENT_Status ||
+          !!existingResult.Skin_Status ||
+          !!existingResult.General_Conclusion
+        );
       resultForm.setFieldsValue({
         height: existingResult.Height,
         weight: existingResult.Weight,
@@ -96,9 +129,9 @@ const HealthCheckStudents: React.FC = () => {
           }]
           : []
       });
-      setIsEditMode(true);
+      setIsEditMode(!!hasResult);
     } catch (error) {
-      // No existing result, start fresh
+      // Không có kết quả cũ, giữ nguyên isEditMode=false
       resultForm.setFieldsValue({
         height: undefined,
         weight: undefined,
@@ -144,11 +177,6 @@ const HealthCheckStudents: React.FC = () => {
         await healthCheckService.updateHealthCheckResult(parseInt(hcId), selectedStudent.Student_ID, payload);
         notificationService.success('Cập nhật kết quả khám thành công!');
         // Reset sent status when updating
-        setSentResults(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(selectedStudent.Student_ID);
-          return newSet;
-        });
       } else {
         await healthCheckService.submitHealthCheckResult(parseInt(hcId), payload);
         notificationService.success('Nhập kết quả khám thành công!');
@@ -164,19 +192,43 @@ const HealthCheckStudents: React.FC = () => {
     }
   };
 
-  const handleSendResult = async (studentId: number) => {
-    if (!hcId) return;
+  // Hàm gửi kết quả cho tất cả học sinh
+  const handleSendAllResults = () => {
+    // Lấy danh sách học sinh approved chưa nhập đủ kết quả
+    const notCompleted = students.filter(s =>
+      s.status === 'approved' &&
+      !(
+        s.Height !== null ||
+        s.Weight !== null ||
+        s.Blood_Pressure ||
+        s.Vision_Left !== null ||
+        s.Vision_Right !== null ||
+        s.Dental_Status ||
+        s.ENT_Status ||
+        s.Skin_Status ||
+        s.General_Conclusion
+      )
+    );
+    setStudentsNotCompleted(notCompleted);
+    if (notCompleted.length > 0) {
+      setSendAllModalVisible(true);
+    } else {
+      sendAllResults();
+    }
+  };
 
-    setSendingResult(studentId);
+  const sendAllResults = async () => {
+    if (!hcId) return;
+    setSendingAll(true);
     try {
       await healthCheckService.sendHealthCheckResult(parseInt(hcId));
       notificationService.success('Đã gửi kết quả khám về phụ huynh!');
-      setSentResults(prev => new Set([...prev, studentId]));
+      navigate('/nurse/healthcheck'); // Quay lại danh sách đợt khám để reload trạng thái
     } catch (error) {
-      console.error('Error sending result:', error);
       notificationService.error('Có lỗi xảy ra khi gửi kết quả khám');
     } finally {
-      setSendingResult(null);
+      setSendingAll(false);
+      setSendAllModalVisible(false);
     }
   };
 
@@ -358,7 +410,11 @@ const HealthCheckStudents: React.FC = () => {
       title: 'Hành động',
       key: 'action',
       render: (record: HealthCheckForm) => {
-        const canInputResult = record.status === 'approved' || record.status === 'checked';
+        const canInputResult =
+          (record.status === 'approved' || record.status === 'checked') &&
+          healthEventDetail &&
+          typeof healthEventDetail === 'object' &&
+          ('status' in healthEventDetail ? (healthEventDetail as any).status !== 'checked' : true);
         const hasResult = record.Height || record.Weight || record.Blood_Pressure;
         const isChecked = record.status === 'checked';
 
@@ -374,7 +430,7 @@ const HealthCheckStudents: React.FC = () => {
                   handleInputResult(record);
                 }}
               >
-                Nhập kết quả
+                Nhập kết quả khám
               </Button>
             )}
 
@@ -388,7 +444,7 @@ const HealthCheckStudents: React.FC = () => {
                   handleInputResult(record);
                 }}
               >
-                Chỉnh sửa
+                Chỉnh sửa kết quả
               </Button>
             )}
 
@@ -398,20 +454,7 @@ const HealthCheckStudents: React.FC = () => {
                   <CheckCircle className="w-3 h-3 mr-1" />
                   Đã gửi
                 </Tag>
-              ) : (
-                <Button
-                  type="default"
-                  size="small"
-                  icon={<Send className="w-3 h-3" />}
-                  loading={sendingResult === record.Student_ID}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSendResult(record.Student_ID);
-                  }}
-                >
-                  Gửi kết quả
-                </Button>
-              )
+              ) : null // Ẩn nút gửi kết quả từng học sinh
             )}
           </Space>
         );
@@ -494,6 +537,18 @@ const HealthCheckStudents: React.FC = () => {
         </Col>
       </Row>
 
+      {/* Nút gửi kết quả chung */}
+      {healthEventDetail?.status === 'in progress' && (
+        <Button
+          type="primary"
+          onClick={handleSendAllResults}
+          loading={sendingAll}
+          style={{ marginBottom: 16 }}
+        >
+          Gửi kết quả
+        </Button>
+      )}
+
       {/* Students Table */}
       <Card title="Danh sách học sinh" className="shadow-sm">
         <Table
@@ -513,7 +568,7 @@ const HealthCheckStudents: React.FC = () => {
 
       {/* Result Input Modal */}
       <Modal
-        title={`${isEditMode ? 'Chỉnh sửa' : 'Nhập'} kết quả khám - ${selectedStudent?.Student?.fullname}`}
+        title={`Kết quả khám sức khoẻ - ${selectedStudent?.Student?.fullname}`}
         open={resultModalVisible}
         onCancel={() => setResultModalVisible(false)}
         footer={null}
@@ -648,7 +703,7 @@ const HealthCheckStudents: React.FC = () => {
                 htmlType="submit"
                 loading={submittingResult}
               >
-                {isEditMode ? 'Cập nhật' : 'Lưu kết quả'}
+                Lưu kết quả
               </Button>
               <Button onClick={() => setResultModalVisible(false)}>
                 Hủy
@@ -656,6 +711,20 @@ const HealthCheckStudents: React.FC = () => {
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Modal xác nhận gửi khi còn học sinh chưa nhập kết quả */}
+      <Modal
+        open={sendAllModalVisible}
+        onCancel={() => setSendAllModalVisible(false)}
+        onOk={sendAllResults}
+        okText="Gửi kết quả"
+        cancelText="Hủy"
+        title="Xác nhận gửi kết quả"
+      >
+        <div>
+          Còn {studentsNotCompleted.length} học sinh chưa được nhập kết quả khám. Bạn có chắc chắn muốn gửi?
+        </div>
       </Modal>
     </div>
   );
