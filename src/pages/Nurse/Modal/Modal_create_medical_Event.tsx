@@ -82,8 +82,26 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setErrorMessage(null);
+
+    if (!formData.ID) {
+      setErrorMessage('Vui lòng chọn một hồ sơ y tế học sinh.');
+      return;
+    }
+    if (!formData.Decription.trim()) {
+      setErrorMessage('Vui lòng nhập mô tả sự kiện.');
+      return;
+    }
+    if (!formData.Handle.trim()) {
+      setErrorMessage('Vui lòng nhập biện pháp xử lý.');
+      return;
+    }
+    if (!formData.Image) {
+      setErrorMessage('Vui lòng tải lên hình ảnh minh họa.');
+      return;
+    }
+
+    setIsLoading(true);
     try {
       await onSubmit(formData);
       resetForm();
@@ -131,7 +149,7 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
           <div className="lg:w-2/5 w-full p-6 bg-gray-50/50 border-r border-gray-200">
             <div className="h-full flex flex-col">
               <label className="block text-lg font-semibold text-gray-800 mb-4">
-                Thông tin học sinh & phụ huynh
+                Thông tin học sinh & phụ huynh <span className="text-red-500">*</span>
               </label>
               
               {selectedInfo ? (
@@ -185,8 +203,6 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
                         </div>
                       </div>
                     </div>
-
-                    {/* Thông tin phụ huynh */}
                     {selectedInfo.guardian && (
                       <div>
                         <h4 className="font-semibold text-green-800 mb-3 text-base border-b border-green-200 pb-2">
@@ -223,7 +239,6 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
                       readOnly
                       placeholder="Nhấn để chọn hồ sơ y tế học sinh"
                       className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white cursor-pointer hover:border-blue-400 transition-colors text-center text-gray-500"
-                      required
                       onClick={() => setShowSearch(true)}
                     />
                     <button
@@ -239,8 +254,6 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
               )}
             </div>
           </div>
-
-          {/* Right: Form */}
           <div className="lg:w-3/5 w-full p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
             <form onSubmit={handleSubmit} className="space-y-6">
               {errorMessage && (
@@ -264,7 +277,6 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
                     onChange={e => setFormData(prev => ({ ...prev, Decription: e.target.value }))}
                     className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[140px] resize-none transition-colors"
                     placeholder="Mô tả chi tiết về sự kiện y tế..."
-                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -276,14 +288,13 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
                     onChange={e => setFormData(prev => ({ ...prev, Handle: e.target.value }))}
                     className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[140px] resize-none transition-colors"
                     placeholder="Mô tả các biện pháp đã thực hiện..."
-                    required
                   />
                 </div>
               </div>
 
               <div className="space-y-4">
                 <label className="block text-sm font-semibold text-gray-700">
-                  Hình ảnh minh họa
+                  Hình ảnh  <span className="text-red-500">*</span>
                 </label>
                 <div className="flex flex-col items-center justify-center w-full">
                   {previewUrl ? (

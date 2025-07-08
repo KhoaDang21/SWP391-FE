@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 interface VaccineCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { vaccineName: string, vaccineType: string, date: string, grade: string }) => boolean | Promise<boolean>;
+  onSubmit: (data: { Vaccine_name: string, Vaccince_type: string, Date_injection: string, batch_number: string, Grade: string }) => boolean | Promise<boolean>;
   vaccineTypes: string[];
   selectedVaccine: string;
   resetTrigger?: number; 
@@ -21,8 +21,10 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
   const [vaccineName, setVaccineName] = useState('');
   const [vaccineType, setVaccineType] = useState('');
   const [grade, setGrade] = useState('');
+  const [batchNumber, setBatchNumber] = useState('');
   const [showWarning, setShowWarning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   React.useEffect(() => {
     if (resetTrigger > 0 && !isOpen) {
@@ -30,6 +32,7 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
       setVaccineType('');
       setDate('');
       setGrade('');
+      setBatchNumber('');
     }
   }, [resetTrigger, isOpen]);
 
@@ -38,28 +41,57 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
     setVaccineType('');
     setDate('');
     setGrade('');
+    setBatchNumber('');
   };
 
   const handleClose = () => {
     setShowWarning(false);
     onClose();
+    setErrors({});
+  };
 
+  const validate = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!vaccineName) {
+      newErrors.vaccineName = 'Tên vaccine không được để trống.';
+    } else if (!vaccineName.toLowerCase().includes('vaccine')) {
+      newErrors.vaccineName = 'Tên vaccine phải chứa từ "Vaccine".';
+    }
+    if (!vaccineType) newErrors.vaccineType = 'Loại vaccine không được để trống.';
+    if (!batchNumber) newErrors.batchNumber = 'Số lô không được để trống.';
+    if (!date) {
+      newErrors.date = 'Ngày tiêm không được để trống.';
+    } else {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(date);
+      if (selectedDate < today) {
+        newErrors.date = 'Không được chọn ngày trong quá khứ.';
+      }
+    }
+    if (!grade) newErrors.grade = 'Khối lớp không được để trống.';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = () => {
-    setShowWarning(true);
+    if (validate()) {
+      setShowWarning(true);
+    }
   };
 
   const handleConfirmCreate = async () => {
-    if (isSubmitting) return; 
-    
+    if (isSubmitting || !validate()) return;
+
     setIsSubmitting(true);
     try {
       const success = await onSubmit({
-        vaccineName,
-        vaccineType,
-        date,
-        grade
+        Vaccine_name: vaccineName,
+        Vaccince_type: vaccineType,
+        Date_injection: new Date(date).toISOString(),
+        batch_number: batchNumber,
+        Grade: grade
       });
      
       if (success) {
@@ -102,21 +134,22 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tên Vaccine
+                Tên Vaccine <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={vaccineName}
                 onChange={(e) => setVaccineName(e.target.value)}
                 className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
-                placeholder="Nhập tên vaccine"
+                placeholder="Nhập tên vaccine (chứa từ 'Vaccine')"
                 required
                 disabled={isSubmitting}
               />
+              {errors.vaccineName && <p className="text-red-500 text-xs mt-1">{errors.vaccineName}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Loại Vaccine
+                Loại Vaccine <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -127,10 +160,26 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
                 required
                 disabled={isSubmitting}
               />
+              {errors.vaccineType && <p className="text-red-500 text-xs mt-1">{errors.vaccineType}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ngày tiêm
+                Số lô <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={batchNumber}
+                onChange={(e) => setBatchNumber(e.target.value)}
+                className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
+                placeholder="Nhập số lô vaccine"
+                required
+                disabled={isSubmitting}
+              />
+              {errors.batchNumber && <p className="text-red-500 text-xs mt-1">{errors.batchNumber}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ngày tiêm <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -141,20 +190,27 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
                 required
                 disabled={isSubmitting}
               />
+              {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Khối lớp
+                Khối lớp <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 value={grade}
                 onChange={(e) => setGrade(e.target.value)}
                 className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
-                placeholder="Nhập khối lớp"
                 required
                 disabled={isSubmitting}
-              />
+              >
+                <option value="" disabled>Chọn khối lớp</option>
+                <option value="1">Khối 1</option>
+                <option value="2">Khối 2</option>
+                <option value="3">Khối 3</option>
+                <option value="4">Khối 4</option>
+                <option value="5">Khối 5</option>
+              </select>
+              {errors.grade && <p className="text-red-500 text-xs mt-1">{errors.grade}</p>}
             </div>
           </div>
 
@@ -168,7 +224,7 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={!date || !vaccineName || !vaccineType || !grade || isSubmitting}
+              disabled={isSubmitting}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Đang xử lý...' : 'Tạo mới'}
