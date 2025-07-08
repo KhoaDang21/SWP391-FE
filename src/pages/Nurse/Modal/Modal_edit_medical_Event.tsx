@@ -45,6 +45,7 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
     Is_calLOb: false
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (existingData) {
@@ -78,6 +79,21 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
+    if (!formData.Decription.trim()) {
+      setErrorMessage('Vui lòng nhập mô tả sự kiện.');
+      return;
+    }
+    if (!formData.Handle.trim()) {
+      setErrorMessage('Vui lòng nhập biện pháp xử lý.');
+      return;
+    }
+    if (!previewUrl) {
+      setErrorMessage('Vui lòng tải lên hình ảnh minh họa.');
+      return;
+    }
+
     onSubmit(formData);
   };
 
@@ -94,6 +110,11 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {errorMessage && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              {errorMessage}
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               ID Hồ sơ y tế
@@ -109,25 +130,23 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mô tả sự kiện
+                Mô tả sự kiện <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={formData.Decription}
                 onChange={e => setFormData(prev => ({ ...prev, Decription: e.target.value }))}
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[150px] resize-none"
-                required
                 placeholder="Nhập mô tả sự kiện..."
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Biện pháp xử lý
+                Biện pháp xử lý <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={formData.Handle}
                 onChange={e => setFormData(prev => ({ ...prev, Handle: e.target.value }))}
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[150px] resize-none"
-                required
                 placeholder="Nhập biện pháp xử lý..."
               />
             </div>
@@ -135,7 +154,7 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
 
           <div className="space-y-4">
             <label className="block text-sm font-medium text-gray-700">
-              Hình ảnh
+              Hình ảnh <span className="text-red-500">*</span>
             </label>
             <div className="flex flex-col items-center justify-center w-full">
               {previewUrl ? (

@@ -43,6 +43,7 @@ const MedicalEventManagement: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [medicalEvents, setMedicalEvents] = useState<MedicalEventApi[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteModalConfig, setDeleteModalConfig] = useState<{
     isOpen: boolean;
@@ -51,6 +52,8 @@ const MedicalEventManagement: React.FC = () => {
     isOpen: false,
     eventId: null
   });
+
+  const pageSize = 5;
 
   useEffect(() => {
     const fetchMedicalEvents = async () => {
@@ -76,6 +79,9 @@ const MedicalEventManagement: React.FC = () => {
       return eventDate.toDateString() === selectedDate.toDateString();
     })
     : medicalEvents;
+
+  const totalPages = Math.ceil(filteredEvents.length / pageSize);
+  const paginatedEvents = filteredEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleCreateEvent = async (formData: FormData) => {
     try {
@@ -138,7 +144,10 @@ const MedicalEventManagement: React.FC = () => {
         </label>
         <DatePicker
           selected={selectedDate}
-          onChange={(date: Date | null) => setSelectedDate(date)}
+          onChange={(date: Date | null) => {
+            setSelectedDate(date);
+            setCurrentPage(1);
+          }}
           dateFormat="dd/MM/yyyy"
           className="min-w-[200px] border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
         />
@@ -168,12 +177,12 @@ const MedicalEventManagement: React.FC = () => {
                 <td colSpan={8} className="text-center py-8 text-gray-500">Không có dữ liệu</td>
               </tr>
             ) : (
-              filteredEvents.map((event, index) => (
+              paginatedEvents.map((event, index) => (
                 <tr
                   key={event.OrtherM_ID}
                   className="hover:bg-gray-50 transition-colors duration-200"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{index + 1}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{(currentPage - 1) * pageSize + index + 1}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-medium text-gray-900">
                       {event.UserFullname || 'Không rõ'}
@@ -218,6 +227,41 @@ const MedicalEventManagement: React.FC = () => {
             )}
           </tbody>
         </table>
+        {filteredEvents.length > pageSize && (
+          <div className="flex justify-between items-center px-6 py-4">
+            <span className="text-sm text-gray-600">
+              Hiển thị {(currentPage - 1) * pageSize + 1}-
+              {Math.min(currentPage * pageSize, filteredEvents.length)} trên tổng số {filteredEvents.length} sự kiện
+            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                className={`w-8 h-8 flex items-center justify-center rounded border ${currentPage === 1 ? 'border-gray-200 text-gray-300 bg-white' : 'border-gray-300 text-gray-600 bg-white hover:border-blue-400 hover:text-blue-600'} transition`}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                aria-label="Trang trước"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <span
+                className="w-8 h-8 flex items-center justify-center rounded border border-blue-500 text-blue-600 bg-white font-semibold"
+              >
+                {currentPage}
+              </span>
+              <button
+                className={`w-8 h-8 flex items-center justify-center rounded border ${currentPage === totalPages ? 'border-gray-200 text-gray-300 bg-white' : 'border-gray-300 text-gray-600 bg-white hover:border-blue-400 hover:to-blue-600'} transition`}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                aria-label="Trang sau"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Modal_create_medical_Event

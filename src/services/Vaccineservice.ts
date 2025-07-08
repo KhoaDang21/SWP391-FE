@@ -8,6 +8,7 @@ export interface VaccinePayload {
   Vaccince_type: string;
   Date_injection: string;
   note_affter_injection: string | null;
+  image_after_injection?: string | null;
   Status: string;
   MedicalRecord: {
     ID: number;
@@ -51,6 +52,7 @@ export interface GuardianVaccineHistory {
     Vaccince_type: string;
     Date_injection: string;
     note_affter_injection: string | null;
+    image_after_injection?: string | null;
     Status: string;
   }[];
 }
@@ -64,22 +66,13 @@ export interface GuardianVaccineResponse {
 export interface VaccineTypeResponse {
   id: number;
   name: string;
-  description: string;
-  minAge: number;
-  maxAge: number;
-  disease: string;
-  numberOfInjections: number;
-  origin: string;
-  price: number;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface VaccineCreateRequest {
   Vaccine_name: string;
   Vaccince_type: string;
   Date_injection: string;
+  batch_number: string;
   Grade: string;
 }
 export interface VaccineCreateEvidenceRequest {
@@ -95,6 +88,7 @@ export interface VaccineUpdateItem {
   VH_ID: number;
   status: string;
   note_affter_injection: string;
+  image?: File | null;
 }
 
 export interface UpdateVaccineStatusRequest {
@@ -105,6 +99,7 @@ export interface VaccineEvent {
   vaccineName: string;
   grade: number;
   eventdate: string;
+  batch_number: string;
 }
 
 export interface VaccineHistoryByMedicalRecordResponse {
@@ -325,15 +320,28 @@ export const vaccineService = {
     if (!token) throw new Error('No access token found');
 
     try {
-      console.log('Service - Request Body:', data);
+      const formData = new FormData();
+      const updatesForJson = data.updates.map(update => {
+        const { image, ...rest } = update;
+        if (image instanceof File) {
+          return rest;
+        }
+        return update;
+      });
+      formData.append('updates', JSON.stringify(updatesForJson));
+      
+      data.updates.forEach(update => {
+        if (update.image instanceof File) {
+          formData.append(`image_${update.VH_ID}`, update.image);
+        }
+      });
 
       const response = await fetch(`${API_URL}/vaccine/vaccine-history/status`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(data)
+        body: formData
       });
 
       const responseData = await response.json();
