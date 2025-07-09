@@ -32,7 +32,7 @@ const Manage_vaccine: React.FC = () => {
   }>({ open: false });
   const [undeletableEvents, setUndeletableEvents] = useState<Set<string>>(new Set());
 
-  const pageSize = 10;
+  const pageSize = 5;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,15 +76,10 @@ const Manage_vaccine: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleModalSubmit = async (data: { vaccineName: string, vaccineType: string, date: string, grade: string }) => {
+  const handleModalSubmit = async (data: { Vaccine_name: string, Vaccince_type: string, Date_injection: string, batch_number: string, Grade: string }) => {
     try {
       setIsLoading(true);
-      await vaccineService.createVaccine({
-        Vaccine_name: data.vaccineName,
-        Vaccince_type: data.vaccineType,
-        Date_injection: data.date,
-        Grade: data.grade
-      });
+      await vaccineService.createVaccine(data);
 
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out';
@@ -256,8 +251,9 @@ const Manage_vaccine: React.FC = () => {
             <tr className="bg-gray-50">
               <th className="w-[10%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STT</th>
               <th className="w-[30%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên đợt tiêm</th>
-              <th className="w-[20%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khối</th>
-              <th className="w-[20%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiêm</th>
+              <th className="w-[20%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lô</th>
+              <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khối</th>
+              <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiêm</th>
               <th className="w-[10%] px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Xóa</th>
             </tr>
           </thead>
@@ -270,13 +266,14 @@ const Manage_vaccine: React.FC = () => {
                   onClick={() =>
                     navigate(
                       `/nurse/vaccine-events/${encodeURIComponent(event.vaccineName)}/${event.grade}/${event.eventdate}`,
-                      { state: { vaccineName: event.vaccineName, grade: event.grade, eventDate: event.eventdate } }
+                      { state: { vaccineName: event.vaccineName, grade: event.grade, eventDate: event.eventdate, batch_number: event.batch_number } }
                     )
                   }
                   title="Xem danh sách học sinh"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{(currentPage - 1) * pageSize + index + 1}</td>
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{event.vaccineName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.batch_number}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Khối {event.grade}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(event.eventdate)}</td>
                   <td
@@ -306,7 +303,7 @@ const Manage_vaccine: React.FC = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
                   Không có dữ liệu đợt tiêm
                 </td>
               </tr>
@@ -352,7 +349,6 @@ const Manage_vaccine: React.FC = () => {
         selectedVaccine={''}
       />
 
-      {/* Modal xác nhận xóa */}
       {deleteModal.open && deleteModal.event && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl px-8 py-8 max-w-md w-full border border-red-300 animate-fade-in flex flex-col items-center relative">
