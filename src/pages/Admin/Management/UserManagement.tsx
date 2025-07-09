@@ -3,7 +3,7 @@ import { Card, Table, Tag, Button, Input, Space, Tooltip, Popconfirm, Modal, For
 import { SearchOutlined, EyeOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, LockOutlined, IdcardOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
-import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto, createGuardianWithStudents, deleteGuardianByObId, Guardian, getAllGuardians } from '../../../services/AccountService';
+import { User, getAllUsers, getRoleName, deleteUser, registerUser, RegisterUserDto, createGuardianWithStudents, deleteGuardianByObId, Guardian, getAllGuardians, importGuardiansToExcel } from '../../../services/AccountService';
 import { notificationService } from '../../../services/NotificationService';
 
 const UserManagement: React.FC = () => {
@@ -303,6 +303,31 @@ const UserManagement: React.FC = () => {
         }
     };
 
+    const handleExcelUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                notificationService.error('Vui lòng đăng nhập để tiếp tục');
+                return;
+            }
+
+            await importGuardiansToExcel(formData, token);
+            notificationService.success('Import phụ huynh thành công');
+            fetchUsers(); // reload danh sách sau khi import
+        } catch (error: any) {
+            notificationService.error(error.message || 'Có lỗi khi import Excel');
+        } finally {
+            event.target.value = ''; // reset input để cho phép chọn lại file giống nhau sau này
+        }
+    };
+
+
     return (
         <Card className="shadow-md">
             <div className="mb-6 flex justify-between items-center h-14">
@@ -344,6 +369,20 @@ const UserManagement: React.FC = () => {
                     >
                         Thêm phụ huynh
                     </Button>
+                    <Button
+                        type="default"
+                        onClick={() => document.getElementById('excel-file-input')?.click()}
+                    >
+                        Import Excel
+                    </Button>
+                    <input
+                        type="file"
+                        id="excel-file-input"
+                        accept=".xlsx, .xls"
+                        style={{ display: 'none' }}
+                        onChange={handleExcelUpload}
+                    />
+
                 </div>
             </div>
 

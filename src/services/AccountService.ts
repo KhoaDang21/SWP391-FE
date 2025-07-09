@@ -1,3 +1,4 @@
+
 export interface User {
   id: number;
   username: string;
@@ -329,3 +330,21 @@ export async function updateGuardian(
   const data = await res.json();
   return data.data;
 }
+
+export const importGuardiansToExcel = async (formData: FormData, token: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/guardians/import`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const result = await response.json();
+    throw new Error(result.message || 'Import thất bại');
+  }
+
+  return response.json();
+};
+
