@@ -16,8 +16,6 @@ import HealthOverview from "../pages/Admin/Dashboard/HealthOverview";
 import ExportExcel from "../pages/Admin/Dashboard/ExportExcel";
 import HealthEvents from "../pages/Admin/Reports/HealthEvents";
 import VaccinationReports from "../pages/Admin/Reports/VaccinationReports";
-import StudentHealthRecords from "../pages/Admin/Students/HealthRecords";
-import CreateForm from "../pages/Admin/Forms/CreateForm";
 import UserManagement from "../pages/Admin/Management/UserManagement";
 import UserDetail from "../pages/Admin/Management/UserDetail";
 import ContentManagement from "../pages/Admin/Management/ContentManagement";
@@ -35,6 +33,8 @@ import HealthCheckStudents from '../pages/Nurse/HealthCheckStudents';
 import VaccineEventStudents from '../pages/Nurse/VaccineEventStudents';
 import ForgotPasswordPage from '../pages/Login/ForgotPasswordPage';
 import NurseDashboard from "../pages/Nurse/Dashboard";
+import ProfileParent from '../pages/Parent/Profile';
+import ProfileNurse from '../pages/Nurse/Profile';
 
 export default function AppRoutes() {
     return (
@@ -64,12 +64,6 @@ export default function AppRoutes() {
                     <Route path="health-events" element={<HealthEvents />} />
                     <Route path="vaccination" element={<VaccinationReports />} />
                 </Route>
-                <Route path="students">
-                    <Route path="health-records" element={<StudentHealthRecords />} />
-                </Route>
-                <Route path="forms">
-                    <Route path="create" element={<CreateForm />} />
-                </Route>
                 <Route path="management">
                     <Route path="users" element={<UserManagement />} />
                     <Route path="users/:id" element={<UserDetail />} />
@@ -95,6 +89,7 @@ export default function AppRoutes() {
                 <Route path="vaccine-events">
                     <Route path=":eventName/:eventGade/:eventDate" element={<VaccineEventStudents />} />
                 </Route>
+                <Route path="profile" element={<ProfileNurse />} />
             </Route>
             <Route
                 path="/guardian"
@@ -110,6 +105,7 @@ export default function AppRoutes() {
                 <Route path="vaccines" element={<Vaccine />} />
                 <Route path="checkups" element={<Checkup />} />
                 <Route path="events" element={<Event />} />
+                <Route path="profile" element={<ProfileParent />} />
             </Route>
             <Route path="*" element={<Login />} />
         </Routes>

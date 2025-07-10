@@ -3,8 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     HomeOutlined,
     BarChartOutlined,
-    TeamOutlined,
-    FormOutlined,
     UserOutlined,
     LogoutOutlined,
     MenuFoldOutlined,
@@ -31,24 +29,12 @@ const menuConfig = [
         path: '/admin/export-excel'
     },
     {
-        key: 'student-profiles',
-        icon: <TeamOutlined className="text-lg" />,
-        label: 'Hồ sơ học sinh',
-        path: '/admin/students/health-records'
-    },
-    {
-        key: 'forms',
-        icon: <FormOutlined className="text-lg" />,
-        label: 'Biểu mẫu xác nhận',
-        path: '/admin/forms/create'
-    },
-    {
         key: 'reports',
         icon: <BarChartOutlined className="text-lg" />,
         label: 'Báo cáo & Thống kê',
         children: [
-            { key: 'health-events', label: 'Sự kiện y tế', path: '/admin/reports/health-events' },
-            { key: 'vaccination-reports', label: 'Báo cáo kiểm tra & tiêm chủng', path: '/admin/reports/vaccination' },
+            { key: 'health-events', label: 'Báo cáo sức khỏe', path: '/admin/reports/health-events' },
+            { key: 'vaccination-reports', label: 'Báo cáo tiêm chủng', path: '/admin/reports/vaccination' },
         ]
     },
     {

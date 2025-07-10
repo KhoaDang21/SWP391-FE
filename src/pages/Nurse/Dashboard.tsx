@@ -34,6 +34,8 @@ import {
     ResponsiveContainer
 } from 'recharts';
 
+// import { healthCheckService, HealthCheckEvent, CreateHealthCheckRequest } from '../../services/DashboardService';
+
 // const { Title, Text } = Typography;
 const { Option } = Select;
 
@@ -327,7 +329,7 @@ const NurseDashboard: React.FC = () => {
                 <Col span={6}>
                     <Card>
                         <Statistic
-                            title="Đơn thuốc chờ duyệt"
+                            title="Đơn thuốc gửi đến"
                             value={medicines.filter(m => m.status === 'pending').length}
                             valueStyle={{ color: '#f5222d' }}
                             prefix={<MedicineBoxOutlined />}
@@ -364,12 +366,13 @@ const NurseDashboard: React.FC = () => {
                         />
                     </Card>
                 </Col>
+
             </Row>
 
             {/* Charts Row 1 */}
             <Row gutter={16} style={{ marginBottom: 24 }}>
                 <Col span={12}>
-                    <Card title="Tình trạng đơn thuốc" extra={<Button type="link">Chi tiết</Button>}>
+                    <Card title="Các trạng thái đơn thuốc" extra={<Button type="link">Chi tiết</Button>}>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
@@ -391,7 +394,7 @@ const NurseDashboard: React.FC = () => {
                     </Card>
                 </Col>
                 <Col span={12}>
-                    <Card title="Loại sự kiện y tế" extra={<Button type="link">Chi tiết</Button>}>
+                    <Card title="Thống kê sự kiện y tế theo tháng" extra={<Button type="link">Chi tiết</Button>}>
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={eventTypeData}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -409,7 +412,7 @@ const NurseDashboard: React.FC = () => {
             {/* Charts Row 2 */}
             <Row gutter={16} style={{ marginBottom: 24 }}>
                 <Col span={12}>
-                    <Card title="Mức độ nghiêm trọng sự kiện" extra={<Button type="link">Chi tiết</Button>}>
+                    <Card title="Các trạng thái đợt tiêm" extra={<Button type="link">Chi tiết</Button>}>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
@@ -431,55 +434,29 @@ const NurseDashboard: React.FC = () => {
                     </Card>
                 </Col>
                 <Col span={12}>
-                    <Card title="Tiến độ tiêm vaccine" extra={<Button type="link">Chi tiết</Button>}>
+                    <Card title="Các trạng thái đợt khám sức khỏe" extra={<Button type="link">Chi tiết</Button>}>
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={vaccinationData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
+                            <PieChart>
+                                <Pie
+                                    data={severityData}
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                    {severityData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
                                 <Tooltip />
-                                <Legend />
-                                <Bar dataKey="participants" fill="#52c41a" name="Số người tham gia" />
-                            </BarChart>
+                            </PieChart>
                         </ResponsiveContainer>
                     </Card>
                 </Col>
             </Row>
 
-            {/* Charts Row 3 */}
-            <Row gutter={16} style={{ marginBottom: 24 }}>
-                <Col span={12}>
-                    <Card title="Khám sức khỏe theo loại" extra={<Button type="link">Chi tiết</Button>}>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={healthCheckData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Bar dataKey="participants" fill="#1890ff" name="Tổng số" />
-                                <Bar dataKey="completed" fill="#52c41a" name="Hoàn thành" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </Card>
-                </Col>
-                <Col span={12}>
-                    <Card title="Xu hướng theo tháng" extra={<Button type="link">Chi tiết</Button>}>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={monthlyTrendData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="month" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Line type="monotone" dataKey="medicines" stroke="#8884d8" name="Đơn thuốc" />
-                                <Line type="monotone" dataKey="events" stroke="#82ca9d" name="Sự kiện y tế" />
-                                <Line type="monotone" dataKey="vaccinations" stroke="#ffc658" name="Đợt vaccine" />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </Card>
-                </Col>
-            </Row>
         </div>
     );
 };

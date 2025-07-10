@@ -8,6 +8,7 @@ export interface VaccinePayload {
   Vaccince_type: string;
   Date_injection: string;
   note_affter_injection: string | null;
+  image_after_injection?: string | null;
   Status: string;
   MedicalRecord: {
     ID: number;
@@ -51,7 +52,9 @@ export interface GuardianVaccineHistory {
     Vaccince_type: string;
     Date_injection: string;
     note_affter_injection: string | null;
+    image_after_injection?: string | null;
     Status: string;
+    batch_number: string;
   }[];
 }
 
@@ -64,29 +67,29 @@ export interface GuardianVaccineResponse {
 export interface VaccineTypeResponse {
   id: number;
   name: string;
-  description: string;
-  minAge: number;
-  maxAge: number;
-  disease: string;
-  numberOfInjections: number;
-  origin: string;
-  price: number;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface VaccineCreateRequest {
   Vaccine_name: string;
   Vaccince_type: string;
   Date_injection: string;
+  batch_number: string;
   Grade: string;
+}
+export interface VaccineCreateEvidenceRequest {
+  ID: string;
+  Vaccine_name: string;
+  Vaccince_type: string;
+  Date_injection: string;
+  note_affter_injection: string;
+  evidence: File | File[] | string | string[];
 }
 
 export interface VaccineUpdateItem {
   VH_ID: number;
   status: string;
   note_affter_injection: string;
+  image?: File | null;
 }
 
 export interface UpdateVaccineStatusRequest {
@@ -97,6 +100,7 @@ export interface VaccineEvent {
   vaccineName: string;
   grade: number;
   eventdate: string;
+  batch_number: string;
 }
 
 export interface VaccineHistoryByMedicalRecordResponse {
@@ -123,6 +127,7 @@ export interface VaccineHistoryByMedicalRecordResponse {
     Date_injection: string;
     note_affter_injection: string | null;
     Status: string;
+    Is_created_by_guardian: boolean;
   }[];
 }
 
@@ -316,15 +321,28 @@ export const vaccineService = {
     if (!token) throw new Error('No access token found');
 
     try {
-      console.log('Service - Request Body:', data);
+      const formData = new FormData();
+      const updatesForJson = data.updates.map(update => {
+        const { image, ...rest } = update;
+        if (image instanceof File) {
+          return rest;
+        }
+        return update;
+      });
+      formData.append('updates', JSON.stringify(updatesForJson));
+      
+      data.updates.forEach(update => {
+        if (update.image instanceof File) {
+          formData.append(`image_${update.VH_ID}`, update.image);
+        }
+      });
 
       const response = await fetch(`${API_URL}/vaccine/vaccine-history/status`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(data)
+        body: formData
       });
 
       const responseData = await response.json();
@@ -392,5 +410,32 @@ export const vaccineService = {
       }
     };
   },
+  createVaccineEvidence: async (formData: FormData): Promise<any> => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+
+    try {
+      const response = await fetch(`${API_URL}/vaccine/evidence`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        const msg = result?.message || (result?.error && result.error.message) || 'Failed to create vaccine';
+        throw new Error(msg);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error creating vaccine:', error);
+      throw error;
+    }
+  },
+
+
 };
 

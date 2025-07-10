@@ -15,7 +15,8 @@ import {
     List,
     Avatar,
     Badge,
-    Alert
+    Alert,
+    Image
 } from 'antd';
 import {
     EyeOutlined,
@@ -54,6 +55,7 @@ interface VaccineRecord {
     location?: string;
     notes?: string;
     batchNumber?: string;
+    image_after_injection?: string | null;
 }
 
 interface Student {
@@ -101,6 +103,8 @@ const Vaccine: React.FC = () => {
                     vaccinatedDate: vh.Date_injection,
                     location: '',
                     notes: vh.note_affter_injection || '',
+                    batchNumber: vh.batch_number,
+                    image_after_injection: vh.image_after_injection,
                 }))
             }));
 
@@ -148,6 +152,8 @@ const Vaccine: React.FC = () => {
                         vaccinatedDate: vh.Date_injection,
                         location: '',
                         notes: vh.note_affter_injection || '',
+                        batchNumber: vh.batch_number,
+                        image_after_injection: vh.image_after_injection,
                     }))
                 }));
 
@@ -551,6 +557,20 @@ const Vaccine: React.FC = () => {
                                                 >
                                                     {selectedVaccine.vaccineType}
                                                 </Tag>
+                                                {selectedVaccine.batchNumber && (
+                                                    <Tag
+                                                        style={{
+                                                            fontSize: 12,
+                                                            padding: '4px 12px',
+                                                            borderRadius: 16,
+                                                            background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
+                                                            color: '#3730a3',
+                                                            border: 'none'
+                                                        }}
+                                                    >
+                                                        Số lô: {selectedVaccine.batchNumber}
+                                                    </Tag>
+                                                )}
                                             </Col>
                                         </Row>
                                     </div>
@@ -658,6 +678,27 @@ const Vaccine: React.FC = () => {
                                                             {selectedVaccine.notes}
                                                         </Text>
                                                     </div>
+                                                </div>
+                                            </Col>
+                                        )}
+
+                                        {selectedVaccine.image_after_injection && (
+                                            <Col span={24}>
+                                                <div style={{
+                                                    background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+                                                    borderRadius: 10,
+                                                    padding: 20,
+                                                    border: '1px solid #bae6fd',
+                                                    position: 'relative'
+                                                }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                                                        <Text strong style={{ color: '#0369a1', fontSize: 15 }}>Hình ảnh sau tiêm</Text>
+                                                    </div>
+                                                    <Image
+                                                        width={100}
+                                                        src={selectedVaccine.image_after_injection}
+                                                        style={{ borderRadius: 8 }}
+                                                    />
                                                 </div>
                                             </Col>
                                         )}

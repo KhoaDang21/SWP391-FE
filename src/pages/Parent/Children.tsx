@@ -18,7 +18,10 @@ import {
     Typography,
     Alert,
     Checkbox,
-    InputNumber
+    InputNumber,
+    Tooltip,
+    Upload,
+    message
 } from 'antd';
 import {
     PlusOutlined,
@@ -27,7 +30,8 @@ import {
     UserOutlined,
     MedicineBoxOutlined,
     HeartOutlined,
-    SafetyOutlined
+    SafetyOutlined,
+    UploadOutlined
 } from '@ant-design/icons';
 import { getStudentsByGuardianUserId } from '../../services/AccountService';
 import { createStudentWithMedicalRecord, deleteMedicalRecord, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
@@ -41,6 +45,7 @@ const { Title, Text } = Typography;
 const Children = () => {
     const token = localStorage.getItem('accessToken') as string;
 
+    const { Dragger } = Upload;
 
     const [loading, setLoading] = useState(false);
     const [children, setChildren] = useState<MedicalRecord[]>([]);
@@ -49,6 +54,7 @@ const Children = () => {
     const [vaccineHistories, setVaccineHistories] = useState<{ [medicalRecordId: number]: VaccineHistoryByMedicalRecordResponse }>(
         {}
     );
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -63,21 +69,6 @@ const Children = () => {
 
         fetchData();
     }, []);
-
-    interface Child {
-        id: number;
-        name: string;
-        dateOfBirth: string;
-        gender: string;
-        bloodType: string;
-        height: number;
-        weight: number;
-        vaccines: { name: string; date: string; status: string }[];
-        chronicDiseases: string[];
-        allergies: string[];
-        pastIllnesses: { disease: string; treatment: string; date: string }[];
-    }
-
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingChild, setEditingChild] = useState<MedicalRecord | null>(null);
@@ -111,6 +102,10 @@ const Children = () => {
 
         fetchChildren();
     }, []);
+
+    const watchedDOB = Form.useWatch('dateOfBirth', form);
+    const watchedClass = Form.useWatch('Class', form);
+
 
 
     const [childrenList, setChildrenList] = useState<{ id: number; name: string }[]>([]);
@@ -192,6 +187,25 @@ const Children = () => {
         return [];
     };
 
+    const suggestClassFromDOB = (watchedDOB: string | undefined): string | null => {
+        if (!watchedDOB) return null;
+
+        const birthDate = new Date(watchedDOB);
+        const now = new Date();
+
+        let age = now.getFullYear() - birthDate.getFullYear();
+        const m = now.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < birthDate.getDate())) {
+            age--; // Chưa sinh nhật năm nay
+        }
+
+        // Giả sử lớp 1 là 6 tuổi → lớp = age - 5
+        if (age < 5 || age > 13) return null; // ngoài phạm vi gợi ý
+
+        return `${age - 5}`;
+    };
+
+
     const handleSubmit = async (values: any) => {
         const token = localStorage.getItem('accessToken') as string;
         if (!token) {
@@ -200,9 +214,8 @@ const Children = () => {
         }
 
         const user = localStorage.getItem('user');
-
         const userIdStr = user ? JSON.parse(user).id : null;
-        console.log('User ID String:', userIdStr);
+        console.log('values', values);
 
         setLoading(true);
 
@@ -227,11 +240,35 @@ const Children = () => {
 
             console.log('Payload gửi BE:', newChild);
 
+            let medicalRecordId: number | null = null;
+
             if (editingChild) {
                 await updateMedicalRecord(editingChild.ID!, newChild, token);
+                medicalRecordId = editingChild.ID!;
             } else {
-                await createStudentWithMedicalRecord(newChild, token);
+                const res = await createStudentWithMedicalRecord(newChild, token);
+                medicalRecordId = res?.data?.medicalRecord?.ID; // Tùy theo response API
             }
+
+            if (medicalRecordId && values.vaccines && values.vaccines.length > 0) {
+                for (const v of values.vaccines) {
+                    const formData = new FormData();
+                    formData.append('ID', String(medicalRecordId));
+                    formData.append('Vaccine_name', v.Vaccine_name);
+                    formData.append('Vaccince_type', v.Vaccince_type);
+                    formData.append('Date_injection', v.Date_injection);
+                    formData.append('note_affter_injection', v.note_affter_injection || '');
+
+                    const file = v.evidence?.[0]?.originFileObj;
+                    if (file) {
+                        formData.append('evidence', file);
+                    }
+                    console.log('Form data gửi BE:', formData);
+
+                    await vaccineService.createVaccineEvidence(formData);
+                }
+            }
+
 
             const updatedRecords = await getMedicalRecordsByGuardian(token);
             setChildren(updatedRecords);
@@ -239,9 +276,11 @@ const Children = () => {
             setIsModalVisible(false);
             setEditingChild(null);
             form.resetFields();
-            setLoading(false);
+            message.success(editingChild ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
         } catch (error) {
             console.error('Lỗi khi gửi form:', error);
+            message.error('Có lỗi xảy ra!');
+        } finally {
             setLoading(false);
         }
     };
@@ -351,113 +390,157 @@ const Children = () => {
                             {children.map(child => (
                                 <Col xs={24} lg={12} key={child.userId}>
                                     <Card
-                                        style={{ height: '100%' }}
+                                        hoverable
+                                        bordered={false}
+                                        style={{
+                                            height: '100%',
+                                            borderRadius: 20,
+                                            boxShadow: '0 6px 32px rgba(24, 144, 255, 0.10)',
+                                            marginBottom: 24,
+                                            background: '#fff',
+                                            padding: 0
+                                        }}
                                         actions={[
-                                            <EditOutlined key="edit" onClick={() => showModal(child)} />,
-                                            <DeleteOutlined key="delete" onClick={() => showDeleteConfirm(child.ID)} />
+                                            <Tooltip title="Chỉnh sửa" key="edit">
+                                                <EditOutlined
+                                                    style={{ fontSize: 22, color: '#2563eb' }}
+                                                    onClick={() => showModal(child)}
+                                                />
+                                            </Tooltip>,
+                                            <Tooltip title="Xóa" key="delete">
+                                                <DeleteOutlined
+                                                    style={{ fontSize: 22, color: '#ff4d4f' }}
+                                                    onClick={() => showDeleteConfirm(child.ID)}
+                                                />
+                                            </Tooltip>
                                         ]}
                                     >
-                                        <div style={{ marginBottom: '16px' }}>
-                                            <Space>
-                                                <Avatar size={64} icon={<UserOutlined />} />
+                                        <div style={{ display: 'flex', alignItems: 'center', padding: 24, paddingBottom: 0 }}>
+                                            <Avatar
+                                                size={80}
+                                                icon={<UserOutlined />}
+                                                style={{
+                                                    background: 'linear-gradient(135deg, #bae6fd 0%, #2563eb 100%)',
+                                                    marginRight: 28,
+                                                    border: '3px solid #fff',
+                                                    boxShadow: '0 2px 8px #91d5ff'
+                                                }}
+                                            />
+                                            <div>
+                                                <Title level={4} style={{ margin: 0, color: '#2563eb', fontWeight: 700 }}>{child.fullname}</Title>
+                                                <div style={{ margin: '8px 0' }}>
+                                                    <Tag color="blue" style={{ fontSize: 15, padding: '2px 12px' }}>Lớp: {child.Class || 'Chưa xác định'}</Tag>
+                                                    <Tag color="geekblue" style={{ fontSize: 15, padding: '2px 12px' }}>Tuổi: {calculateAge(child.dateOfBirth)}</Tag>
+                                                </div>
                                                 <div>
-                                                    <Title level={4} style={{ margin: 0 }}>{child.fullname}</Title>
-                                                    <Text type="secondary">Lớp : {child.Class || 'Chưa xác định'}  • Tuổi: {calculateAge(child.dateOfBirth)}</Text>
-                                                    <br />
-                                                    <Text type="secondary">Chiều cao: {child.height || 'Chưa xác định'} cm  • Cân nặng: {child.weight || 'Chưa xác định'} kg</Text>
+                                                    <Tag color="cyan" style={{ fontSize: 15, padding: '2px 12px' }}>Chiều cao: {child.height || 'Chưa xác định'} cm</Tag>
+                                                    <Tag color="cyan" style={{ fontSize: 15, padding: '2px 12px' }}>Cân nặng: {child.weight || 'Chưa xác định'} kg</Tag>
                                                 </div>
-                                            </Space>
+                                            </div>
                                         </div>
-
-                                        <Tabs size="small">
-                                            <TabPane tab={<span><SafetyOutlined />Vaccine</span>} key="1">
-                                                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {vaccineHistories[child.ID] && vaccineHistories[child.ID].vaccineHistory.filter(v => v.Status === 'Đã tiêm').length > 0 ? (
-                                                        vaccineHistories[child.ID].vaccineHistory
-                                                            .filter(vaccine => vaccine.Status === 'Đã tiêm')
-                                                            .map((vaccine, index) => (
-                                                                <div
-                                                                    key={index}
-                                                                    style={{
-                                                                        marginBottom: '8px',
-                                                                        padding: '8px',
-                                                                        backgroundColor: '#f6ffed',
-                                                                        borderRadius: '4px',
-                                                                        border: '1px solid #b7eb8f'
-                                                                    }}
-                                                                >
-                                                                    <Text strong style={{ color: '#389e0d' }}>{vaccine.Vaccine_name}</Text>
-                                                                    <br />
-                                                                    <Text type="secondary" style={{ fontSize: '12px', color: '#389e0d' }}>
-                                                                       Ngày Tiêm: {vaccine.Date_injection ? new Date(vaccine.Date_injection).toLocaleDateString('vi-VN') : ''} 
-                                                                    </Text>
-                                                                </div>
-                                                            ))
-                                                    ) : (
-                                                        <Text type="secondary">Chưa có thông tin vaccine đã tiêm</Text>
-                                                    )}
-                                                </div>
-                                            </TabPane>
-
-                                            <TabPane tab={<div><MedicineBoxOutlined />Sức khỏe</div>} key="2">
-                                                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                                                    {(() => {
-                                                        // Chuyển chronicDiseases thành array đối tượng { name: string }
-                                                        let chronicArr: { name: string }[] = [];
-                                                        if (Array.isArray(child.chronicDiseases)) {
-                                                            chronicArr = child.chronicDiseases;
-                                                        } else if (typeof child.chronicDiseases === 'string') {
-                                                            chronicArr = child.chronicDiseases
-                                                                .split(',')
-                                                                .map(s => ({ name: s.trim() }))
-                                                                .filter(item => item.name);
-                                                        }
-                                                        // Chuyển allergies thành array đối tượng { name: string }
-                                                        let allergyArr: { name: string }[] = [];
-                                                        if (Array.isArray(child.allergies)) {
-                                                            allergyArr = child.allergies;
-                                                        } else if (typeof child.allergies === 'string') {
-                                                            allergyArr = child.allergies
-                                                                .split(',')
-                                                                .map(s => ({ name: s.trim() }))
-                                                                .filter(item => item.name);
-                                                        }
-                                                        // Chuyển pastIllnesses thành array đối tượng { disease, date, treatment? }
-
-
-                                                        return (
-                                                            <>
-                                                                {chronicArr.length > 0 && (
-                                                                    <div style={{ marginBottom: 12 }}>
-                                                                        <Text strong>Bệnh nền:</Text>
-                                                                        <div style={{ marginTop: 4 }}>
-                                                                            {chronicArr.map((disease, idx) => (
-                                                                                <Tag key={idx} color="orange">{disease.name}</Tag>
-                                                                            ))}
+                                        <Divider style={{ margin: '16px 0' }} />
+                                        <Tabs
+                                            size="large"
+                                            tabBarGutter={40}
+                                            items={[
+                                                {
+                                                    key: '1',
+                                                    label: (
+                                                        <span style={{ fontSize: 16 }}>
+                                                            <SafetyOutlined /> Vaccine
+                                                        </span>
+                                                    ),
+                                                    children: (
+                                                        <div style={{ minHeight: 60, padding: '0 16px' }}>
+                                                            {vaccineHistories[child.ID] &&
+                                                                vaccineHistories[child.ID].vaccineHistory
+                                                                    // Lọc thêm Is_created_by_guardian === true
+                                                                    .filter(v => v.Status === 'Đã tiêm' && v.Is_created_by_guardian)
+                                                                    .length > 0 ? (
+                                                                vaccineHistories[child.ID].vaccineHistory
+                                                                    .filter(v => v.Status === 'Đã tiêm' && v.Is_created_by_guardian)
+                                                                    .map((vaccine, idx) => (
+                                                                        <div
+                                                                            key={idx}
+                                                                            style={{
+                                                                                marginBottom: 10,
+                                                                                padding: 10,
+                                                                                backgroundColor: '#f6ffed',
+                                                                                borderRadius: 6,
+                                                                                border: '1px solid #b7eb8f'
+                                                                            }}
+                                                                        >
+                                                                            <Text strong style={{ color: '#389e0d', fontSize: 15 }}>{vaccine.Vaccine_name}</Text>
+                                                                            <br />
+                                                                            <Text type="secondary" style={{ fontSize: 13, color: '#389e0d' }}>
+                                                                                Ngày Tiêm: {vaccine.Date_injection ? new Date(vaccine.Date_injection).toLocaleDateString('vi-VN') : ''}
+                                                                            </Text>
                                                                         </div>
-                                                                    </div>
-                                                                )}
-
-                                                                {allergyArr.length > 0 && (
-                                                                    <div style={{ marginBottom: 12 }}>
-                                                                        <Text strong>Dị ứng:</Text>
-                                                                        <div style={{ marginTop: 4 }}>
-                                                                            {allergyArr.map((allergy, idx) => (
-                                                                                <Tag key={idx} color="red">{allergy.name}</Tag>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </div>
-                                            </TabPane>
-
-
-                                        </Tabs>
+                                                                    ))
+                                                            ) : (
+                                                                <Text type="secondary"><SafetyOutlined /> Chưa có thông tin vaccine đã tiêm</Text>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                },
+                                                {
+                                                    key: '2',
+                                                    label: (
+                                                        <span style={{ fontSize: 16 }}>
+                                                            <MedicineBoxOutlined /> Sức khỏe
+                                                        </span>
+                                                    ),
+                                                    children: (
+                                                        <div style={{ minHeight: 60, padding: '0 16px' }}>
+                                                            {(() => {
+                                                                let chronicArr: { name: string }[] = [];
+                                                                if (Array.isArray(child.chronicDiseases)) {
+                                                                    chronicArr = child.chronicDiseases;
+                                                                } else if (typeof child.chronicDiseases === 'string') {
+                                                                    chronicArr = child.chronicDiseases
+                                                                        .split(',')
+                                                                        .map(s => ({ name: s.trim() }))
+                                                                        .filter(item => item.name);
+                                                                }
+                                                                let allergyArr: { name: string }[] = [];
+                                                                if (Array.isArray(child.allergies)) {
+                                                                    allergyArr = child.allergies;
+                                                                } else if (typeof child.allergies === 'string') {
+                                                                    allergyArr = child.allergies
+                                                                        .split(',')
+                                                                        .map(s => ({ name: s.trim() }))
+                                                                        .filter(item => item.name);
+                                                                }
+                                                                return (
+                                                                    <>
+                                                                        {chronicArr.length > 0 && (
+                                                                            <div style={{ marginBottom: 12 }}>
+                                                                                <Text strong>Bệnh nền:</Text>
+                                                                                <div style={{ marginTop: 4 }}>
+                                                                                    {chronicArr.map((disease, idx) => (
+                                                                                        <Tag key={idx} color="orange" style={{ fontSize: 14, padding: '2px 10px' }}>{disease.name}</Tag>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                        {allergyArr.length > 0 && (
+                                                                            <div style={{ marginBottom: 12 }}>
+                                                                                <Text strong>Dị ứng:</Text>
+                                                                                <div style={{ marginTop: 4 }}>
+                                                                                    {allergyArr.map((allergy, idx) => (
+                                                                                        <Tag key={idx} color="red" style={{ fontSize: 14, padding: '2px 10px' }}>{allergy.name}</Tag>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    )
+                                                }
+                                            ]}
+                                        />
                                     </Card>
                                 </Col>
                             ))}
@@ -508,6 +591,28 @@ const Children = () => {
                         >
                             <Input placeholder="Nhập lớp (ví dụ: 1A, 5E)" />
                         </Form.Item>
+
+                        {watchedDOB && watchedClass && (() => {
+                            const suggested = suggestClassFromDOB(watchedDOB);
+                            const classNum = parseInt(watchedClass);
+
+                            if (!suggested || isNaN(classNum)) return null;
+
+                            if (classNum === +suggested) return null;
+
+                            return (
+                                <div
+                                    style={{
+                                        fontSize: '12px',
+                                        color: 'red',
+                                        marginTop: '-10px',
+                                        marginBottom: '12px'
+                                    }}
+                                >
+                                    ⚠️ Gợi ý: Với ngày sinh này, lớp phù hợp là <b>{suggested}</b>
+                                </div>
+                            );
+                        })()}
 
 
 
@@ -585,76 +690,119 @@ const Children = () => {
                             <Input type="number" min={1} placeholder="Nhập cân nặng" />
                         </Form.Item>
 
+                        {!editingChild && (
+                            <>
+
+                                <Divider />
+
+                                <Alert
+                                    message="Lưu ý: Phần tiêm chủng chỉ cho phép thêm mới lần đầu, không thể chỉnh sửa khi cập nhật hồ sơ."
+                                    type="warning"
+                                    showIcon
+                                    style={{ marginBottom: 16 }}
+                                />
+
+                                <Alert
+                                    message="Thông tin tiêm chủng"
+                                    type="success"
+                                    showIcon
+                                    style={{ marginBottom: 16 }}
+                                />
+                                <Form.List name="vaccines">
+                                    {(fields, { add, remove }) => (
+                                        <>
+                                            {fields.map(field => (
+                                                <div key={field.key} className="border p-3 mb-4 rounded-md">
+                                                    <Row gutter={16}>
+                                                        <Col span={8}>
+                                                            <Form.Item
+
+                                                                {...field}
+                                                                name={[field.name, 'Vaccine_name']}
+                                                                label="Tên vaccine"
+                                                                rules={[{ required: true, message: 'Nhập tên vaccine' }]}
+                                                            >
+                                                                <Input placeholder="VD: ComBE Five" />
+                                                            </Form.Item>
+                                                        </Col>
+                                                        <Col span={8}>
+                                                            <Form.Item
+                                                                {...field}
+                                                                name={[field.name, 'Vaccince_type']}
+                                                                label="Loại vaccine"
+                                                            >
+                                                                <Input placeholder="VD: Phòng bạch hầu" />
+                                                            </Form.Item>
+                                                        </Col>
+                                                        <Col span={8}>
+                                                            <Form.Item
+                                                                {...field}
+                                                                name={[field.name, 'Date_injection']}
+                                                                label="Ngày tiêm"
+                                                            >
+                                                                <Input type="date"
+                                                                    max={new Date().toISOString().split("T")[0]}
+                                                                />
+                                                            </Form.Item>
+                                                        </Col>
+                                                    </Row>
+
+                                                    <Row gutter={16}>
+                                                        <Col span={24}>
+                                                            <Form.Item
+                                                                {...field}
+                                                                name={[field.name, 'note_affter_injection']}
+                                                                label="Ghi chú sau tiêm"
+                                                            >
+                                                                <Input.TextArea rows={3} placeholder="VD: Sốt nhẹ sau tiêm..." />
+                                                            </Form.Item>
+                                                        </Col>
+
+                                                    </Row>
+                                                    <Row gutter={16}>
+                                                        <Col span={24}>
+                                                            <Form.Item
+                                                                {...field}
+                                                                name={[field.name, 'evidence']}
+                                                                label="Hình ảnh minh chứng"
+                                                                valuePropName="fileList"
+                                                                getValueFromEvent={e => Array.isArray(e) ? e : e?.fileList}
+                                                                rules={[{ required: true, message: 'Vui lòng tải lên hình ảnh minh chứng' }]}
+                                                            >
+                                                                <Dragger
+                                                                    listType="picture-card"
+                                                                    beforeUpload={() => false}
+                                                                    accept="image/*"
+                                                                    maxCount={1}
+                                                                    style={{ marginBottom: 16 }}
+                                                                >
+                                                                    <div>
+                                                                        <UploadOutlined />
+                                                                        <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
+                                                                    </div>
+                                                                </Dragger>
+                                                            </Form.Item>
 
 
-                        <Divider />
+                                                        </Col>
+                                                    </Row>
 
-                        <Alert
-                            message="Thông tin tiêm chủng"
-                            type="success"
-                            showIcon
-                            style={{ marginBottom: '16px' }}
-                        />
-
-                        <Form.List name="vaccines">
-                            {(fields, { add, remove }) => (
-                                <>
-                                    {fields.map(field => (
-                                        <Row key={field.key} gutter={16} align="middle">
-                                            <Col span={8}>
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, 'name']}
-                                                    label={field.key === 0 ? "Tên Vaccine" : ""}
-                                                >
-                                                    <Select placeholder="Chọn vaccine">
-                                                        {vaccineOptions.map(vaccine => (
-                                                            <Option key={vaccine} value={vaccine}>{vaccine}</Option>
-                                                        ))}
-                                                    </Select>
-                                                </Form.Item>
-                                            </Col>
-                                            <Col span={6}>
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, 'date']}
-                                                    label={field.key === 0 ? "Ngày tiêm" : ""}
-                                                >
-                                                    <Input
-                                                        type="date"
-                                                        max={new Date().toISOString().split("T")[0]}
-                                                    />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col span={6}>
-                                                <Form.Item
-                                                    {...field}
-                                                    name={[field.name, 'status']}
-                                                    label={field.key === 0 ? "Trạng thái" : ""}
-                                                >
-                                                    <Select placeholder="Trạng thái">
-                                                        <Option value="Đã tiêm">Đã tiêm</Option>
-                                                        <Option value="Chưa tiêm">Chưa tiêm</Option>
-                                                    </Select>
-                                                </Form.Item>
-                                            </Col>
-                                            <Col span={4}>
-                                                {field.key === 0 && <div style={{ height: '22px' }} />}
-                                                <Button className='mb-4' onClick={() => remove(field.name)}>
-                                                    Xóa
+                                                    <Button danger onClick={() => remove(field.name)}>
+                                                        Xóa mục tiêm
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                            <Form.Item>
+                                                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                                                    Thêm mũi tiêm
                                                 </Button>
-                                            </Col>
-                                        </Row>
-                                    ))}
-                                    <Form.Item>
-                                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                                            Thêm Vaccine
-                                        </Button>
-                                    </Form.Item>
-                                </>
-                            )}
-                        </Form.List>
+                                            </Form.Item>
+                                        </>
+                                    )}
+                                </Form.List>
+                            </>
 
+                        )}
                         <Divider />
 
                         <Alert
@@ -735,7 +883,7 @@ const Children = () => {
                 </Modal>
 
             </div>
-        </div>
+        </div >
     );
 };
 

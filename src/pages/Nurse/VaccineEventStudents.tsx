@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Button, Table, Card, Row, Col, Statistic, Spin, Tag, Input, Select } from 'antd';
-import { ArrowLeft, Users, CheckCircle, Clock, AlertCircle, Pencil } from 'lucide-react';
+import { Button, Table, Card, Row, Col, Statistic, Spin, Tag, Input, Select, Upload, Image } from 'antd';
+import { ArrowLeft, Users, CheckCircle, Clock, AlertCircle, Pencil, UploadCloud, Eye, Trash2, Loader } from 'lucide-react';
 import { vaccineService, VaccinePayload } from '../../services/Vaccineservice';
 import { notificationService } from '../../services/NotificationService';
+import { UploadFile } from 'antd/es/upload';
 
 const VaccineEventStudents: React.FC = () => {
   const { eventName, eventDate } = useParams<{ eventName: string; eventDate: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const navState = (location.state || {}) as { vaccineName?: string; grade?: string; eventDate?: string };
+  const navState = (location.state || {}) as { vaccineName?: string; grade?: string; eventDate?: string; batch_number?: string };
   const [students, setStudents] = useState<VaccinePayload[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -21,12 +22,27 @@ const VaccineEventStudents: React.FC = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [noteInputs, setNoteInputs] = useState<{ [key: string]: string }>({});
+  const [imageInputs, setImageInputs] = useState<{ [key: string]: UploadFile[] }>({});
+  const [imagesToDelete, setImagesToDelete] = useState<Set<number>>(new Set());
+  const [batchNumber, setBatchNumber] = useState<string>('');
+  const [canEdit, setCanEdit] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (eventName) {
       fetchData();
     }
-  }, [eventName, eventDate]);
+    if (navState.batch_number) {
+      setBatchNumber(navState.batch_number);
+    }
+    if (eventDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const injectionDate = new Date(eventDate);
+      injectionDate.setHours(0, 0, 0, 0);
+      setCanEdit(today.getTime() === injectionDate.getTime());
+    }
+  }, [eventName, eventDate, navState.batch_number]);
 
   const fetchData = async () => {
     try {
@@ -59,32 +75,66 @@ const VaccineEventStudents: React.FC = () => {
 
   const handleEditSave = async () => {
     if (isEditing) {
+      setIsSaving(true);
       try {
         const updates = editableStudents
-          .filter(record => noteInputs[record.VH_ID] !== undefined || noteInputs[`status_${record.VH_ID}`] !== undefined)
-          .map(record => ({
-            VH_ID: record.VH_ID,
-            status: noteInputs[`status_${record.VH_ID}`] || record.Status,
-            note_affter_injection: noteInputs[record.VH_ID] ?? record.note_affter_injection ?? ''
-          }));
-        console.log('Updates:', updates);
+          .filter(record =>
+            noteInputs[record.VH_ID] !== undefined ||
+            noteInputs[`status_${record.VH_ID}`] !== undefined ||
+            imageInputs[record.VH_ID] !== undefined ||
+            imagesToDelete.has(record.VH_ID)
+          )
+          .map(record => {
+            const file = imageInputs[record.VH_ID]?.[0];
+            return {
+              VH_ID: record.VH_ID,
+              status: noteInputs[`status_${record.VH_ID}`] || record.Status,
+              note_affter_injection: noteInputs[record.VH_ID] ?? record.note_affter_injection ?? '',
+              image: imagesToDelete.has(record.VH_ID) ? null : (file?.originFileObj as File | undefined),
+              original_image: record.image_after_injection,
+              patientName: record.PatientName
+            };
+          });
 
-        if (updates.length === 0) {
-          setIsEditing(false);
-          setNoteInputs({});
-          return;
+
+        for (const update of updates) {
+          if (!update.note_affter_injection?.trim()) {
+            notificationService.error(`Vui lòng nhập ghi chú cho học sinh ${update.patientName}.`);
+            setIsSaving(false);
+            return;
+          }
+
+          const hasNewImage = update.image instanceof File;
+          const hasExistingImage = !!update.original_image;
+          const isDeletingImage = imagesToDelete.has(update.VH_ID);
+          const hasImage = (hasExistingImage && !isDeletingImage) || hasNewImage;
+
+          if (update.status === 'Đã tiêm' && !hasImage) {
+            notificationService.error(`Vui lòng tải lên hình ảnh cho học sinh ${update.patientName} khi cập nhật trạng thái là "Đã tiêm".`);
+            setIsSaving(false);
+            return;
+          }
         }
 
-        await vaccineService.updateVaccineStatus({ updates });
+        const finalUpdates = updates.map(({ original_image, patientName, ...rest }) => rest);
 
-        notificationService.success('Cập nhật ghi chú thành công!');
-        fetchData();
+        console.log('Updates:', finalUpdates);
+
+        if (finalUpdates.length > 0) {
+          await vaccineService.updateVaccineStatus({ updates: finalUpdates });
+          notificationService.success('Cập nhật ghi chú thành công!');
+          fetchData();
+        }
       } catch (error) {
         notificationService.error('Có lỗi xảy ra khi cập nhật!');
+      } finally {
+        setIsSaving(false);
       }
     }
     setIsEditing(!isEditing);
     setNoteInputs({});
+    setImageInputs({});
+    setImagesToDelete(new Set());
   };
 
   const columns = [
@@ -169,7 +219,12 @@ const VaccineEventStudents: React.FC = () => {
       ),
     },
     {
-      title: 'Ghi chú sau tiêm',
+      title: (
+        <>
+          Ghi chú sau tiêm
+          {isEditing && <span className="text-red-500">*</span>}
+        </>
+      ),
       dataIndex: 'note_affter_injection',
       key: 'note_affter_injection',
       render: (_: string, record: VaccinePayload) =>
@@ -183,7 +238,7 @@ const VaccineEventStudents: React.FC = () => {
                   [record.VH_ID]: e.target.value
                 }))
               }
-              placeholder="Ghi chú sau tiêm (ví dụ: Đã tiêm, không có phản ứng...)"
+              placeholder="Ghi chú sau tiêm..."
               style={{
                 flex: 1,
                 borderRadius: 6,
@@ -247,6 +302,85 @@ const VaccineEventStudents: React.FC = () => {
         ),
     },
     {
+      title: (
+        <>
+          Hình ảnh         
+        </>
+      ),
+      key: 'image_after_injection',
+      render: (_: any, record: VaccinePayload) => {
+        if (isEditing && (record.Status === 'Cho phép tiêm' || record.Status === 'Đã tiêm' || record.Status === 'Không tiêm')) {
+          const hasExistingImage = record.image_after_injection && !imagesToDelete.has(record.VH_ID);
+          const hasNewImage = imageInputs[record.VH_ID]?.length > 0;
+
+          if (hasExistingImage && !hasNewImage) {
+            return (
+              <div className="flex items-center gap-2">
+                <Image
+                  src={record.image_after_injection ?? undefined}
+                  width={32}
+                  height={32}
+                  style={{ borderRadius: 4, objectFit: 'cover' }}
+                />
+                <Button
+                  icon={<Trash2 size={16} />}
+                  size="small"
+                  danger
+                  onClick={() => {
+                    setImagesToDelete(prev => new Set(prev).add(record.VH_ID));
+                  }}
+                />
+              </div>
+            );
+          }
+
+          return (
+            <Upload
+              accept="image/*"
+              listType="picture-card"
+              fileList={imageInputs[record.VH_ID] || []}
+              onChange={({ fileList: newFileList }) => {
+                setImageInputs(prev => ({ ...prev, [record.VH_ID]: newFileList }));
+                if (newFileList.length > 0) {
+                  if (imagesToDelete.has(record.VH_ID)) {
+                    setImagesToDelete(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(record.VH_ID);
+                      return newSet;
+                    });
+                  }
+                }
+              }}
+              beforeUpload={() => false}
+              maxCount={1}
+              showUploadList={{
+                showPreviewIcon: false,
+                showRemoveIcon: true,
+              }}
+            >
+              {(!imageInputs[record.VH_ID] || imageInputs[record.VH_ID].length === 0) &&
+                <Button icon={<UploadCloud size={16} />} size="small" type="dashed" style={{ width: '100%', height: '100%' }}>Tải ảnh</Button>
+              }
+            </Upload>
+          );
+        }
+
+        return record.image_after_injection ? (
+          <Image
+            src={record.image_after_injection}
+            width={32}
+            height={32}
+            preview={{
+              mask: <Eye size={16} />,
+            }}
+            style={{ borderRadius: 4, cursor: 'pointer', objectFit: 'cover' }}
+          />
+        ) : (
+          <span className="text-gray-400">Chưa có</span>
+        );
+      },
+    },
+    {
       title: 'Ngày tiêm',
       dataIndex: 'Date_injection',
       key: 'Date_injection',
@@ -282,16 +416,17 @@ const VaccineEventStudents: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               Danh sách học sinh
-              <p> Đợt tiêm {eventName} - {students[0]?.MedicalRecord?.Class.charAt(0) ? `Khối Lớp ${students[0].MedicalRecord.Class.charAt(0)}` : ''} </p>
+              <p> Đợt tiêm {eventName} - {navState.grade ? `Khối Lớp ${navState.grade}` : ''} </p>
             </h1>
             <p className="text-gray-600">
               Ngày tiêm: {eventDate ? new Date(eventDate).toLocaleDateString('vi-VN') : 'N/A'}
+              {batchNumber && ` - Số lô: ${batchNumber}`}
             </p>
           </div>
         </div>
-        {!hasPending && hasAllowed && (
+        {!hasPending && hasAllowed && (canEdit || isEditing) && (
           <Button
-            icon={<Pencil className="w-4 h-4" />}
+            icon={isSaving ? <Loader className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
             type="default"
             style={{
               background: isEditing
@@ -307,8 +442,9 @@ const VaccineEventStudents: React.FC = () => {
             }}
             className="flex items-center px-5 py-2 rounded-lg"
             onClick={handleEditSave}
+            disabled={isSaving}
           >
-            {isEditing ? 'Lưu ghi chú' : 'Ghi chú sau tiêm'}
+            {isEditing ? (isSaving ? 'Đang lưu...' : 'Lưu ghi chú') : 'Ghi chú sau tiêm'}
           </Button>
         )}
       </div>

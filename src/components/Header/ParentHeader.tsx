@@ -1,21 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { UserOutlined } from "@ant-design/icons";
 import { Avatar, Dropdown, Menu, Badge, Modal, Form, Input, Button } from "antd";
 import { NavLink, useNavigate } from "react-router-dom";
 import Noti from "../../pages/Noti/Noti";
 import { logout, changePassword } from "../../services/AuthServices";
 import { notificationService } from "../../services/NotificationService";
+import { getUserById, User } from "../../services/AccountService";
 
 const Header = () => {
   const baseClass = "font-medium px-2 py-1 transition";
   const activeClass = "text-blue-600";
   const inactiveClass = "text-gray-700 hover:text-blue-600";
   const userInfo = localStorage.getItem("user");
+  console.log('User info from localStorage:', userInfo ? JSON.parse(userInfo) : null);
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -35,6 +38,22 @@ const Header = () => {
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userId = payload.userId || payload.id || payload.sub;
+        const userData = await getUserById(userId, token);
+        setUser(userData);
+      } catch (error) {
+        console.error('Failed to fetch user info:', error);
+      }
+    };
+    fetchUserInfo();
+  }, []);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -51,10 +70,7 @@ const Header = () => {
   const menu = (
     <Menu>
       <Menu.Item key="profile">
-        <button className="w-full text-left">Hồ sơ</button>
-      </Menu.Item>
-      <Menu.Item key="change-password">
-        <button onClick={() => setIsModalVisible(true)} className="w-full text-left">Đổi mật khẩu</button>
+        <button className="w-full text-left" onClick={() => navigate('/guardian/profile')}>Hồ sơ cá nhân</button>
       </Menu.Item>
       <Menu.Item key="logout">
         <button onClick={handleLogout} className="w-full text-left">Đăng xuất</button>
@@ -107,10 +123,10 @@ const Header = () => {
             <div className="flex items-center space-x-2 cursor-pointer">
               <div className="text-left">
                 <p className="font-bold">
-                  {userInfo ? JSON.parse(userInfo).username : 'Người dùng'}
+                  {user ? user.fullname : 'Người dùng'}
                 </p>
                 <p className="text-sm">
-                  {userInfo ? JSON.parse(userInfo).email : 'Người dùng'}
+                  {user ? user.email : 'Người dùng'}
                 </p>
               </div>
               <Avatar style={{ backgroundColor: '#155dfc', width: 40, height: 40 }} icon={<UserOutlined />} />
@@ -137,9 +153,13 @@ const Header = () => {
                 return;
               }
               await changePassword(values.currentPassword, values.newPassword, token);
-              notificationService.success('Đổi mật khẩu thành công');
+              notificationService.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại');
               setIsModalVisible(false);
-              form.resetFields();
+              // Tự động logout sau khi đổi mật khẩu thành công
+              localStorage.removeItem("user");
+              localStorage.removeItem("accessToken");
+              localStorage.removeItem("refreshToken");
+              navigate('/login');
             } catch (error: any) {
               notificationService.error(error.message || 'Đổi mật khẩu thất bại');
             } finally {

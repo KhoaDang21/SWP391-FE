@@ -10,11 +10,12 @@ import {
   createMedicalSent,
   deleteMedicalSent
 } from '../../services/MedicalSentService';
-import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message, Image, Form, Input, Upload, Select, Space, Tooltip, Popconfirm } from 'antd';
+import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message, Image, Form, Input, Upload, Select, Space, Tooltip, Popconfirm, Row, Col } from 'antd';
 import dayjs from 'dayjs';
 import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { getAllMedicalRecords, MedicalRecord } from '../../services/MedicalRecordService';
 import { getAllGuardians, Guardian } from '../../services/AccountService';
+import type { UploadFile } from 'antd/es/upload/interface';
 
 const statusColor: Record<string, string> = {
   pending: 'orange',
@@ -42,7 +43,11 @@ const MedicineManagement: React.FC = () => {
   const [createLoading, setCreateLoading] = useState(false);
   const [nurseForm] = Form.useForm();
   const timeOptions = ['Trước ăn sáng', 'Sau ăn sáng', 'Trước ăn trưa', 'Sau ăn trưa', 'Trước ăn chiều', 'Sau ăn chiều'];
-  const [editRecord, setEditRecord] = useState<MedicalSent | null>(null);
+  const [fileList, setFileList] = useState<UploadFile<any>[]>([]);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [detailPreviewVisible, setDetailPreviewVisible] = useState(false);
+  const [detailPreviewImage, setDetailPreviewImage] = useState('');
 
   const medicalRecordMap = React.useMemo(() => {
     const map: Record<number, MedicalRecord> = {};
@@ -60,14 +65,6 @@ const MedicineManagement: React.FC = () => {
     });
     return map;
   }, [guardians]);
-
-  const normalizePhone = (phone?: string) => {
-    if (!phone) return '';
-    let p = phone.replace(/\D/g, '');
-    if (p.startsWith('84')) p = '0' + p.slice(2);
-    if (p.length === 9) p = '0' + p;
-    return p;
-  };
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -159,6 +156,18 @@ const MedicineManagement: React.FC = () => {
     }
   };
 
+  const handlePreview = async (file: UploadFile<any>) => {
+    if (!file.url && !file.preview && file.originFileObj) {
+      file.preview = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file.originFileObj!);
+        reader.onload = () => resolve(reader.result as string);
+      });
+    }
+    setPreviewImage(file.url || file.preview || '');
+    setPreviewVisible(true);
+  };
+
   const columns = [
     {
       title: 'STT',
@@ -234,7 +243,7 @@ const MedicineManagement: React.FC = () => {
       render: (_: any, record: MedicalSent) => (
         <Space>
           <Tooltip title="Xem chi tiết"><Button type="text" icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} /></Tooltip>
-          <Tooltip title="Sửa"><Button type="text" icon={<EditOutlined />} onClick={() => { setEditRecord(record); setCreateModal(true); nurseForm.setFieldsValue({ studentName: medicalRecordMap[record.User_ID]?.fullname || '', className: record.Class, deliveryTimeNote: record.Delivery_time?.split(' - ')[1], prescriptionImage: [] }); }} /></Tooltip>
+          <Tooltip title="Sửa"><Button type="text" icon={<EditOutlined />} onClick={() => { nurseForm.setFieldsValue({ studentName: medicalRecordMap[record.User_ID]?.fullname || '', className: record.Class, deliveryTimeNote: record.Delivery_time?.split(' - ')[1], prescriptionImage: [] }); }} /></Tooltip>
           <Popconfirm
             title="Xác nhận xóa"
             description="Bạn chắc chắn muốn xóa đơn thuốc này?"
@@ -333,13 +342,21 @@ const MedicineManagement: React.FC = () => {
                 <PictureOutlined className="text-indigo-600" />
                 <span className="text-indigo-800 font-semibold">Ảnh Toa Thuốc</span>
               </div>
-              {detailModal.record.Image_prescription ? (
+              {detailModal.record?.Image_prescription ? (
                 <div className="flex justify-center">
                   <Image
-                    width={300}
+                    width={220}
+                    style={{ maxWidth: 220, height: 'auto', display: 'block', margin: '0 auto', cursor: 'pointer' }}
                     src={detailModal.record.Image_prescription}
                     alt="Toa thuốc"
-                    className="rounded-lg border border-gray-200 shadow-sm max-h-[200px] object-cover"
+                    className="rounded-lg border border-gray-200 shadow-sm object-contain"
+                    preview={false}
+                    onClick={() => {
+                      if (detailModal.record?.Image_prescription) {
+                        setDetailPreviewImage(detailModal.record.Image_prescription);
+                        setDetailPreviewVisible(true);
+                      }
+                    }}
                   />
                 </div>
               ) : (
@@ -368,10 +385,11 @@ const MedicineManagement: React.FC = () => {
 
       <Modal
         open={createModal}
-        onCancel={() => { setCreateModal(false); setEditRecord(null); }}
+        onCancel={() => { setCreateModal(false); }}
         title="Tạo đơn gửi thuốc mới"
         footer={null}
         destroyOnClose
+        width={1000}
       >
         <Form
           form={nurseForm}
@@ -379,19 +397,21 @@ const MedicineManagement: React.FC = () => {
           onFinish={async (values) => {
             setCreateLoading(true);
             try {
-              const { studentName, deliveryTimeNote, prescriptionImage, className, guardianPhone } = values;
-              if (!studentName || !prescriptionImage || !deliveryTimeNote || !className || !guardianPhone) {
+              const { selectedStudentId, deliveryTimeNote, prescriptionImage, notes } = values;
+              if (!selectedStudentId || !prescriptionImage || !deliveryTimeNote) {
                 message.error('Vui lòng nhập đầy đủ thông tin!');
                 setCreateLoading(false);
                 return;
               }
+              const student = medicalRecords.find(s => s.userId === selectedStudentId);
               const formData = new FormData();
-              formData.append('fullname', studentName);
-              formData.append('Class', className);
-              formData.append('guardianPhone', guardianPhone);
-              formData.append('prescriptionImage', prescriptionImage[0].originFileObj);
+              formData.append('userId', String(selectedStudentId));
+              formData.append('Class', student?.Class || '');
+              formData.append('guardianPhone', student?.guardian?.phoneNumber || '');
               formData.append('deliveryTime', `${dayjs().format('YYYY-MM-DD')} - ${deliveryTimeNote}`);
               formData.append('status', 'received');
+              formData.append('notes', notes || '');
+              formData.append('prescriptionImage', prescriptionImage[0].originFileObj);
               await createMedicalSent(formData, token);
               message.success('Tạo đơn gửi thuốc thành công!');
               setCreateModal(false);
@@ -405,68 +425,119 @@ const MedicineManagement: React.FC = () => {
             }
           }}
         >
-          <Form.Item name="studentName" label="Tên học sinh" rules={[{ required: true, message: 'Vui lòng nhập tên học sinh!' }]}>
-            <Input placeholder="Nhập tên học sinh" onChange={() => nurseForm.setFields([{ name: 'studentName', errors: [] }])} />
-          </Form.Item>
-          <Form.Item
-            name="deliveryTimeNote"
-            label="Buổi uống"
-            rules={[{ required: true, message: 'Vui lòng chọn buổi uống!' }]}
-          >
-            <Select placeholder="Chọn buổi">
-              {timeOptions.map((time) => (<Select.Option key={time} value={time}>{time}</Select.Option>))}
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="prescriptionImage"
-            label="Hình ảnh toa thuốc"
-            valuePropName="fileList"
-            getValueFromEvent={e => (Array.isArray(e) ? e : e?.fileList)}
-            rules={[
-              { required: true, message: 'Vui lòng tải lên hình ảnh toa thuốc' },
-              { validator: (_, value) => value && value.length > 0 ? Promise.resolve() : Promise.reject(new Error('Vui lòng tải lên ít nhất một hình ảnh')) }
-            ]}
-          >
-            <Upload listType="picture-card" beforeUpload={() => false} maxCount={1}>
-              <div>
-                <PlusOutlined />
-                <div style={{ marginTop: 8 }}>Upload</div>
-              </div>
-            </Upload>
-          </Form.Item>
-          <Form.Item
-            name="className"
-            label="Lớp"
-            rules={[
-              { required: true, message: 'Vui lòng nhập lớp!' },
-              { pattern: /^[1-9][0-2]?[A-Z]$/, message: 'Lớp phải có định dạng như 1A, 5E...' }
-            ]}
-          >
-            <Input placeholder="Nhập lớp (ví dụ: 1A, 5E)" onChange={() => nurseForm.setFields([{ name: 'className', errors: [] }])} />
-          </Form.Item>
-          <Form.Item
-            name="guardianPhone"
-            label="SĐT Phụ huynh"
-            rules={[
-              { required: true, message: 'Vui lòng nhập SĐT phụ huynh!' },
-              { pattern: /^0\d{9,10}$/, message: 'SĐT không hợp lệ!' }
-            ]}
-          >
-            <Input
-              placeholder="Nhập số điện thoại phụ huynh"
-              maxLength={11}
-              onChange={e => {
-                if (nurseForm.getFieldError('guardianPhone').length) {
-                  nurseForm.setFields([{ name: 'guardianPhone', errors: [] }]);
-                }
-              }}
-            />
-          </Form.Item>
+          <Row gutter={32}>
+            <Col xs={24} md={12}>
+              <Form.Item name="selectedStudentId" label="Chọn học sinh" rules={[{ required: true, message: 'Vui lòng chọn học sinh!' }]} style={{ marginBottom: 24 }}>
+                <Select
+                  showSearch
+                  placeholder="Nhấn để chọn hồ sơ y tế học sinh"
+                  optionFilterProp="children"
+                  onChange={id => {
+                    const student = medicalRecords.find(s => s.userId === id);
+                    nurseForm.setFieldsValue({
+                      className: student?.Class,
+                      guardianPhone: student?.guardian?.phoneNumber
+                    });
+                  }}
+                  filterOption={(input, option) => {
+                    const children = option?.children as unknown;
+                    if (typeof children === 'string') {
+                      return children.toLowerCase().includes(input.toLowerCase());
+                    }
+                    if (typeof children === 'number') {
+                      return children.toString().toLowerCase().includes(input.toLowerCase());
+                    }
+                    if (Array.isArray(children)) {
+                      const label = children.map(child =>
+                        typeof child === 'string' ? child :
+                          typeof child === 'number' ? child.toString() : ''
+                      ).join('');
+                      return label.toLowerCase().includes(input.toLowerCase());
+                    }
+                    return false;
+                  }}
+                  style={{ width: '100%', fontSize: 16 }}
+                >
+                  {medicalRecords.map(s => (
+                    <Select.Option key={s.userId} value={s.userId}>
+                      {s.fullname}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item label="Lớp" name="className" style={{ marginBottom: 24 }}>
+                <Input readOnly disabled style={{ fontSize: 16 }} />
+              </Form.Item>
+              <Form.Item label="SĐT phụ huynh" name="guardianPhone" style={{ marginBottom: 24 }}>
+                <Input readOnly disabled style={{ fontSize: 16 }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="deliveryTimeNote"
+                label="Buổi uống"
+                rules={[{ required: true, message: 'Vui lòng chọn buổi uống!' }]}
+                style={{ marginBottom: 24 }}
+              >
+                <Select placeholder="Chọn buổi" style={{ width: '100%', fontSize: 16 }}>
+                  {timeOptions.map((time) => (<Select.Option key={time} value={time}>{time}</Select.Option>))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="prescriptionImage"
+                label="Hình ảnh toa thuốc"
+                valuePropName="fileList"
+                getValueFromEvent={e => (Array.isArray(e) ? e : e?.fileList)}
+                rules={[
+                  { required: true, message: 'Vui lòng tải lên hình ảnh toa thuốc' }
+                ]}
+                style={{ marginBottom: 24 }}
+              >
+                <Upload
+                  listType="picture-card"
+                  accept="image/*"
+                  beforeUpload={file => {
+                    const isImage = file.type.startsWith('image/');
+                    if (!isImage) {
+                      message.error('Chỉ cho phép upload file ảnh!');
+                    }
+                    const isLt5M = file.size / 1024 / 1024 < 5;
+                    if (!isLt5M) {
+                      message.error('Ảnh phải nhỏ hơn 5MB!');
+                    }
+                    return isImage && isLt5M ? false : Upload.LIST_IGNORE;
+                  }}
+                  maxCount={1}
+                  fileList={fileList}
+                  onChange={({ fileList }) => setFileList(fileList)}
+                  onPreview={handlePreview}
+                  style={{ width: '100%' }}
+                >
+                  {fileList.length >= 1 ? null : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <PlusOutlined />
+                      <span>Upload</span>
+                    </div>
+                  )}
+                </Upload>
+              </Form.Item>
+              <Modal open={previewVisible} footer={null} onCancel={() => setPreviewVisible(false)}>
+                <img alt="preview" style={{ width: '100%' }} src={previewImage} />
+              </Modal>
+              <Form.Item name="notes" label="Ghi chú" style={{ marginBottom: 24 }}>
+                <Input.TextArea rows={4} placeholder="Nhập ghi chú (nếu có)" style={{ fontSize: 16 }} />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
-            <Button onClick={() => setCreateModal(false)} style={{ marginRight: 8 }}>Hủy</Button>
-            <Button type="primary" htmlType="submit" loading={createLoading}>Tạo đơn</Button>
+            <Button onClick={() => setCreateModal(false)} style={{ marginRight: 8, fontSize: 16 }}>Hủy</Button>
+            <Button type="primary" htmlType="submit" loading={createLoading} style={{ fontSize: 16 }}>Tạo đơn</Button>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal open={detailPreviewVisible} footer={null} onCancel={() => setDetailPreviewVisible(false)}>
+        <img alt="preview" style={{ width: '100%' }} src={detailPreviewImage} />
       </Modal>
 
     </div>
