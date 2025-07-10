@@ -277,6 +277,7 @@ const MedicineManagement: React.FC = () => {
           onChange={(date: Date | null) => setSelectedDate(date)}
           dateFormat="dd/MM/yyyy"
           className="min-w-[200px] border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          isClearable
         />
       </div>
 
@@ -324,7 +325,6 @@ const MedicineManagement: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-gray-700">
                 <div><span className="font-semibold">Tên học sinh:</span> {medicalRecordMap[detailModal.record.User_ID]?.fullname || ''}</div>
-                <div><span className="font-semibold">SĐT:</span> {guardianMap[detailModal.record.Guardian_phone]?.phoneNumber || detailModal.record.Guardian_phone || ''}</div>
                 <div><span className="font-semibold">Lớp:</span> {medicalRecordMap[detailModal.record.User_ID]?.Class || ''}</div>
                 <div><span className="font-semibold">Thời gian uống:</span> {detailModal.record.Delivery_time?.split(' - ')[1]}</div>
                 <div><span className="font-semibold">Tình trạng:</span>
@@ -333,6 +333,20 @@ const MedicineManagement: React.FC = () => {
                   </Tag>
                 </div>
                 <div><span className="font-semibold">Thời gian tạo:</span> {dayjs(detailModal.record.createdAt).format('HH:mm DD/MM/YYYY')}</div>
+              </div>
+            </div>
+
+            {/* Thông tin phụ huynh */}
+            <div className="bg-green-50 border border-green-200 rounded-md p-4 shadow-sm">
+              <div className="flex items-center space-x-2 mb-3">
+                <UserOutlined className="text-green-600" />
+                <span className="text-green-800 font-semibold">Thông Tin Phụ Huynh</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-gray-700">
+                <div><span className="font-semibold">Họ tên:</span> {guardianMap[detailModal.record.Guardian_phone]?.fullname || ''}</div>
+                <div><span className="font-semibold">SĐT:</span> {guardianMap[detailModal.record.Guardian_phone]?.phoneNumber || detailModal.record.Guardian_phone || ''}</div>
+                <div><span className="font-semibold">Vai trò:</span> {guardianMap[detailModal.record.Guardian_phone]?.roleInFamily || ''}</div>
+                <div><span className="font-semibold">Địa chỉ:</span> {guardianMap[detailModal.record.Guardian_phone]?.address || ''}</div>
               </div>
             </div>
 
