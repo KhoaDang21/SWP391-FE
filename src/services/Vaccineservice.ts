@@ -54,6 +54,7 @@ export interface GuardianVaccineHistory {
     note_affter_injection: string | null;
     image_after_injection?: string | null;
     Status: string;
+    batch_number: string;
   }[];
 }
 
