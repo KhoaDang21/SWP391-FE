@@ -115,6 +115,8 @@ const Checkup: React.FC = () => {
         try {
             const res = await getHealthCheckFormsByStudent(student.id);
             setStudentForms(res.data || []);
+            setFormsLoading(false);
+
         } catch (e) {
             setStudentForms([]);
         } finally {
