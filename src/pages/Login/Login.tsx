@@ -134,10 +134,10 @@ const Login = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Tên đăng nhập</label>
+                            <label className="block text-sm font-medium text-gray-700">Gmail đăng nhập</label>
                             <input
                                 type="text"
-                                placeholder="Nhập tên đăng nhập"
+                                placeholder="Nhập Gmail"
                                 value={email}
                                 onChange={(e) => {
                                     setEmail(e.target.value);

@@ -89,7 +89,7 @@ const Manage_vaccine: React.FC = () => {
 
       const events = await vaccineService.getVaccineEvents();
       setVaccineEvents(events);
-      
+
       setResetTrigger(prev => prev + 1);
       setIsModalOpen(false);
       return true;
@@ -99,7 +99,7 @@ const Manage_vaccine: React.FC = () => {
       notification.textContent = error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo đợt tiêm';
       document.body.appendChild(notification);
       setTimeout(() => notification.remove(), 3000);
-      
+
       return false;
     } finally {
       setIsLoading(false);
@@ -123,7 +123,7 @@ const Manage_vaccine: React.FC = () => {
         vaccineName: event.vaccineName,
         dateInjection: event.eventdate
       };
-      console.log('Delete vaccine event payload:', payload); 
+      console.log('Delete vaccine event payload:', payload);
       const res = await vaccineService.deleteVaccineByNameDateGrade(payload);
       if (res?.data?.deletedCount > 0) {
         const notification = document.createElement('div');
@@ -311,7 +311,7 @@ const Manage_vaccine: React.FC = () => {
           </tbody>
         </table>
         {filteredEvents.length > pageSize && (
-          <div className="flex justify-end items-center px-6 py-4 space-x-2">            
+          <div className="flex justify-end items-center px-6 py-4 space-x-2">
             <button
               className={`w-8 h-8 flex items-center justify-center rounded border ${currentPage === 1 ? 'border-gray-200 text-gray-300 bg-white' : 'border-gray-300 text-gray-600 bg-white hover:border-blue-400 hover:text-blue-600'} transition`}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
