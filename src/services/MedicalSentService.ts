@@ -4,7 +4,11 @@ export type MedicalSentStatus = 'pending' | 'received' | 'rejected' | 'given';
 
 const mapMedicalSent = (item: any): MedicalSent => {
   const { ID, ...rest } = item;
-  return { ...rest, id: ID || item.id };
+  return {
+    ...rest,
+    id: ID || item.id,
+    Notes: item.Notes || item.notes
+  };
 };
 
 export interface MedicalSent {

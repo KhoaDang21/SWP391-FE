@@ -216,7 +216,14 @@ const Manage_vaccine: React.FC = () => {
             selected={selectedDate}
             onChange={(date: Date | null) => {
               setSelectedDate(date);
-              setSearchDate(date ? date.toISOString().slice(0, 10) : '');
+              if (date) {
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                setSearchDate(`${year}-${month}-${day}`);
+              } else {
+                setSearchDate('');
+              }
               setCurrentPage(1);
             }}
             dateFormat="dd/MM/yyyy"

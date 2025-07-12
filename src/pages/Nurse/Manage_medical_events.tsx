@@ -150,6 +150,7 @@ const MedicalEventManagement: React.FC = () => {
           }}
           dateFormat="dd/MM/yyyy"
           className="min-w-[200px] border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          isClearable
         />
       </div>
 
@@ -193,8 +194,8 @@ const MedicalEventManagement: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Handle}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${event.Is_calLOb
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
                       }`}>
                       {event.Is_calLOb ? 'Đã gọi' : 'Không gọi'}
                     </span>

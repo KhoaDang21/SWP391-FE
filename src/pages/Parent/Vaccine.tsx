@@ -103,6 +103,7 @@ const Vaccine: React.FC = () => {
                     vaccinatedDate: vh.Date_injection,
                     location: '',
                     notes: vh.note_affter_injection || '',
+                    batchNumber: vh.batch_number,
                     image_after_injection: vh.image_after_injection,
                 }))
             }));
@@ -151,6 +152,7 @@ const Vaccine: React.FC = () => {
                         vaccinatedDate: vh.Date_injection,
                         location: '',
                         notes: vh.note_affter_injection || '',
+                        batchNumber: vh.batch_number,
                         image_after_injection: vh.image_after_injection,
                     }))
                 }));
@@ -555,6 +557,20 @@ const Vaccine: React.FC = () => {
                                                 >
                                                     {selectedVaccine.vaccineType}
                                                 </Tag>
+                                                {selectedVaccine.batchNumber && (
+                                                    <Tag
+                                                        style={{
+                                                            fontSize: 12,
+                                                            padding: '4px 12px',
+                                                            borderRadius: 16,
+                                                            background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)',
+                                                            color: '#3730a3',
+                                                            border: 'none'
+                                                        }}
+                                                    >
+                                                        Số lô: {selectedVaccine.batchNumber}
+                                                    </Tag>
+                                                )}
                                             </Col>
                                         </Row>
                                     </div>
