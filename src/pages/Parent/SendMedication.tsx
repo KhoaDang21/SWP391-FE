@@ -43,6 +43,7 @@ import {
     MedicalSent
 } from '../../services/MedicalSentService';
 import { getMedicalRecordsByGuardian } from '../../services/MedicalRecordService';
+import { getAllGuardians, Guardian } from '../../services/AccountService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -71,6 +72,7 @@ const SendMedication: React.FC = () => {
     const [previewImage, setPreviewImage] = useState('');
     const [detailPreviewVisible, setDetailPreviewVisible] = useState(false);
     const [detailPreviewImage, setDetailPreviewImage] = useState('');
+    const [guardians, setGuardians] = useState<Guardian[]>([]);
 
     const studentInfoMap = useMemo(() => {
         const map = new Map<number, { name: string; className: string }>();
@@ -79,6 +81,14 @@ const SendMedication: React.FC = () => {
         });
         return map;
     }, [students]);
+
+    const guardianMap = React.useMemo(() => {
+        const map: Record<string, Guardian> = {};
+        guardians.forEach((g) => {
+            map[g.phoneNumber] = g;
+        });
+        return map;
+    }, [guardians]);
 
     const token = localStorage.getItem('accessToken') || '';
     const userStr = localStorage.getItem('user');
@@ -90,6 +100,7 @@ const SendMedication: React.FC = () => {
         try {
             const medicalRecords = await getMedicalRecordsByGuardian(token);
             const medicalSentsData = await getMedicalSentsByGuardian(token);
+            const guardiansRes = await getAllGuardians(token);
 
             const fetchedStudents = medicalRecords.map((s: any) => ({
                 id: s.userId,
@@ -101,6 +112,7 @@ const SendMedication: React.FC = () => {
 
             const sortedData = medicalSentsData.sort((a, b) => dayjs(b.createdAt).unix() - dayjs(a.createdAt).unix());
             setDeliveries(sortedData);
+            setGuardians(guardiansRes);
         } catch (err) {
             console.error('Failed to load data:', err);
             message.error('Lỗi khi tải dữ liệu.');
@@ -385,7 +397,8 @@ const SendMedication: React.FC = () => {
                 onCancel={() => setViewModalVisible(false)}
                 width={750}
                 centered
-                style={{ paddingTop: 40, paddingBottom: 40 }}
+                style={{ paddingTop: 40, paddingBottom: 40, background: '#f3f4f6' }}
+                bodyStyle={{ background: '#f3f4f6', padding: 0 }}
                 footer={[
                     <Button key="close" type="primary" size="large" onClick={() => setViewModalVisible(false)}>
                         Đóng
@@ -393,123 +406,124 @@ const SendMedication: React.FC = () => {
                 ]}
                 styles={{
                     header: {
-                        borderBottom: '1px solid #f0f0f0'
+                        borderBottom: '1px solid #f0f0f0',
+                        background: '#f3f4f6'
+                    },
+                    content: {
+                        background: '#f3f4f6'
                     }
                 }}
             >
-                {selectedRecord && (
-                    <div className="py-4">
-                        <Space direction="vertical" size="large" className="w-full">
+                <div style={{ background: '#f3f4f6', padding: 24 }}>
+                    {selectedRecord && (
+                        <div className="py-4">
+                            <Space direction="vertical" size="large" className="w-full">
 
-                            {/* Thông tin học sinh */}
-                            <Card
-                                size="small"
-                                className="shadow-sm border-0 bg-blue-50"
-                                styles={{ body: { padding: '16px' } }}
-                            >
-                                <div className="flex items-center mb-3">
-                                    <UserOutlined className="text-blue-600 mr-2" />
-                                    <Text strong className="text-blue-800">Thông tin học sinh</Text>
-                                </div>
-                                <Row gutter={24}>
-                                    <Col span={12}>
-                                        <div className="mb-2">
-                                            <Text type="secondary" className="text-xs">HỌC SINH</Text>
-                                            <div className="text-base font-medium text-gray-800">
-                                                {studentInfoMap.get(selectedRecord.User_ID)?.name || 'Không rõ'}
-                                            </div>
-                                        </div>
-                                    </Col>
-                                    <Col span={12}>
-                                        <div className="mb-2">
-                                            <Text type="secondary" className="text-xs">LỚP</Text>
-                                            <div className="text-base font-medium text-gray-800">
-                                                {selectedRecord.Class || studentInfoMap.get(selectedRecord.User_ID)?.className || ''}
-                                            </div>
-                                        </div>
-                                    </Col>
-                                </Row>
-                            </Card>
-
-                            {/* Thông tin giao thuốc */}
-                            <Card
-                                size="small"
-                                className="shadow-sm border-0 bg-green-50"
-                                styles={{ body: { padding: '16px' } }}
-                            >
-                                <div className="flex items-center mb-3">
-                                    <ClockCircleOutlined className="text-green-600 mr-2" />
-                                    <Text strong className="text-green-800">Thông tin giao thuốc</Text>
-                                </div>
-                                <Row gutter={24}>
-                                    <Col span={12}>
-                                        <div className="mb-2">
-                                            <Text type="secondary" className="text-xs">THỜI GIAN UỐNG</Text>
-                                            <div className="text-base font-medium text-gray-800">
-                                                {selectedRecord.Delivery_time?.split(' - ')[1]}
-                                            </div>
-                                        </div>
-                                    </Col>
-                                    <Col span={12}>
-                                        <div className="mb-2">
-                                            <Text type="secondary" className="text-xs">TÌNH TRẠNG</Text>
-                                            <div className="mt-1">
-                                                <Tag
-                                                    color={statusConfig[selectedRecord.Status]?.color || 'default'}
-                                                    className="px-3 py-1 rounded-full font-medium"
-                                                >
-                                                    {statusConfig[selectedRecord.Status]?.text}
-                                                </Tag>
-                                            </div>
-                                        </div>
-                                    </Col>
-                                </Row>
-                            </Card>
-
-                            {/* Ảnh toa thuốc */}
-                            <Card
-                                size="small"
-                                className="shadow-sm border-0"
-                                styles={{ body: { padding: '16px' } }}
-                            >
-                                <div className="flex items-center mb-3">
-                                    <PictureOutlined className="text-indigo-600 mr-2" />
-                                    <Text strong className="text-indigo-800">Ảnh toa thuốc</Text>
-                                </div>
-                                {selectedRecord?.Image_prescription ? (
-                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                        <Image
-                                            width={220}
-                                            style={{ maxWidth: 220, height: 'auto', display: 'block', margin: '0 auto', cursor: 'pointer' }}
-                                            src={selectedRecord.Image_prescription}
-                                            alt="Ảnh minh chứng"
-                                            className="rounded-lg border border-gray-200 shadow-sm object-contain"
-                                            preview={false}
-                                            onClick={() => {
-                                                setDetailPreviewImage(selectedRecord.Image_prescription);
-                                                setDetailPreviewVisible(true);
-                                            }}
-                                        />
+                                {/* Thông tin học sinh */}
+                                <Card
+                                    size="small"
+                                    className="rounded-md shadow-sm mb-4"
+                                    bodyStyle={{ padding: 16, background: '#e7f3ff', border: '1px solid #b6e0fe' }}
+                                >
+                                    <div className="flex items-center space-x-2 mb-3">
+                                        <UserOutlined className="text-blue-600" />
+                                        <span className="text-blue-800 font-semibold">Thông Tin Học Sinh</span>
                                     </div>
-                                ) : (
-                                    <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa' }}>
-                                        <PictureOutlined style={{ fontSize: 40, marginBottom: 8 }} />
-                                        <p>Không có ảnh minh chứng</p>
+                                    <Row gutter={24} className="text-gray-700">
+                                        <Col span={12}>
+                                            <div><span className="font-semibold">Tên học sinh:</span> {studentInfoMap.get(selectedRecord.User_ID)?.name || 'Không rõ'}</div>
+                                        </Col>
+                                        <Col span={12}>
+                                            <div><span className="font-semibold">Lớp:</span> {selectedRecord.Class || studentInfoMap.get(selectedRecord.User_ID)?.className || ''}</div>
+                                        </Col>
+                                        <Col span={12}>
+                                            <div><span className="font-semibold">Thời gian uống:</span> {selectedRecord.Delivery_time?.split(' - ')[1]}</div>
+                                        </Col>
+                                        <Col span={12}>
+                                            <div><span className="font-semibold">Tình trạng:</span> <Tag color={statusConfig[selectedRecord.Status]?.color || 'default'} className="px-3 py-1 rounded-full font-medium">{statusConfig[selectedRecord.Status]?.text}</Tag></div>
+                                        </Col>
+                                        <Col span={24}>
+                                            <div><span className="font-semibold">Thời gian tạo:</span> {dayjs(selectedRecord.createdAt).format('HH:mm DD/MM/YYYY')}</div>
+                                        </Col>
+                                    </Row>
+                                </Card>
+
+                                {/* Thông tin phụ huynh */}
+                                <Card
+                                    size="small"
+                                    className="rounded-md shadow-sm mb-4"
+                                    bodyStyle={{ padding: 16, background: '#eaffea', border: '1px solid #b7eb8f' }}
+                                >
+                                    <div className="flex items-center space-x-2 mb-3">
+                                        <UserOutlined className="text-green-600" />
+                                        <span className="text-green-800 font-semibold">Thông Tin Phụ Huynh</span>
+                                    </div>
+                                    <Row gutter={24} className="text-gray-700">
+                                        <Col span={12}>
+                                            <div><span className="font-semibold">Họ tên:</span> {guardianMap[selectedRecord.Guardian_phone]?.fullname || ''}</div>
+                                        </Col>
+                                        <Col span={12}>
+                                            <div><span className="font-semibold">SĐT:</span> {guardianMap[selectedRecord.Guardian_phone]?.phoneNumber || selectedRecord.Guardian_phone || ''}</div>
+                                        </Col>
+                                        <Col span={12}>
+                                            <div><span className="font-semibold">Vai trò:</span> {guardianMap[selectedRecord.Guardian_phone]?.roleInFamily || ''}</div>
+                                        </Col>
+                                        <Col span={12}>
+                                            <div><span className="font-semibold">Địa chỉ:</span> {guardianMap[selectedRecord.Guardian_phone]?.address || ''}</div>
+                                        </Col>
+                                    </Row>
+                                </Card>
+
+                                {/* Ảnh toa thuốc */}
+                                <Card
+                                    size="small"
+                                    className="rounded-md shadow-sm mb-4"
+                                    bodyStyle={{ padding: 16, background: '#f3f4fd', border: '1px solid #d3adf7' }}
+                                >
+                                    <div className="flex items-center space-x-2 mb-3">
+                                        <PictureOutlined className="text-indigo-600" />
+                                        <span className="text-indigo-800 font-semibold">Ảnh Toa Thuốc</span>
+                                    </div>
+                                    {selectedRecord?.Image_prescription ? (
+                                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                            <Image
+                                                width={220}
+                                                style={{ maxWidth: 220, height: 'auto', display: 'block', margin: '0 auto', cursor: 'pointer' }}
+                                                src={selectedRecord.Image_prescription}
+                                                alt="Ảnh minh chứng"
+                                                className="rounded-lg border border-gray-200 shadow-sm object-contain"
+                                                preview={false}
+                                                onClick={() => {
+                                                    setDetailPreviewImage(selectedRecord.Image_prescription);
+                                                    setDetailPreviewVisible(true);
+                                                }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa' }}>
+                                            <PictureOutlined style={{ fontSize: 40, marginBottom: 8 }} />
+                                            <p>Không có ảnh minh chứng</p>
+                                        </div>
+                                    )}
+                                </Card>
+
+                                {/* Ghi chú */}
+                                {selectedRecord.Notes && (
+                                    <div className="mt-4 p-3 rounded-md" style={{ background: '#fff7e6', border: '1px solid #ffe58f' }}>
+                                        <div className="flex items-center space-x-2 mb-2">
+                                            <FileTextOutlined className="text-orange-700" />
+                                            <span className="text-orange-800 font-semibold text-base">Ghi Chú Đặc Biệt</span>
+                                        </div>
+                                        <div className="bg-white border border-orange-100 rounded-lg p-4 text-gray-700">
+                                            {selectedRecord.Notes}
+                                        </div>
                                     </div>
                                 )}
-                            </Card>
 
-                            {/* Ghi chú */}
-                            {selectedRecord.Notes && (
-                                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                    <p className="text-sm text-blue-800 font-medium mb-1">Ghi chú:</p>
-                                    <p className="text-sm text-blue-800">{selectedRecord.Notes}</p>
-                                </div>
-                            )}
-
-                        </Space>
-                    </div>
-                )}
+                            </Space>
+                        </div>
+                    )}
+                </div>
             </Modal>
             <Modal open={detailPreviewVisible} footer={null} onCancel={() => setDetailPreviewVisible(false)}>
                 <img alt="preview" style={{ width: '100%' }} src={detailPreviewImage} />

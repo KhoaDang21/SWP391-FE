@@ -1,149 +1,220 @@
-import React from 'react';
-import { Card, Col, Row, Statistic, Table } from 'antd';
+import { Card, Col, Row, Button, Statistic, Table } from 'antd';
 import {
     UserOutlined,
-    SmileTwoTone,
-    HeartTwoTone,
-    FrownTwoTone,
+    FileTextOutlined,
+    ExperimentOutlined,
+    HeartOutlined,
 } from '@ant-design/icons';
-import {
-    PieChart,
-    Pie,
-    Cell,
-    Tooltip,
-    ResponsiveContainer,
-    Legend,
-} from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
+import { useEffect, useState } from 'react';
+import { getTotalHealthCheckStatus, getTotalVaccineStatus, getDashboardCounts } from '../../../services/DashboardService';
+import { Link } from 'react-router-dom';
 
-const HealthOverview: React.FC = () => {
-    const total = 1200;
-    const healthy = 1100;
-    const followUp = 80;
-    const injured = 20;
+const HealthOverview = () => {
 
-    const healthData = [
-        { name: 'Sức khỏe tốt', value: healthy },
-        { name: 'Cần theo dõi', value: followUp },
-        { name: 'Bệnh/chấn thương', value: injured },
+    const [dashboardStats, setDashboardStats] = useState({
+        countUsers: 0,
+        countBlog: 0,
+        countVaccineRounds: 0,
+        countHealthChecks: 0
+    });
+
+
+    const stats = [
+        {
+            title: 'Người dùng',
+            value: dashboardStats.countUsers,
+            icon: <UserOutlined />,
+            color: '#1890ff'
+        },
+        {
+            title: 'Bài blog',
+            value: dashboardStats.countBlog,
+            icon: <FileTextOutlined />,
+            color: '#fa541c'
+        },
+        {
+            title: 'Đợt tiêm',
+            value: dashboardStats.countVaccineRounds,
+            icon: <ExperimentOutlined />,
+            color: '#52c41a'
+        },
+        {
+            title: 'Đợt khám',
+            value: dashboardStats.countHealthChecks,
+            icon: <HeartOutlined />,
+            color: '#eb2f96'
+        }
     ];
 
-    const COLORS = ['#52c41a', '#1890ff', '#faad14'];
 
-    const recentCases = [
-        { key: '1', name: 'Nguyễn Văn A', class: '10A1', issue: 'Đau đầu', status: 'Cần theo dõi' },
-        { key: '2', name: 'Trần Thị B', class: '11B2', issue: 'Gãy tay', status: 'Bệnh/chấn thương' },
-        { key: '3', name: 'Lê Văn C', class: '12C3', issue: 'Ổn định', status: 'Sức khỏe tốt' },
+
+    useEffect(() => {
+        async function fetchDashboardStats() {
+            try {
+                const res = await getDashboardCounts();
+                setDashboardStats(res);
+            } catch (err) {
+                console.error('Lỗi khi lấy dữ liệu dashboard:', err);
+            }
+        }
+
+        fetchDashboardStats();
+    }, []);
+
+
+    // const vaccineStatusData = [
+    //     { name: 'Chờ xử lý', value: 10, color: '#faad14' },
+    //     { name: 'Đã tiêm', value: 18, color: '#52c41a' },
+    //     { name: 'Đã từ chối', value: 2, color: '#f5222d' },
+    // ];
+
+    const healthStatusData = [
+        { name: 'Chờ xử lý', value: 12, color: '#faad14' },
+        { name: 'Đã kiểm tra', value: 10, color: '#52c41a' },
+        { name: 'Đã từ chối', value: 3, color: '#f5222d' },
+    ];
+
+    const eventTypeData = [
+        { name: '01/2025', value: 1 },
+        { name: '02/2025', value: 2 },
+        { name: '03/2025', value: 0 },
+        { name: '04/2025', value: 4 },
+        { name: '05/2025', value: 3 },
     ];
 
     const columns = [
-        { title: 'Họ tên', dataIndex: 'name', key: 'name' },
-        { title: 'Lớp', dataIndex: 'class', key: 'class' },
-        { title: 'Tình trạng', dataIndex: 'issue', key: 'issue' },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
-            render: (text: string) => {
-                const colorMap: any = {
-                    'Sức khỏe tốt': '#52c41a',
-                    'Cần theo dõi': '#faad14',
-                    'Bệnh/chấn thương': '#ff4d4f',
-                };
-                return <span style={{ color: colorMap[text], fontWeight: 600 }}>{text}</span>;
-            },
-        },
+        { title: 'Tên đợt', dataIndex: 'name' },
+        { title: 'Thời gian', dataIndex: 'date' },
+        { title: 'Loại', dataIndex: 'type' },
     ];
 
-    return (
-        <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 min-h-[calc(100vh-64px)]">
-            <h1 className="text-3xl font-bold text-blue-600 mb-6">
-                Tình hình Y tế học đường
-            </h1>
+    const recentEvents = [
+        { key: 1, name: 'Đợt tiêm sởi', date: '15/07/2025', type: 'Tiêm chủng' },
+        { key: 2, name: 'Khám sức khỏe học kỳ 1', date: '10/07/2025', type: 'Khám sức khỏe' },
+    ];
 
-            <Row gutter={[24, 24]} justify="center">
-                {[
-                    {
-                        title: 'Tổng số học sinh',
-                        value: total,
-                        icon: <UserOutlined style={{ color: '#2563eb', fontSize: 28 }} />,
-                        color: '#2563eb',
-                    },
-                    {
-                        title: 'Sức khỏe tốt',
-                        value: healthy,
-                        icon: <SmileTwoTone twoToneColor="#52c41a" style={{ fontSize: 28 }} />,
-                        color: '#52c41a',
-                    },
-                    {
-                        title: 'Cần theo dõi',
-                        value: followUp,
-                        icon: <HeartTwoTone twoToneColor="#1890ff" style={{ fontSize: 28 }} />,
-                        color: '#1890ff',
-                    },
-                    {
-                        title: 'Bệnh/chấn thương',
-                        value: injured,
-                        icon: <FrownTwoTone twoToneColor="#faad14" style={{ fontSize: 28 }} />,
-                        color: '#faad14',
-                    },
-                ].map((item, idx) => (
-                    <Col xs={24} sm={12} md={6} key={idx}>
-                        <Card
-                            hoverable
-                            className="text-center shadow-md rounded-xl h-full"
-                            bodyStyle={{ height: '100%' }}
-                        >
+    type StatusItem = {
+        name: string;
+        value: number;
+        color: string;
+    };
+
+    const [healthCheckStatusData, setHealthCheckStatusData] = useState<StatusItem[]>([]);
+    const [vaccineStatusData, setVaccineStatusData] = useState<StatusItem[]>([]);
+
+
+    useEffect(() => {
+        async function fetchStatus() {
+            try {
+                const res = await getTotalHealthCheckStatus(); // 👈 gọi API bạn có sẵn
+                const chartData = [
+                    { name: 'Đang xử lý', value: res.countInProgress, color: '#faad14' },
+                    { name: 'Đã tạo', value: res.countCreated, color: '#1890ff' },
+                    { name: 'Đã kiểm tra', value: res.countChecked, color: '#52c41a' },
+                    { name: 'Đã gửi thông báo', value: res.countPending, color: '#f5222d' },
+                ];
+                setHealthCheckStatusData(chartData);
+            } catch (err) {
+                console.error('Lỗi load trạng thái khám sức khỏe:', err);
+            }
+        }
+
+        fetchStatus();
+    }, []);
+
+    useEffect(() => {
+        async function fetchStatus() {
+            try {
+                const res = await getTotalVaccineStatus(); // 👈 gọi API bạn có sẵn
+                const chartData = [
+                    { name: 'Đang chờ', value: res.countPending, color: '#faad14' },
+                    { name: 'Đã cho phép', value: res.countAllowed, color: '#1890ff' },
+                    { name: 'Đã tiêm', value: res.countInjected, color: '#52c41a' },
+                    { name: 'Đã từ chối', value: res.countRejected, color: '#f5222d' }
+                ];
+                setVaccineStatusData(chartData);
+            } catch (err) {
+                console.error('Lỗi load trạng thái tiêm chủng:', err);
+            }
+        }
+
+        fetchStatus();
+    }, []);
+
+
+    return (
+        <div className="p-6 space-y-6">
+            <h1 className="text-3xl font-bold text-gray-800">Dashboard Hiệu Trưởng</h1>
+
+            {/* Statistics */}
+            <Row gutter={16}>
+                {stats.map((item, index) => (
+                    <Col span={6} key={index}>
+                        <Card>
                             <Statistic
-                                title={<span className="text-gray-500">{item.title}</span>}
+                                title={item.title}
                                 value={item.value}
+                                valueStyle={{ color: item.color }}
                                 prefix={item.icon}
-                                valueStyle={{ color: item.color, fontWeight: 700, fontSize: 28 }}
                             />
                         </Card>
                     </Col>
                 ))}
             </Row>
 
-            {/* Phân bổ và bảng */}
-            <Row gutter={[24, 24]} className="mt-10" justify="center">
-                {/* Biểu đồ phân bổ sức khỏe */}
-                <Col xs={24}>
-                    <Card title="Phân bổ sức khỏe" className="rounded-xl shadow-md">
-                        <div style={{ height: 300 }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={healthData}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={false}
-                                        outerRadius={100}
-                                        dataKey="value"
-                                    >
-                                        {healthData.map((_, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
+            {/* Pie Charts */}
+            <Row gutter={16}>
+                <Col span={12}>
+                    <Card title="Trạng thái đợt tiêm" extra={<Button type="link"><Link to="/admin/reports/vaccination" style={{ textDecoration: 'none' }}>Chi tiết</Link></Button>}>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie
+                                    data={vaccineStatusData}
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={80}
+                                    dataKey="value"
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                    {vaccineStatusData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
                     </Card>
                 </Col>
 
-                {/* Bảng các trường hợp gần đây */}
-                <Col xs={24}>
-                    <Card title="Các trường hợp gần đây" className="rounded-xl shadow-md">
-                        <Table
-                            columns={columns}
-                            dataSource={recentCases}
-                            pagination={false}
-                            size="middle"
-                        />
+                <Col span={12}>
+                    <Card title="Trạng thái khám sức khỏe" extra={<Button type="link"><Link to="/admin/reports/health-events" style={{ textDecoration: 'none' }}>Chi tiết</Link></Button>}>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie
+                                    data={healthCheckStatusData}
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={80}
+                                    dataKey="value"
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                    {healthCheckStatusData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
                     </Card>
                 </Col>
             </Row>
+
+
+            {/* Table Recent Events */}
+            {/* <Card title="Sự kiện gần đây">
+                <Table dataSource={recentEvents} columns={columns} pagination={false} />
+            </Card> */}
         </div>
     );
 };
