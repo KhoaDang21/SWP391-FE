@@ -155,7 +155,6 @@ const Header = () => {
               await changePassword(values.currentPassword, values.newPassword, token);
               notificationService.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại');
               setIsModalVisible(false);
-              // Tự động logout sau khi đổi mật khẩu thành công
               localStorage.removeItem("user");
               localStorage.removeItem("accessToken");
               localStorage.removeItem("refreshToken");

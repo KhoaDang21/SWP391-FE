@@ -88,16 +88,24 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
       setErrorMessage('Vui lòng chọn một hồ sơ y tế học sinh.');
       return;
     }
-    if (!formData.Decription.trim()) {
-      setErrorMessage('Vui lòng nhập mô tả sự kiện.');
+    if (!formData.Decription.trim() || formData.Decription.trim().length < 10) {
+      setErrorMessage('Vui lòng nhập mô tả sự kiện và đảm bảo có ít nhất 10 kí tự.');
       return;
     }
-    if (!formData.Handle.trim()) {
-      setErrorMessage('Vui lòng nhập biện pháp xử lý.');
+    if (/^\d+$/.test(formData.Decription.trim())) {
+      setErrorMessage('Mô tả sự kiện không được chỉ chứa chữ số.');
+      return;
+    }
+    if (!formData.Handle.trim() || formData.Handle.trim().length < 10) {
+      setErrorMessage('Vui lòng nhập biện pháp xử lý và đảm bảo có ít nhất 10 kí tự.');
+      return;
+    }
+    if (/^\d+$/.test(formData.Handle.trim())) {
+      setErrorMessage('Biện pháp xử lý không được chỉ chứa chữ số.');
       return;
     }
     if (!formData.Image) {
-      setErrorMessage('Vui lòng tải lên hình ảnh minh họa.');
+      setErrorMessage('Vui lòng tải lên hình ảnh.');
       return;
     }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Badge, Popover, List, Spin, Divider, Pagination } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { notificationService } from '../../services/NotificationService';
@@ -19,21 +19,50 @@ const Noti: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(3);
+  const [pageSize] = useState(5);
+  const [totalItems, setTotalItems] = useState(0);
+  const isAutoRefreshing = useRef(false);
 
-  useEffect(() => {
-    notificationService.startAutoRefresh((response) => {
+  const fetchNotifications = async (page: number, size: number) => {
+    setLoading(true);
+    try {
+      const response = await notificationService.getNotificationsForCurrentUser(page, size);
       setNotifications(response.notifications);
       setUnreadCount(response.unreadCount);
+      setTotalItems(response.pagination.totalItems);
+      setCurrentPage(response.pagination.currentPage);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
       setLoading(false);
-    });
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications(1, pageSize);
+
+    if (!isAutoRefreshing.current) {
+      notificationService.startAutoRefresh((response) => {
+        if (currentPage === 1) {
+          setNotifications(response.notifications);
+          setTotalItems(response.pagination.totalItems);
+        }
+        setUnreadCount(response.unreadCount);
+      }, 1, pageSize);
+      isAutoRefreshing.current = true;
+    }
+
     return () => {
       notificationService.stopAutoRefresh();
+      isAutoRefreshing.current = false;
     };
   }, []);
 
   const handleOpenChange = (visible: boolean) => {
     setOpen(visible);
+    if (visible && currentPage !== 1) {
+      fetchNotifications(1, pageSize);
+    }
   };
 
   const handleNotificationClick = async (notification: Notification) => {
@@ -71,13 +100,9 @@ const Noti: React.FC = () => {
       console.error('Failed to mark notification as read:', error);
     }
   };
-  const pagedNotifications = notifications.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    fetchNotifications(page, pageSize);
   };
 
   const content = (
@@ -89,7 +114,7 @@ const Noti: React.FC = () => {
       ) : (
         <>
           <List
-            dataSource={pagedNotifications}
+            dataSource={notifications}
             renderItem={(item) => (
               <React.Fragment key={item.notiId}>
                 <List.Item
@@ -138,7 +163,7 @@ const Noti: React.FC = () => {
               size="small"
               current={currentPage}
               pageSize={pageSize}
-              total={notifications.length}
+              total={totalItems}
               onChange={handlePageChange}
               showSizeChanger={false}
               style={{ margin: 0 }}

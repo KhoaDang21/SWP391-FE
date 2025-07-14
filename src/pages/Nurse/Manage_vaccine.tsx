@@ -256,10 +256,11 @@ const Manage_vaccine: React.FC = () => {
         <table className="min-w-full divide-y divide-gray-200 table-fixed">
           <thead>
             <tr className="bg-gray-50">
-              <th className="w-[10%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STT</th>
-              <th className="w-[30%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên đợt tiêm</th>
-              <th className="w-[20%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lô</th>
-              <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khối</th>
+              <th className="w-[5%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STT</th>
+              <th className="w-[25%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên đợt tiêm</th>
+              <th className="w-[20%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại vaccine</th>
+              <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lô</th>
+              <th className="w-[10%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khối</th>
               <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiêm</th>
               <th className="w-[10%] px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Xóa</th>
             </tr>
@@ -280,6 +281,7 @@ const Manage_vaccine: React.FC = () => {
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{(currentPage - 1) * pageSize + index + 1}</td>
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{event.vaccineName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.vaccineType}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.batch_number}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Khối {event.grade}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(event.eventdate)}</td>
@@ -310,7 +312,7 @@ const Manage_vaccine: React.FC = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                   Không có dữ liệu đợt tiêm
                 </td>
               </tr>
