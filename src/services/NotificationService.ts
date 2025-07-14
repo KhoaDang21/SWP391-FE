@@ -64,11 +64,11 @@ class NotificationService {
         toast.warning(message, { ...defaultOptions, ...options });
     }
 
-    async getNotificationsForCurrentUser(): Promise<NotificationResponse> {
+    async getNotificationsForCurrentUser(page: number = 1, pageSize: number = 5): Promise<NotificationResponse> {
         const userId = getUserIdFromToken();
         if (!userId) throw new Error("No userId in token");
         
-        const response = await fetch(`${API_URL}/notify/user/${userId}`, {
+        const response = await fetch(`${API_URL}/notify/user/${userId}?page=${page}&limit=${pageSize}`, {
             headers: {
                 "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
             }
@@ -108,14 +108,14 @@ class NotificationService {
         }
     }
 
-    startAutoRefresh(callback: (data: NotificationResponse) => void) {
+    startAutoRefresh(callback: (data: NotificationResponse) => void, page: number = 1, pageSize: number = 5) {
         
-        this.getNotificationsForCurrentUser().then(callback);
+        this.getNotificationsForCurrentUser(page, pageSize).then(callback);
         
         
         this.refreshInterval = setInterval(async () => {
             try {
-                const data = await this.getNotificationsForCurrentUser();
+                const data = await this.getNotificationsForCurrentUser(page, pageSize);
                 callback(data);
             } catch (error) {
                 console.error('Auto refresh failed:', error);

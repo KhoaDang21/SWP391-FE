@@ -56,9 +56,27 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
       newErrors.vaccineName = 'Tên vaccine không được để trống.';
     } else if (!vaccineName.toLowerCase().includes('vaccine')) {
       newErrors.vaccineName = 'Tên vaccine phải chứa từ "Vaccine".';
+    } else if (vaccineName.length < 5) {
+      newErrors.vaccineName = 'Tên vaccine phải có ít nhất 5 kí tự.';
+    } else if (/^\d+$/.test(vaccineName)) {
+      newErrors.vaccineName = 'Tên vaccine không được chỉ chứa chữ số.';
     }
-    if (!vaccineType) newErrors.vaccineType = 'Loại vaccine không được để trống.';
-    if (!batchNumber) newErrors.batchNumber = 'Số lô không được để trống.';
+    
+    if (!vaccineType) {
+      newErrors.vaccineType = 'Loại vaccine không được để trống.';
+    } else if (vaccineType.length < 5) {
+      newErrors.vaccineType = 'Loại vaccine phải có ít nhất 5 kí tự.';
+    } else if (/^\d+$/.test(vaccineType)) {
+      newErrors.vaccineType = 'Loại vaccine không được chỉ chứa chữ số.';
+    }
+
+    if (!batchNumber) {
+      newErrors.batchNumber = 'Số lô không được để trống.';
+    } else if (batchNumber.length < 5) {
+      newErrors.batchNumber = 'Số lô phải có ít nhất 5 kí tự.';
+    } else if (/^\d+$/.test(batchNumber)) {
+      newErrors.batchNumber = 'Số lô không được chỉ chứa chữ số.';
+    }
     if (!date) {
       newErrors.date = 'Ngày tiêm không được để trống.';
     } else {

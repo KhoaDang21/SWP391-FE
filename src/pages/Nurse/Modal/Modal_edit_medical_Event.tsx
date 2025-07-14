@@ -45,7 +45,7 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
     Is_calLOb: false
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (existingData) {
@@ -57,6 +57,7 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
         Is_calLOb: existingData.Is_calLOb
       });
       setPreviewUrl(existingData.Image);
+      setErrors({});
     }
   }, [existingData]);
 
@@ -77,24 +78,37 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
     };
   }, [previewUrl, existingData]);
 
+  const validate = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.Decription.trim()) {
+      newErrors.Decription = 'Vui lòng nhập mô tả sự kiện.';
+    } else if (formData.Decription.trim().length < 10) {
+      newErrors.Decription = 'Mô tả sự kiện phải có ít nhất 10 ký tự.';
+    } else if (/^\d+$/.test(formData.Decription.trim())) {
+      newErrors.Decription = 'Mô tả sự kiện không được chỉ chứa chữ số.';
+    }
+
+    if (!formData.Handle.trim()) {
+      newErrors.Handle = 'Vui lòng nhập biện pháp xử lý.';
+    } else if (formData.Handle.trim().length < 10) {
+      newErrors.Handle = 'Biện pháp xử lý phải có ít nhất 10 ký tự.';
+    } else if (/^\d+$/.test(formData.Handle.trim())) {
+      newErrors.Handle = 'Biện pháp xử lý không được chỉ chứa chữ số.';
+    }
+
+    if (!previewUrl) {
+      newErrors.Image = 'Vui lòng tải lên hình ảnh.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null);
-
-    if (!formData.Decription.trim()) {
-      setErrorMessage('Vui lòng nhập mô tả sự kiện.');
-      return;
+    if (validate()) {
+      onSubmit(formData);
     }
-    if (!formData.Handle.trim()) {
-      setErrorMessage('Vui lòng nhập biện pháp xử lý.');
-      return;
-    }
-    if (!previewUrl) {
-      setErrorMessage('Vui lòng tải lên hình ảnh minh họa.');
-      return;
-    }
-
-    onSubmit(formData);
   };
 
   if (!isOpen) return null;
@@ -110,9 +124,9 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {errorMessage && (
+          {Object.keys(errors).length > 0 && !errors.Decription && !errors.Handle && !errors.Image && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-              {errorMessage}
+              Vui lòng sửa các lỗi dưới đây.
             </div>
           )}
           <div>
@@ -138,6 +152,7 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[150px] resize-none"
                 placeholder="Nhập mô tả sự kiện..."
               />
+              {errors.Decription && <p className="text-red-500 text-xs mt-1">{errors.Decription}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -149,6 +164,7 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[150px] resize-none"
                 placeholder="Nhập biện pháp xử lý..."
               />
+              {errors.Handle && <p className="text-red-500 text-xs mt-1">{errors.Handle}</p>}
             </div>
           </div>
 
@@ -194,6 +210,7 @@ const Modal_edit_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onSub
                   />
                 </label>
               )}
+              {errors.Image && <p className="text-red-500 text-xs mt-1">{errors.Image}</p>}
             </div>
           </div>
 
