@@ -98,6 +98,7 @@ export interface UpdateVaccineStatusRequest {
 
 export interface VaccineEvent {
   vaccineName: string;
+  vaccineType: string;
   grade: number;
   eventdate: string;
   batch_number: string;
