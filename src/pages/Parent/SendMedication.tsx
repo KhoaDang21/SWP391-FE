@@ -197,7 +197,7 @@ const SendMedication: React.FC = () => {
                 if (fileObj) {
                     formData.append('prescriptionImage', fileObj);
                 }
-                formData.append('deliveryTime', deliveryTime);
+                formData.append('Delivery_time', deliveryTime);
                 formData.append('status', modalState.record.Status);
                 if (values.notes) {
                     formData.append('notes', values.notes.trim());
@@ -244,7 +244,7 @@ const SendMedication: React.FC = () => {
         setPreviewVisible(true);
     };
 
-    const timeOptions = ['Trước ăn sáng', 'Sau ăn sáng', 'Trước ăn trưa', 'Sau ăn trưa', 'Trước ăn chiều', 'Sau ăn chiều'];
+    const timeOptions = ['Sau ăn sáng', 'Trước ăn trưa', 'Sau ăn trưa', 'Trước ăn chiều', 'Sau ăn chiều'];
 
     const columns: ColumnsType<MedicalSent> = [
         { title: 'STT', key: 'stt', render: (_, __, index) => index + 1 },
