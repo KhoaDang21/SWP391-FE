@@ -365,7 +365,7 @@ const Children = () => {
                             marginBottom: '8px',
                         }}
                     >
-                        <HeartOutlined /> Hồ Sơ Sức Khỏe Trẻ Em
+                        <HeartOutlined /> Hồ Sơ Sức Khỏe Con Em
                     </Title>
                     <Text style={{ color: '#ffffff', opacity: 0.9 }}>
                         Quản lý thông tin sức khỏe toàn diện cho con em của bạn
@@ -454,11 +454,10 @@ const Children = () => {
                                                         <div style={{ minHeight: 60, padding: '0 16px' }}>
                                                             {vaccineHistories[child.ID] &&
                                                                 vaccineHistories[child.ID].vaccineHistory
-                                                                    // Lọc thêm Is_created_by_guardian === true
-                                                                    .filter(v => v.Status === 'Đã tiêm' && v.Is_created_by_guardian)
+                                                                    .filter(v => v.Status === 'Đã tiêm')
                                                                     .length > 0 ? (
                                                                 vaccineHistories[child.ID].vaccineHistory
-                                                                    .filter(v => v.Status === 'Đã tiêm' && v.Is_created_by_guardian)
+                                                                    .filter(v => v.Status === 'Đã tiêm')
                                                                     .map((vaccine, idx) => (
                                                                         <div
                                                                             key={idx}
@@ -732,6 +731,15 @@ const Children = () => {
                                                                 label="Loại vaccine"
                                                             >
                                                                 <Input placeholder="VD: Phòng bạch hầu" />
+                                                            </Form.Item>
+                                                        </Col>
+                                                        <Col span={8}>
+                                                            <Form.Item
+                                                                {...field}
+                                                                name={[field.name, 'batch_number']}
+                                                                label="Số lô"
+                                                            >
+                                                                <Input placeholder="VD: 123456" />
                                                             </Form.Item>
                                                         </Col>
                                                         <Col span={8}>

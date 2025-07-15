@@ -34,7 +34,7 @@ import {
     ResponsiveContainer
 } from 'recharts';
 
-import { getTotalMedicalSend, getTotalHealthCheck, getTotalEvents, getTotalVaccine, getTotalMedicalStatus, getOtherMedicalMonthly, getTotalVaccineStatus, getTotalHealthCheckStatus } from '../../services/DashboardService'
+import { getTotalMedicalSend, getTotalHealthCheck, getTotalEvents, getTotalVaccine, getTotalMedicalStatus, getOtherMedicalMonthly, getTotalVaccineStatus, getTotalHealthCheckStatus, getTotalMedicalRecord } from '../../services/DashboardService'
 import { Link } from 'react-router-dom';
 
 const NurseDashboard: React.FC = () => {
@@ -42,6 +42,7 @@ const NurseDashboard: React.FC = () => {
     const [healthCheckCount, setHealthCheckCount] = useState(0);
     const [vaccineCount, setVaccineCount] = useState(0);
     const [eventCount, setEventCount] = useState(0);
+    const [medicalRecordCount, setMedicalRecordCount] = useState(0);
 
     type StatusItem = {
         name: string;
@@ -128,23 +129,26 @@ const NurseDashboard: React.FC = () => {
     useEffect(() => {
         async function fetchDashboardData() {
             try {
-                const [medicines, healthChecks, vaccines, events] = await Promise.all([
+                const [medicines, healthChecks, vaccines, events, medicalRecords] = await Promise.all([
                     getTotalMedicalSend(),
                     getTotalHealthCheck(),
                     getTotalVaccine(),
-                    getTotalEvents()
+                    getTotalEvents(),
+                    getTotalMedicalRecord()
                 ]);
                 console.log('✅ Dashboard data:', {
                     medicines,
                     healthChecks,
                     vaccines,
-                    events
+                    events,
+                    medicalRecords
                 });
 
                 setMedicalSendCount(medicines.count);
                 setHealthCheckCount(healthChecks.count);
                 setVaccineCount(vaccines.count);
                 setEventCount(events.count);
+                setMedicalRecordCount(medicalRecords.count);
             } catch (error) {
                 console.error('❌ Lỗi tải dữ liệu dashboard:', error);
             }
@@ -157,8 +161,8 @@ const NurseDashboard: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-800 mb-8">Dashboard Y Tá</h1>
 
             {/* 1. Thống kê tổng quan */}
-            <Row gutter={16} style={{ marginBottom: 24 }}>
-                <Col span={6}>
+            <Row gutter={16} style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+                <Col flex="1">
                     <Card>
                         <Statistic
                             title="Đơn thuốc gửi đến"
@@ -168,7 +172,7 @@ const NurseDashboard: React.FC = () => {
                         />
                     </Card>
                 </Col>
-                <Col span={6}>
+                <Col flex="1">
                     <Card>
                         <Statistic
                             title="Đợt khám sức khỏe"
@@ -178,7 +182,7 @@ const NurseDashboard: React.FC = () => {
                         />
                     </Card>
                 </Col>
-                <Col span={6}>
+                <Col flex="1">
                     <Card>
                         <Statistic
                             title="Đợt tiêm vaccine"
@@ -188,7 +192,7 @@ const NurseDashboard: React.FC = () => {
                         />
                     </Card>
                 </Col>
-                <Col span={6}>
+                <Col flex="1">
                     <Card>
                         <Statistic
                             title="Sự kiện y tế mới"
@@ -198,7 +202,18 @@ const NurseDashboard: React.FC = () => {
                         />
                     </Card>
                 </Col>
+                <Col flex="1">
+                    <Card>
+                        <Statistic
+                            title="Hồ sơ y tế"
+                            value={medicalRecordCount}
+                            valueStyle={{ color: '#fa8c16' }}
+                            prefix={<AlertOutlined />}
+                        />
+                    </Card>
+                </Col>
             </Row>
+
 
             <Row gutter={16} style={{ marginBottom: 24 }}>
                 <Col span={8}>

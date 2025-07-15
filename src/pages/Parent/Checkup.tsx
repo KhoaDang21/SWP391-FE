@@ -94,8 +94,8 @@ const Checkup: React.FC = () => {
     useEffect(() => {
         const token = localStorage.getItem('accessToken') || '';
 
-        if (selectedResult?.Nurse_ID) {
-            getUserById(selectedResult.Nurse_ID, token)
+        if (selectedResult?.Created_By) {
+            getUserById(selectedResult.Created_By, token)
                 .then((res) => setNurseInfo(res))
                 .catch((err) => {
                     console.error('Lỗi khi lấy thông tin y tá:', err);
@@ -104,7 +104,7 @@ const Checkup: React.FC = () => {
         } else {
             setNurseInfo(null);
         }
-    }, [selectedResult?.Nurse_ID]);
+    }, [selectedResult?.Created_By]);
 
 
     const handleViewDetail = async (student: any) => {
@@ -429,6 +429,7 @@ const Checkup: React.FC = () => {
                                                     setStudentForms(res.data || []);
                                                     setFormsLoading(false);
                                                 }
+                                                setConfirmLoading(false);
                                             } catch (e) {
                                                 setConfirmLoading(false);
                                             }
@@ -449,6 +450,7 @@ const Checkup: React.FC = () => {
                                                     setStudentForms(res.data || []);
                                                     setFormsLoading(false);
                                                 }
+                                                setConfirmLoading(false);
                                             } catch (e) {
                                                 setConfirmLoading(false);
                                             }
