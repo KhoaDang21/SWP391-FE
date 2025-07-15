@@ -32,7 +32,8 @@ const statusText: Record<string, string> = {
 };
 
 const MedicineManagement: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
   const [medicineRecords, setMedicineRecords] = useState<MedicalSent[]>([]);
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
@@ -89,14 +90,21 @@ const MedicineManagement: React.FC = () => {
     fetchAll();
   }, [token]);
 
-  const filteredRecords = selectedDate
-    ? medicineRecords.filter(record => {
-      const recordDate = dayjs(record.createdAt).toDate();
-      return (
-        recordDate.toDateString() === selectedDate.toDateString()
-      );
-    })
-    : medicineRecords;
+  const filteredRecords = medicineRecords.filter(record => {
+    const recordDate = dayjs(record.createdAt).startOf('day');
+    const from = fromDate ? dayjs(fromDate).startOf('day') : null;
+    const to = toDate ? dayjs(toDate).startOf('day') : null;
+    if (from && to) {
+      return recordDate.isSameOrAfter(from) && recordDate.isSameOrBefore(to);
+    }
+    if (from) {
+      return recordDate.isSameOrAfter(from);
+    }
+    if (to) {
+      return recordDate.isSameOrBefore(to);
+    }
+    return true;
+  });
   console.log('Filtered records:', filteredRecords);
   const handleViewDetail = async (record: MedicalSent) => {
     setLoading(true);
@@ -269,16 +277,32 @@ const MedicineManagement: React.FC = () => {
       </div>
 
       <div className="mb-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Chọn ngày xem đơn thuốc:
-        </label>
-        <DatePicker
-          selected={selectedDate}
-          onChange={(date: Date | null) => setSelectedDate(date)}
-          dateFormat="dd/MM/yyyy"
-          className="min-w-[200px] border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          isClearable
-        />
+        <div className="flex gap-4 items-center">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Từ ngày:</label>
+            <DatePicker
+              selected={fromDate}
+              onChange={(date: Date | null) => setFromDate(date)}
+              dateFormat="dd/MM/yyyy"
+              className="min-w-[140px] border border-gray-300 rounded-lg p-2.5"
+              isClearable
+              placeholderText="Từ ngày"
+              maxDate={toDate || undefined}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Đến ngày:</label>
+            <DatePicker
+              selected={toDate}
+              onChange={(date: Date | null) => setToDate(date)}
+              dateFormat="dd/MM/yyyy"
+              className="min-w-[140px] border border-gray-300 rounded-lg p-2.5"
+              isClearable
+              placeholderText="Đến ngày"
+              minDate={fromDate || undefined}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
