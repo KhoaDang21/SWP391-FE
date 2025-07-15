@@ -38,6 +38,8 @@ const ManageHealthcheck: React.FC = () => {
   const navigate = useNavigate();
 
   const [sentStatus, setSentStatus] = useState<{ [key: number]: boolean }>({});
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
 
   const [form] = Form.useForm();
   const [editForm] = Form.useForm();
@@ -203,6 +205,23 @@ const ManageHealthcheck: React.FC = () => {
     selectedYear === 'Tất cả'
       ? healthEvents
       : healthEvents.filter((e) => e.School_year === selectedYear);
+
+  const dateFilteredEvents = filteredEvents.filter(event => {
+    const eventDate = event.Event?.dateEvent ? new Date(event.Event.dateEvent) : null;
+    if (!eventDate) return false;
+    const from = fromDate ? new Date(fromDate.setHours(0, 0, 0, 0)) : null;
+    const to = toDate ? new Date(toDate.setHours(0, 0, 0, 0)) : null;
+    if (from && to) {
+      return eventDate >= from && eventDate <= to;
+    }
+    if (from) {
+      return eventDate >= from;
+    }
+    if (to) {
+      return eventDate <= to;
+    }
+    return true;
+  });
   console.log('Filtered Events:', filteredEvents);
   return (
     <div className="container mx-auto px-4 py-8">
@@ -232,6 +251,28 @@ const ManageHealthcheck: React.FC = () => {
               </Option>
             ))}
           </Select>
+          <div className="flex gap-2 items-center ml-8">
+            <span className="text-sm font-medium text-gray-700">Từ ngày:</span>
+            <DatePicker
+              selected={fromDate}
+              onChange={(date: Date | null) => setFromDate(date)}
+              dateFormat="dd/MM/yyyy"
+              className="min-w-[120px] border border-gray-300 rounded-lg p-2.5"
+              isClearable
+              placeholderText="Từ ngày"
+              maxDate={toDate || undefined}
+            />
+            <span className="text-sm font-medium text-gray-700">Đến ngày:</span>
+            <DatePicker
+              selected={toDate}
+              onChange={(date: Date | null) => setToDate(date)}
+              dateFormat="dd/MM/yyyy"
+              className="min-w-[120px] border border-gray-300 rounded-lg p-2.5"
+              isClearable
+              placeholderText="Đến ngày"
+              minDate={fromDate || undefined}
+            />
+          </div>
         </div>
       </div>
 
@@ -254,12 +295,12 @@ const ManageHealthcheck: React.FC = () => {
               <tr>
                 <td colSpan={7} className="text-center py-8 text-gray-500">Đang tải dữ liệu...</td>
               </tr>
-            ) : filteredEvents.length === 0 ? (
+            ) : dateFilteredEvents.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-center py-8 text-gray-500">Không có dữ liệu</td>
               </tr>
             ) : (
-              filteredEvents.map((event, index) => {
+              dateFilteredEvents.map((event, index) => {
                 const isSent = sentStatus[event.HC_ID];
                 const isSending = sendingConfirmation === event.HC_ID;
 

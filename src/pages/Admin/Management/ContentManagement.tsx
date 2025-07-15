@@ -7,7 +7,6 @@ import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 const { Text } = Typography;
-const { TextArea } = Input;
 
 const ContentManagement: React.FC = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -447,6 +446,7 @@ const ContentManagement: React.FC = () => {
                                 label="Tiêu đề"
                                 rules={[
                                     { required: true, message: 'Nhập tiêu đề' },
+                                    { min: 5, message: 'Tiêu đề tối thiểu 5 ký tự' },
                                     { max: 200, message: 'Tiêu đề tối đa 200 ký tự' }
                                 ]}
                                 validateStatus={submitAttempted && form.getFieldError('title').length ? 'error' : ''}
@@ -570,6 +570,7 @@ const ContentManagement: React.FC = () => {
                         label="Tên category"
                         rules={[
                             { required: true, message: 'Nhập tên category' },
+                            { min: 5, message: 'Tên tối thiểu 5 ký tự' },
                             { max: 100, message: 'Tên tối đa 100 ký tự' }
                         ]}
                         validateStatus={catSubmitAttempted && catForm.getFieldError('Name').length ? 'error' : ''}
