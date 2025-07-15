@@ -157,20 +157,21 @@ const Home = () => {
             {schoolInfo.map((info, index) => (
               <div
                 key={index}
-                className="flex flex-col items-center justify-center text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-lg transition-shadow h-full"
+                className="flex flex-col items-center justify-center text-center p-8 rounded-3xl bg-white/60 shadow-xl border border-blue-200 hover:scale-105 hover:shadow-2xl transition-all duration-300 backdrop-blur-md group"
+                style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)' }}
               >
-                <div className="flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
-                  <span className="text-blue-600 text-3xl flex items-center justify-center">{info.icon}</span>
+                <div className="flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-full mb-6 shadow-lg group-hover:from-cyan-400 group-hover:to-blue-500 transition-colors">
+                  <span className="text-white text-4xl flex items-center justify-center drop-shadow-lg">{info.icon}</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{info.title}</h3>
-                <p className="text-gray-600">{info.description}</p>
+                <h3 className="text-2xl font-bold text-blue-700 mb-2 drop-shadow-sm">{info.title}</h3>
+                <p className="text-gray-700 font-medium opacity-90">{info.description}</p>
               </div>
             ))}
           </div>
 
           <div className="bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl p-8 text-white">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div>
+              <div className="flex flex-col justify-center h-full">
                 <h3 className="text-2xl font-bold mb-4">Thông tin trường học</h3>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
@@ -187,14 +188,14 @@ const Home = () => {
                   </div>
                 </div>
               </div>
-              <div className="text-center lg:text-right">
-                <div className="text-4xl font-bold mb-2">30+</div>
-                <div className="text-blue-100">Năm kinh nghiệm</div>
+              <div className="flex flex-col items-center justify-center h-full border-l border-white/30 py-4">
+                <div className="text-5xl font-extrabold mb-2 drop-shadow-lg">30+</div>
+                <div className="text-blue-100 text-lg font-semibold mb-2">Năm kinh nghiệm</div>
                 <Rate
                   defaultValue={5}
                   disabled
                   character={<StarFilled />}
-                  style={{ fontSize: 20 }}
+                  style={{ fontSize: 24 }}
                 />
               </div>
             </div>
@@ -217,12 +218,12 @@ const Home = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-shadow border border-gray-100">
-                <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600">
+              <div key={index} className="bg-white/70 rounded-3xl p-8 shadow-xl border border-cyan-200 hover:scale-105 hover:shadow-2xl transition-all duration-300 backdrop-blur-md group flex flex-col items-center text-center" style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.10)' }}>
+                <div className="w-20 h-20 bg-gradient-to-br from-cyan-400 to-blue-400 rounded-2xl flex items-center justify-center mb-5 text-white text-3xl shadow-lg group-hover:from-blue-500 group-hover:to-cyan-500 transition-colors">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-3">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                <h3 className="text-xl font-bold text-blue-700 mb-3 drop-shadow-sm">{feature.title}</h3>
+                <p className="text-gray-700 leading-relaxed font-medium opacity-90">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -242,21 +243,21 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center p-6">
-              <div className="text-4xl lg:text-5xl font-bold text-blue-600 mb-2">2,487</div>
-              <div className="text-gray-600 font-medium">Học sinh toàn trường</div>
+            <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-blue-100 to-cyan-100 shadow-xl border border-blue-200 hover:scale-105 hover:shadow-2xl transition-transform transition-shadow duration-200 will-change-transform will-change-shadow">
+              <div className="text-5xl font-extrabold text-blue-600 mb-2 drop-shadow-lg">2,487</div>
+              <div className="text-blue-700 font-semibold text-lg">Học sinh toàn trường</div>
             </div>
-            <div className="text-center p-6">
-              <div className="text-4xl lg:text-5xl font-bold text-green-600 mb-2">1,234</div>
-              <div className="text-gray-600 font-medium">Hồ sơ sức khỏe</div>
+            <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-green-100 to-teal-100 shadow-xl border border-green-200 hover:scale-105 hover:shadow-2xl transition-transform transition-shadow duration-200 will-change-transform will-change-shadow">
+              <div className="text-5xl font-extrabold text-green-600 mb-2 drop-shadow-lg">1,234</div>
+              <div className="text-green-700 font-semibold text-lg">Hồ sơ sức khỏe</div>
             </div>
-            <div className="text-center p-6">
-              <div className="text-4xl lg:text-5xl font-bold text-orange-600 mb-2">245</div>
-              <div className="text-gray-600 font-medium">Khám sức khỏe tháng này</div>
+            <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-orange-100 to-yellow-100 shadow-xl border border-orange-200 hover:scale-105 hover:shadow-2xl transition-transform transition-shadow duration-200 will-change-transform will-change-shadow">
+              <div className="text-5xl font-extrabold text-orange-500 mb-2 drop-shadow-lg">245</div>
+              <div className="text-orange-700 font-semibold text-lg">Khám sức khỏe tháng này</div>
             </div>
-            <div className="text-center p-6">
-              <div className="text-4xl lg:text-5xl font-bold text-purple-600 mb-2">12</div>
-              <div className="text-gray-600 font-medium">Nhân viên y tế</div>
+            <div className="text-center p-8 rounded-3xl bg-gradient-to-br from-purple-100 to-pink-100 shadow-xl border border-purple-200 hover:scale-105 hover:shadow-2xl transition-transform transition-shadow duration-200 will-change-transform will-change-shadow">
+              <div className="text-5xl font-extrabold text-purple-600 mb-2 drop-shadow-lg">12</div>
+              <div className="text-purple-700 font-semibold text-lg">Nhân viên y tế</div>
             </div>
           </div>
         </div>
