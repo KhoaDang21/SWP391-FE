@@ -1,38 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Select, Space, Modal, Form, Input } from 'antd';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate } from 'react-router-dom';
-import { getAllMedicalRecords, createStudentWithMedicalRecord, MedicalRecord, CreateStudentMedicalPayload } from '../../services/MedicalRecordService';
+import { getAllMedicalRecords, MedicalRecord } from '../../services/MedicalRecordService';
 import { notificationService } from '../../services/NotificationService';
 import { Eye, Stethoscope, Heart, UserCircle, Activity } from 'lucide-react';
 
 const { Option } = Select;
-const { TextArea } = Input;
-
-function formatDate(date: Date | null) {
-  if (!date) return '';
-  const d = new Date(date);
-  const month = '' + (d.getMonth() + 1);
-  const day = '' + d.getDate();
-  const year = d.getFullYear();
-  return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
-}
 
 const ManageHealthRecords: React.FC = () => {
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
   const [classes, setClasses] = useState<string[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>('Tất cả');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const [fromDate, setFromDate] = useState<Date | null>(null);
-  const [toDate, setToDate] = useState<Date | null>(null);
+  const [searchName, setSearchName] = useState<string>('');
 
-  const [form] = Form.useForm();
-  const [createDate, setCreateDate] = useState<Date | null>(null);
   const [viewingRecord, setViewingRecord] = useState<MedicalRecord | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
@@ -58,45 +41,6 @@ const ManageHealthRecords: React.FC = () => {
     fetchMedicalRecords();
   }, []);
 
-  const handleCreateRecord = () => {
-    form.resetFields();
-    setCreateDate(null);
-    setIsModalOpen(true);
-  };
-
-  const handleSubmit = async (values: any) => {
-    const payload: CreateStudentMedicalPayload = {
-      guardianUserId: values.guardianUserId,
-      student: {
-        fullname: values.fullname,
-        dateOfBirth: values.dateOfBirth ? formatDate(values.dateOfBirth) : '',
-        gender: values.gender,
-      },
-      medicalRecord: {
-        Class: values.Class,
-        height: values.height,
-        weight: values.weight,
-        bloodType: values.bloodType,
-        chronicDiseases: values.chronicDiseases ? values.chronicDiseases.split(',').map((name: string) => ({ name: name.trim() })) : [],
-        allergies: values.allergies ? values.allergies.split(',').map((name: string) => ({ name: name.trim() })) : [],        vaccines: []
-      }
-    };
-
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem('token') || '';
-      await createStudentWithMedicalRecord(payload, token);
-      await fetchMedicalRecords();
-      notificationService.success('Tạo sổ sức khỏe thành công!');
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Error creating medical record:', error);
-      notificationService.error('Có lỗi xảy ra khi tạo sổ sức khỏe');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const showViewModal = (record: MedicalRecord) => {
     setViewingRecord(record);
     setIsViewModalOpen(true);
@@ -107,71 +51,50 @@ const ManageHealthRecords: React.FC = () => {
       ? medicalRecords
       : medicalRecords.filter((record) => record.Class === selectedClass);
 
-  const dateFilteredRecords = filteredRecords.filter(record => {
-    const recordDate = new Date(record.dateOfBirth);
-    const from = fromDate ? new Date(fromDate.setHours(0, 0, 0, 0)) : null;
-    const to = toDate ? new Date(toDate.setHours(0, 0, 0, 0)) : null;
-    if (from && to) {
-      return recordDate >= from && recordDate <= to;
-    }
-    if (from) {
-      return recordDate >= from;
-    }
-    if (to) {
-      return recordDate <= to;
-    }
-    return true;
+  const nameFilteredRecords = filteredRecords.filter(record => {
+    if (!searchName.trim()) return true;
+    return record.fullname.toLowerCase().includes(searchName.toLowerCase().trim());
   });
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Quản lý sổ sức khỏe</h1>
-        <button
-          className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-blue-500/30"
-          type="button"
-          onClick={handleCreateRecord}>
-          + Thêm sổ sức khỏe
-        </button>
       </div>
 
       <div className="mb-8 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="flex items-center space-x-4">
-          <span className="text-sm font-medium text-gray-700">Lớp:</span>
-          <Select
-            value={selectedClass}
-            onChange={(val) => setSelectedClass(val)}
-            style={{ width: 200 }}
-            className="min-w-[200px]"
-          >
-            <Option value="Tất cả">Tất cả</Option>
-            {classes.map((className) => (
-              <Option key={className} value={className}>
-                {className}
-              </Option>
-            ))}
-          </Select>
-          <div className="flex gap-2 items-center ml-8">
-            <span className="text-sm font-medium text-gray-700">Từ ngày sinh:</span>
-            <DatePicker
-              selected={fromDate}
-              onChange={(date: Date | null) => setFromDate(date)}
-              dateFormat="dd/MM/yyyy"
-              className="min-w-[120px] border border-gray-300 rounded-lg p-2.5"
-              isClearable
-              placeholderText="Từ ngày"
-              maxDate={toDate || undefined}
-            />
-            <span className="text-sm font-medium text-gray-700">Đến ngày sinh:</span>
-            <DatePicker
-              selected={toDate}
-              onChange={(date: Date | null) => setToDate(date)}
-              dateFormat="dd/MM/yyyy"
-              className="min-w-[120px] border border-gray-300 rounded-lg p-2.5"
-              isClearable
-              placeholderText="Đến ngày"
-              minDate={fromDate || undefined}
-            />
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-gray-700">Lớp:</span>
+            <Select
+              value={selectedClass}
+              onChange={(val) => setSelectedClass(val)}
+              style={{ width: 200 }}
+              className="min-w-[200px]"
+            >
+              <Option value="Tất cả">Tất cả</Option>
+              {classes.map((className) => (
+                <Option key={className} value={className}>
+                  {className}
+                </Option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-gray-700">Tên học sinh:</span>
+            <div className="relative">
+              <Input
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                placeholder="Tìm kiếm theo tên học sinh..."
+                className="min-w-[280px] pl-10"
+                allowClear
+                style={{
+                  height: '40px',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -196,12 +119,12 @@ const ManageHealthRecords: React.FC = () => {
               <tr>
                 <td colSpan={9} className="text-center py-8 text-gray-500">Đang tải dữ liệu...</td>
               </tr>
-            ) : dateFilteredRecords.length === 0 ? (
+            ) : nameFilteredRecords.length === 0 ? (
               <tr>
                 <td colSpan={9} className="text-center py-8 text-gray-500">Không có dữ liệu</td>
               </tr>
             ) : (
-              dateFilteredRecords.map((record, index) => (
+              nameFilteredRecords.map((record, index) => (
                 <tr
                   key={record.ID}
                   className="hover:bg-gray-50 transition-colors duration-200"
@@ -237,133 +160,6 @@ const ManageHealthRecords: React.FC = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Create Modal */}
-      <Modal
-        title="Tạo sổ sức khỏe mới"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}
-        width={800}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{}}
-        >
-          <Form.Item
-            name="guardianUserId"
-            label="ID phụ huynh"
-            rules={[{ required: true, message: 'Vui lòng nhập ID phụ huynh' }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-
-          <Form.Item
-            name="fullname"
-            label="Họ và tên học sinh"
-            rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            name="dateOfBirth"
-            label="Ngày sinh"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày sinh' }]}
-          >
-            <DatePicker
-              selected={createDate}
-              onChange={date => setCreateDate(date)}
-              dateFormat="dd/MM/yyyy"
-              className="w-full border border-gray-300 rounded px-3 py-2"
-              placeholderText="Chọn ngày sinh"
-              maxDate={new Date()}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="gender"
-            label="Giới tính"
-            rules={[{ required: true, message: 'Vui lòng chọn giới tính' }]}
-          >
-            <Select>
-              <Option value="Nam">Nam</Option>
-              <Option value="Nữ">Nữ</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="Class"
-            label="Lớp"
-            rules={[{ required: true, message: 'Vui lòng nhập lớp' }]}
-          >
-            <Input placeholder="VD: 1A, 2B" />
-          </Form.Item>
-
-          <Form.Item
-            name="height"
-            label="Chiều cao (cm)"
-            rules={[{ required: true, message: 'Vui lòng nhập chiều cao' }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-
-          <Form.Item
-            name="weight"
-            label="Cân nặng (kg)"
-            rules={[{ required: true, message: 'Vui lòng nhập cân nặng' }]}
-          >
-            <Input type="number" />
-          </Form.Item>
-
-          <Form.Item
-            name="bloodType"
-            label="Nhóm máu"
-            rules={[{ required: true, message: 'Vui lòng chọn nhóm máu' }]}
-          >
-            <Select>
-              <Option value="A">A</Option>
-              <Option value="B">B</Option>
-              <Option value="AB">AB</Option>
-              <Option value="O">O</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="chronicDiseases"
-            label="Bệnh mãn tính (cách nhau bởi dấu phẩy)"
-          >
-            <TextArea rows={2} placeholder="VD: Hen suyễn, Tiểu đường" />
-          </Form.Item>
-
-          <Form.Item
-            name="allergies"
-            label="Dị ứng (cách nhau bởi dấu phẩy)"
-          >
-            <TextArea rows={2} placeholder="VD: Tôm cua, Hạt điều" />
-          </Form.Item>
-
-          <Form.Item>
-            <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button
-                onClick={() => setIsModalOpen(false)}
-                style={{ marginRight: 8 }}
-              >
-                Hủy
-              </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={isLoading}
-              >
-                Tạo sổ sức khỏe
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
 
       <Modal
         title={
