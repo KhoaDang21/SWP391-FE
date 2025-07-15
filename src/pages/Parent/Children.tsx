@@ -33,7 +33,7 @@ import {
     SafetyOutlined,
     UploadOutlined
 } from '@ant-design/icons';
-import { getStudentsByGuardianUserId } from '../../services/AccountService';
+import { getStudentsByGuardianUserId, getUserById } from '../../services/AccountService';
 import { createStudentWithMedicalRecord, deleteMedicalRecord, getMedicalRecordsByGuardian, updateMedicalRecord } from '../../services/MedicalRecordService';
 import { vaccineService, VaccineHistoryByMedicalRecordResponse } from '../../services/Vaccineservice';
 import type { MedicalRecord } from '../../services/MedicalRecordService';
@@ -54,6 +54,7 @@ const Children = () => {
     const [vaccineHistories, setVaccineHistories] = useState<{ [medicalRecordId: number]: VaccineHistoryByMedicalRecordResponse }>(
         {}
     );
+    const [parentFullname, setParentFullname] = useState<string>('');
 
 
     useEffect(() => {
@@ -69,6 +70,22 @@ const Children = () => {
 
         fetchData();
     }, []);
+
+    useEffect(() => {
+        // Fetch parent's fullname from API
+        const fetchParentFullname = async () => {
+            try {
+                const user = localStorage.getItem('user');
+                const userIdStr = user ? JSON.parse(user).id : null;
+                if (!userIdStr || !token) return;
+                const userData = await getUserById(userIdStr, token);
+                setParentFullname(userData.fullname || '');
+            } catch (e) {
+                setParentFullname('');
+            }
+        };
+        fetchParentFullname();
+    }, [token]);
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingChild, setEditingChild] = useState<MedicalRecord | null>(null);
@@ -572,7 +589,17 @@ const Children = () => {
                         <Form.Item
                             name="fullname"
                             label="Họ và tên"
-                            rules={[{ required: true, message: 'Vui lòng nhập họ và tên!' }]}
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập họ và tên!' },
+                                () => ({
+                                    validator(_, value) {
+                                        if (value && parentFullname && value.trim().toLowerCase() === parentFullname.trim().toLowerCase()) {
+                                            return Promise.reject(new Error('Tên con không được trùng với tên cha/mẹ!'));
+                                        }
+                                        return Promise.resolve();
+                                    }
+                                })
+                            ]}
                         >
                             <Input placeholder="Nhập họ và tên" />
                         </Form.Item>
