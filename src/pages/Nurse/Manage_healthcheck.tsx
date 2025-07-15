@@ -439,19 +439,39 @@ const ManageHealthcheck: React.FC = () => {
           <Form.Item
             name="description"
             label="Mô tả"
-            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập mô tả' },
+              { min: 10, message: 'Mô tả phải có ít nhất 10 ký tự' },
+              { max: 1000, message: 'Mô tả tối đa 1000 ký tự' }
+            ]}
           >
-            <TextArea rows={3} />
+            <TextArea rows={3} maxLength={1000} />
           </Form.Item>
 
           <Form.Item
             name="dateEvent"
-            label="Ngày khám"
+            label={<span><span style={{color: 'red'}}>*</span> Ngày khám</span>}
             rules={[
               {
                 validator: (_, value) => {
                   if (!value) return Promise.reject('Vui lòng chọn ngày khám');
-                  if (!isFutureDate(value)) return Promise.reject('Chỉ được chọn ngày lớn hơn ngày hôm nay');
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const selectedDate = new Date(value);
+                  if (selectedDate <= today) {
+                    return Promise.reject('Chỉ được chọn ngày lớn hơn ngày hôm nay');
+                  }
+                  // Lấy giá trị năm học
+                  const schoolYear = form.getFieldValue('schoolYear');
+                  if (!schoolYear || !/^\d{4}-\d{4}$/.test(schoolYear)) {
+                    return Promise.reject('Vui lòng nhập năm học hợp lệ trước');
+                  }
+                  const [startYear, endYear] = schoolYear.split('-').map(Number);
+                  const minDate = new Date(`${startYear}-01-01T00:00:00`);
+                  const maxDate = new Date(`${endYear}-12-31T23:59:59`);
+                  if (selectedDate < minDate || selectedDate > maxDate) {
+                    return Promise.reject(`Ngày khám phải nằm trong khoảng từ 01/01/${startYear} đến 31/12/${endYear}`);
+                  }
                   return Promise.resolve();
                 }
               }
@@ -461,17 +481,38 @@ const ManageHealthcheck: React.FC = () => {
               selected={createDate}
               onChange={date => setCreateDate(date)}
               dateFormat="yyyy-MM-dd"
-              minDate={new Date()}
+              minDate={(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()}
               className="w-full border border-gray-300 rounded px-3 py-2"
               placeholderText="Chọn ngày khám"
-            // minDate={(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()}
             />
           </Form.Item>
 
           <Form.Item
             name="schoolYear"
-            label="Năm học"
-            rules={[{ required: true, message: 'Vui lòng nhập năm học' }]}
+            label={<span><span style={{color: 'red'}}>*</span> Năm học</span>}
+            rules={[
+              {
+                validator: (_, value) => {
+                  const now = new Date();
+                  const currentYear = now.getFullYear();
+                  const expected = `${currentYear}-${currentYear + 1}`;
+                  if (!value || value.trim() === '') {
+                    return Promise.reject('Năm học không được để trống.');
+                  }
+                  if (!/^\d{4}-\d{4}$/.test(value)) {
+                    return Promise.reject('Năm học phải có định dạng YYYY-YYYY (ví dụ: 2025-2026).');
+                  }
+                  const [start, end] = value.split('-').map(Number);
+                  if (isNaN(start) || isNaN(end)) {
+                    return Promise.reject('Năm học phải có định dạng YYYY-YYYY (ví dụ: 2025-2026).');
+                  }
+                  if (value !== expected) {
+                    return Promise.reject(`Chỉ được nhập đúng năm học hiện tại: ${expected}`);
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Input placeholder="VD: 2025-2026" />
           </Form.Item>
@@ -554,7 +595,34 @@ const ManageHealthcheck: React.FC = () => {
           <Form.Item
             name="schoolYear"
             label="Năm học"
-            rules={[{ required: true, message: 'Vui lòng nhập năm học' }]}
+            rules={[
+              {
+                validator: (_, value) => {
+                  const now = new Date();
+                  const currentYear = now.getFullYear();
+                  const maxYear = currentYear + 1;
+                  const maxSchoolYear = `${maxYear}-${maxYear + 1}`;
+                  if (!value || value.trim() === '') {
+                    return Promise.reject('Năm học không được để trống.');
+                  }
+                  // Định dạng phải là YYYY-YYYY
+                  if (!/^\d{4}-\d{4}$/.test(value)) {
+                    return Promise.reject('Năm học phải có định dạng YYYY-YYYY (ví dụ: 2025-2026).');
+                  }
+                  const [start, end] = value.split('-').map(Number);
+                  if (isNaN(start) || isNaN(end)) {
+                    return Promise.reject('Năm học phải có định dạng YYYY-YYYY (ví dụ: 2025-2026).');
+                  }
+                  if (end !== start + 1) {
+                    return Promise.reject('Năm học phải cách nhau đúng 1 năm (VD: 2025-2026).');
+                  }
+                  if (start > maxYear) {
+                    return Promise.reject(`Năm học không được vượt quá ${maxSchoolYear}.`);
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Input placeholder="VD: 2025-2026" />
           </Form.Item>
