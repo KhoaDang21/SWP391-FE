@@ -243,7 +243,7 @@ const MedicineManagement: React.FC = () => {
       render: (_: any, record: MedicalSent) => (
         <Space>
           <Tooltip title="Xem chi tiết"><Button type="text" icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} /></Tooltip>
-          <Tooltip title="Sửa"><Button type="text" icon={<EditOutlined />} onClick={() => { nurseForm.setFieldsValue({ studentName: medicalRecordMap[record.User_ID]?.fullname || '', className: record.Class, deliveryTimeNote: record.Delivery_time?.split(' - ')[1], prescriptionImage: [] }); }} /></Tooltip>
+          {/* <Tooltip title="Sửa"><Button type="text" icon={<EditOutlined />} onClick={() => { nurseForm.setFieldsValue({ studentName: medicalRecordMap[record.User_ID]?.fullname || '', className: record.Class, deliveryTimeNote: record.Delivery_time?.split(' - ')[1], prescriptionImage: [] }); }} /></Tooltip> */}
           <Popconfirm
             title="Xác nhận xóa"
             description="Bạn chắc chắn muốn xóa đơn thuốc này?"

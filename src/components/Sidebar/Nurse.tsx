@@ -31,6 +31,8 @@ function Nurse() {
 
 
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
     const fetchNotifications = async () => {
       try {
         const response = await notificationService.getNotificationsForCurrentUser();
@@ -41,7 +43,12 @@ function Nurse() {
     };
 
     fetchNotifications();
+    intervalId = setInterval(fetchNotifications, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
+
+
   const menuItems = [
     {
       key: 'dashboard',

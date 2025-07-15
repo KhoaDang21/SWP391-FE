@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Modal, Descriptions, Tag, Button, Card } from 'antd';
+import { Table, Modal, Descriptions, Tag, Button, Card, message } from 'antd';
 import {
     healthCheckService,
     HealthCheckEvent,
@@ -7,6 +7,8 @@ import {
     HealthCheckResult,
     Guardian
 } from '../../../services/Healthcheck';
+import { exportExcel } from '../../../services/ExportService';
+import { saveAs } from 'file-saver';
 
 const HealthEvents: React.FC = () => {
     const [healthEvents, setHealthEvents] = useState<HealthCheckEvent[]>([]);
@@ -36,6 +38,18 @@ const HealthEvents: React.FC = () => {
         };
         fetchEvents();
     }, []);
+
+    const handleExport = async (eventId: number, type: 'vaccine' | 'health') => {
+        try {
+            const blob = await exportExcel(eventId, type);
+            const fileName = `Danh-sach-${type}-${eventId}.xlsx`;
+            saveAs(blob, fileName);
+        } catch (error) {
+            console.error('Lỗi xuất Excel:', error);
+            message.error('Xuất danh sách thất bại');
+        }
+    };
+
 
     const handleRowClick = async (event: HealthCheckEvent) => {
         setSelectedEvent(event);
@@ -75,7 +89,24 @@ const HealthEvents: React.FC = () => {
                 r.Event?.dateEvent ? new Date(r.Event.dateEvent).toLocaleDateString() : ''
         },
         { title: 'Loại', render: (r: HealthCheckEvent) => r.Event?.type },
-        { title: 'Mô tả', dataIndex: 'description' }
+        { title: 'Mô tả', dataIndex: 'description' },
+        // {
+        //     title: 'Hành động',
+        //     render: (_: unknown, record: HealthCheckEvent) => (
+        //         <Button
+        //             size="small"
+        //             onClick={(e) => {
+        //                 e.stopPropagation(); // ✅ Ngăn mở modal
+        //                 handleExport(record.HC_ID, 'health');
+        //             }}
+        //         >
+        //             Xuất danh sách học sinh
+        //         </Button>
+        //     )
+        // }
+
+
+
     ];
 
     const studentColumns = [
@@ -154,7 +185,21 @@ const HealthEvents: React.FC = () => {
                     setSelectedEvent(null);
                     setStudents([]);
                 }}
-                title={selectedEvent ? `Danh sách học sinh - ${selectedEvent.title}` : 'Danh sách học sinh'}
+                title={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>
+                            {selectedEvent ? `Danh sách học sinh - ${selectedEvent.title}` : 'Danh sách học sinh'}
+                        </span>
+                        {selectedEvent && (
+                            <Button
+                                className='mr-10'
+                                onClick={() => handleExport(selectedEvent.HC_ID, 'health')}
+                            >
+                                Xuất danh sách học sinh
+                            </Button>
+                        )}
+                    </div>
+                }
                 footer={null}
                 centered
                 width={1000}
@@ -167,6 +212,7 @@ const HealthEvents: React.FC = () => {
                     pagination={false}
                 />
             </Modal>
+
 
             {/* Modal hiển thị kết quả khám */}
             <Modal

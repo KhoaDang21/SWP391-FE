@@ -361,7 +361,7 @@ const UserManagement: React.FC = () => {
                         className="h-full flex items-center"
                         onClick={() => setIsRegisterModalVisible(true)}
                     >
-                        Thêm quản lý
+                        Thêm y tá
                     </Button>
                     <Button
                         type="primary"
@@ -373,7 +373,7 @@ const UserManagement: React.FC = () => {
                         type="default"
                         onClick={() => document.getElementById('excel-file-input')?.click()}
                     >
-                        Import Excel
+                        Tạo phụ huynh từ Excel
                     </Button>
                     <input
                         type="file"
@@ -395,7 +395,7 @@ const UserManagement: React.FC = () => {
             />
 
             <Modal
-                title="Thêm quản lý mới"
+                title="Thêm y tá mới"
                 open={isRegisterModalVisible}
                 onCancel={() => {
                     setIsRegisterModalVisible(false);
@@ -413,7 +413,11 @@ const UserManagement: React.FC = () => {
                         label="Tên đăng nhập"
                         rules={[
                             { required: true, message: 'Vui lòng nhập tên đăng nhập' },
-                            { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' }
+                            { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' },
+                            {
+                                pattern: /^[a-zA-Z0-9_]+$/,
+                                message: 'Tên đăng nhập chỉ được chứa chữ, số và dấu gạch dưới (_)',
+                            },
                         ]}
                     >
                         <Input prefix={<IdcardOutlined />} />
@@ -424,7 +428,11 @@ const UserManagement: React.FC = () => {
                         label="Họ và tên"
                         rules={[
                             { required: true, message: 'Vui lòng nhập họ và tên' },
-                            { min: 3, message: 'Họ và tên phải có ít nhất 3 ký tự' }
+                            { min: 3, message: 'Họ và tên phải có ít nhất 3 ký tự' },
+                            {
+                                pattern: /^[a-zA-ZÀ-ỹ\s]+$/u,
+                                message: 'Họ và tên không được chứa số hoặc ký tự đặc biệt',
+                            },
                         ]}
                     >
                         <Input prefix={<UserOutlined />} />
@@ -506,7 +514,14 @@ const UserManagement: React.FC = () => {
                     <Form.Item
                         name="fullname"
                         label="Họ và tên phụ huynh"
-                        rules={[{ required: true, message: 'Vui lòng nhập họ và tên phụ huynh' }, { min: 3, message: 'Họ và tên phải có ít nhất 3 ký tự' }]}
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập họ và tên' },
+                            { min: 3, message: 'Họ và tên phải có ít nhất 3 ký tự' },
+                            {
+                                pattern: /^[a-zA-ZÀ-ỹ\s]+$/u,
+                                message: 'Họ và tên không được chứa số hoặc ký tự đặc biệt',
+                            },
+                        ]}
                     >
                         <Input prefix={<UserOutlined />} />
                     </Form.Item>
@@ -514,8 +529,14 @@ const UserManagement: React.FC = () => {
                     <Form.Item
                         name="username"
                         label="Tên đăng nhập phụ huynh"
-                        rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập phụ huynh' }, { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' }]}
-                    >
+                        rules={[
+                            { required: true, message: 'Vui lòng nhập tên đăng nhập' },
+                            { min: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' },
+                            {
+                                pattern: /^[a-zA-Z0-9_]+$/,
+                                message: 'Tên đăng nhập chỉ được chứa chữ, số và dấu gạch dưới (_)',
+                            },
+                        ]}                    >
                         <Input prefix={<IdcardOutlined />} />
                     </Form.Item>
 
