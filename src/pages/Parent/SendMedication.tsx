@@ -49,11 +49,8 @@ const { TextArea } = Input;
 
 const statusConfig: Record<string, { color: string; icon: ReactElement; text: string }> = {
     pending: { color: 'orange', icon: <ExclamationCircleOutlined />, text: 'Chờ xử lý' },
-    processing: { color: 'blue', icon: <SyncOutlined />, text: 'Đang xử lý' },
-    delivered: { color: 'green', icon: <CheckCircleOutlined />, text: 'Đã giao' },
-    cancelled: { color: 'red', icon: <ExclamationCircleOutlined />, text: 'Đã hủy' },
-    rejected: { color: 'red', icon: <ExclamationCircleOutlined />, text: 'Đã từ chối' },
     received: { color: 'blue', icon: <SyncOutlined />, text: 'Đã nhận' },
+    rejected: { color: 'red', icon: <ExclamationCircleOutlined />, text: 'Đã từ chối' },
     given: { color: 'green', icon: <CheckCircleOutlined />, text: 'Đã cho uống' },
 };
 
