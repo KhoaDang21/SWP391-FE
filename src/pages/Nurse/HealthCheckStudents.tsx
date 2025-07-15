@@ -8,7 +8,6 @@ import { UploadOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 
-// Định nghĩa biến global để tránh lặp thông báo
 declare global {
   interface Window {
     __healthCheckCheckedNotified?: boolean;
@@ -281,7 +280,7 @@ const HealthCheckStudents: React.FC = () => {
             <div className="space-y-1">
               {guardians.map((guardian, index) => (
                 <div key={index} className="text-sm">
-                  <div className="font-medium text-gray-700">{guardian.roleInFamily}</div>
+                  <div className="font-medium text-gray-700">{guardian.fullName}</div>
                   <div className="text-gray-500">{guardian.phoneNumber}</div>
                 </div>
               ))}
