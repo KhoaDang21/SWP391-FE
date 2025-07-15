@@ -4,12 +4,12 @@ import {
   Activity,
   UserCircle,
   Bell,
-
   Pill,
   Stethoscope,
   ChevronRight,
   Home,
-  ChevronLeft
+  ChevronLeft,
+  FileText
 } from 'lucide-react';
 import medicalLogo from '../../assets/images/medical-book.png';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
@@ -76,6 +76,15 @@ function Nurse() {
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       hoverColor: 'hover:bg-red-100'
+    },
+    {
+      key: 'health-records',
+      title: 'Quản lý sổ sức khỏe',
+      path: '/nurse/health-records',
+      icon: FileText,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      hoverColor: 'hover:bg-orange-100'
     },
     {
       key: 'vaccine',
@@ -158,7 +167,6 @@ function Nurse() {
           await changePassword(values.currentPassword, values.newPassword, token);
           notificationService.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại');
           setIsModalVisible(false);
-          // Tự động logout sau khi đổi mật khẩu thành công
           localStorage.removeItem("user");
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");

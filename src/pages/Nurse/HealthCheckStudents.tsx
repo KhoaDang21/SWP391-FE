@@ -8,7 +8,6 @@ import { UploadOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
 
-// Định nghĩa biến global để tránh lặp thông báo
 declare global {
   interface Window {
     __healthCheckCheckedNotified?: boolean;
@@ -281,7 +280,7 @@ const HealthCheckStudents: React.FC = () => {
             <div className="space-y-1">
               {guardians.map((guardian, index) => (
                 <div key={index} className="text-sm">
-                  <div className="font-medium text-gray-700">{guardian.roleInFamily}</div>
+                  <div className="font-medium text-gray-700">{guardian.fullName}</div>
                   <div className="text-gray-500">{guardian.phoneNumber}</div>
                 </div>
               ))}
@@ -584,18 +583,39 @@ const HealthCheckStudents: React.FC = () => {
               <Form.Item
                 name="height"
                 label="Chiều cao (cm)"
-                rules={[{ required: true, message: 'Vui lòng nhập chiều cao' }]}
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === null || value === '') return Promise.reject('Vui lòng nhập chiều cao');
+                      if (typeof value === 'string' && !/^\d+$/.test(value)) return Promise.reject('Chỉ được nhập số nguyên dương');
+                      const num = Number(value);
+                      if (isNaN(num) || !Number.isInteger(num)) return Promise.reject('Chỉ được nhập số nguyên dương');
+                      if (num < 70 || num > 160) return Promise.reject('Chiều cao hợp lý cho học sinh tiểu học là từ 70 đến 160cm');
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
               >
-                <Input type="number" />
+                <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="weight"
                 label="Cân nặng (kg)"
-                rules={[{ required: true, message: 'Vui lòng nhập cân nặng' }]}
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === null || value === '') return Promise.reject('Vui lòng nhập cân nặng');
+                      if (typeof value === 'string' && !/^\d+(\.\d+)?$/.test(value)) return Promise.reject('Chỉ được nhập số dương, có thể có thập phân');
+                      const num = Number(value);
+                      if (isNaN(num) || num < 9 || num > 60) return Promise.reject('Cân nặng hợp lý cho học sinh tiểu học là từ 9 đến 60kg');
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
               >
-                <Input type="number" />
+                <Input />
               </Form.Item>
             </Col>
           </Row>
@@ -605,18 +625,40 @@ const HealthCheckStudents: React.FC = () => {
               <Form.Item
                 name="vision_left"
                 label="Thị lực mắt trái"
-                rules={[{ required: true, message: 'Vui lòng nhập thị lực mắt trái' }]}
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === null || value === '') return Promise.reject('Vui lòng nhập thị lực mắt trái');
+                      if (typeof value === 'string' && !/^\d+$/.test(value)) return Promise.reject('Chỉ được nhập số nguyên dương, không nhập chữ hoặc ký tự đặc biệt');
+                      const num = Number(value);
+                      if (isNaN(num) || !Number.isInteger(num)) return Promise.reject('Chỉ được nhập số nguyên dương, không nhập chữ hoặc ký tự đặc biệt');
+                      if (num < 0 || num > 10) return Promise.reject('Thị lực phải từ 0 đến 10');
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
               >
-                <Input type="number" step="0.1" />
+                <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
                 name="vision_right"
                 label="Thị lực mắt phải"
-                rules={[{ required: true, message: 'Vui lòng nhập thị lực mắt phải' }]}
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === null || value === '') return Promise.reject('Vui lòng nhập thị lực mắt phải');
+                      if (typeof value === 'string' && !/^\d+$/.test(value)) return Promise.reject('Chỉ được nhập số nguyên dương, không nhập chữ hoặc ký tự đặc biệt');
+                      const num = Number(value);
+                      if (isNaN(num) || !Number.isInteger(num)) return Promise.reject('Chỉ được nhập số nguyên dương, không nhập chữ hoặc ký tự đặc biệt');
+                      if (num < 0 || num > 10) return Promise.reject('Thị lực phải từ 0 đến 10');
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
               >
-                <Input type="number" step="0.1" />
+                <Input />
               </Form.Item>
             </Col>
           </Row>
@@ -624,7 +666,18 @@ const HealthCheckStudents: React.FC = () => {
           <Form.Item
             name="blood_pressure"
             label="Huyết áp"
-            rules={[{ required: true, message: 'Vui lòng nhập huyết áp' }]}
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value || typeof value !== 'string') return Promise.reject('Vui lòng nhập huyết áp');
+                  // Chỉ cho phép định dạng số dương/số dương, không nhận số âm, chữ, ký tự đặc biệt khác ngoài dấu /
+                  if (!/^\d{2,3}\/\d{2,3}$/.test(value)) {
+                    return Promise.reject('Vui lòng nhập đúng định dạng: VD 110/70');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Input placeholder="VD: 110/70" />
           </Form.Item>
@@ -662,7 +715,11 @@ const HealthCheckStudents: React.FC = () => {
           <Form.Item
             name="general_conclusion"
             label="Kết luận chung"
-            rules={[{ required: true, message: 'Vui lòng nhập kết luận chung' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập kết luận chung' },
+              { min: 3, message: 'Kết luận phải có ít nhất 3 ký tự' },
+              { max: 1000, message: 'Kết luận không vượt quá 1000 ký tự' }
+            ]}
           >
             <TextArea rows={3} />
           </Form.Item>
@@ -680,6 +737,16 @@ const HealthCheckStudents: React.FC = () => {
             label="Hình ảnh đính kèm"
             valuePropName="fileList"
             getValueFromEvent={e => Array.isArray(e) ? e : e?.fileList}
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('Vui lòng tải lên hình ảnh đính kèm');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Dragger
               listType="picture-card"

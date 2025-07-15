@@ -35,6 +35,7 @@ import ForgotPasswordPage from '../pages/Login/ForgotPasswordPage';
 import NurseDashboard from "../pages/Nurse/Dashboard";
 import ProfileParent from '../pages/Parent/Profile';
 import ProfileNurse from '../pages/Nurse/Profile';
+import Manage_health_records from '../pages/Nurse/Manage_health_records';
 
 export default function AppRoutes() {
     return (
@@ -78,12 +79,12 @@ export default function AppRoutes() {
                     </ProtectedRoute>
                 }
             >
-
                 <Route path="dashboard" element={<NurseDashboard />} />
                 <Route path="medical" element={<Manage_medical />} />
                 <Route path="healthcheck" element={<Manage_healthcheck />} />
                 <Route path="healthcheck/students/:hcId" element={<HealthCheckStudents />} />
                 <Route path="vaccine" element={<Manage_vaccine />} />
+                <Route path="health-records" element={<Manage_health_records />} />
                 <Route path="medical-events" element={<Manage_medical_events />} />
                 <Route path="medical-events/detail/:id" element={<Detail_medical_event />} />
                 <Route path="vaccine-events">

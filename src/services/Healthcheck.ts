@@ -55,6 +55,7 @@ export interface Guardian {
   userId: number;
   createdAt: string;
   updatedAt: string;
+  fullName: string;
   GuardianUser: GuardianUser;
 }
 
