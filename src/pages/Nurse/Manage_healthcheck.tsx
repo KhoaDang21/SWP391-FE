@@ -458,8 +458,8 @@ const ManageHealthcheck: React.FC = () => {
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
                   const selectedDate = new Date(value);
-                  if (selectedDate <= today) {
-                    return Promise.reject('Chỉ được chọn ngày lớn hơn ngày hôm nay');
+                  if (selectedDate < today) {
+                    return Promise.reject('Chỉ được chọn ngày hôm nay hoặc lớn hơn');
                   }
                   // Lấy giá trị năm học
                   const schoolYear = form.getFieldValue('schoolYear');
@@ -481,7 +481,7 @@ const ManageHealthcheck: React.FC = () => {
               selected={createDate}
               onChange={date => setCreateDate(date)}
               dateFormat="yyyy-MM-dd"
-              minDate={(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()}
+              minDate={(() => { const d = new Date(); d.setHours(0,0,0,0); return d; })()}
               className="w-full border border-gray-300 rounded px-3 py-2"
               placeholderText="Chọn ngày khám"
             />
