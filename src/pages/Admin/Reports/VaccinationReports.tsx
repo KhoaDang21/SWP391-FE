@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Modal, Descriptions, Tag, Button, Card, message } from 'antd';
+import { Table, Modal, Descriptions, Tag, Button, Card, message, Tooltip } from 'antd';
 import { vaccineService, VaccineEvent, VaccinePayload } from '../../../services/Vaccineservice';
 import { exportExcel } from '../../../services/ExportService';
 import { saveAs } from 'file-saver';
+import { EyeOutlined } from '@ant-design/icons';
 
 const VaccinationReports: React.FC = () => {
     const [vaccineEvents, setVaccineEvents] = useState<VaccineEvent[]>([]);
@@ -76,21 +77,24 @@ const VaccinationReports: React.FC = () => {
             render: (r: VaccineEvent) =>
                 r.eventdate ? new Date(r.eventdate).toLocaleDateString() : ''
         },
-        // {
-        //             title: 'Hành động',
-        //             render: (_: unknown, record: VaccineEvent) => (
-        //                 <Button
-        //                     size="small"
-        //                     onClick={(e) => {
-        //                         e.stopPropagation(); // ✅ Ngăn mở modal
-        //                         handleExport(record.VH_ID, 'vaccine');
-        //                     }}
-        //                 >
-        //                     Xuất danh sách học sinh
-        //                 </Button>
-        //             )
-        //         }
+        {
+            title: 'Hành động',
+            render: (_: unknown, record: VaccineEvent) => (
+                <div className="flex gap-2">
+                    <Tooltip title="Xem chi tiết">
+                        <Button
+                            icon={<EyeOutlined />}
+                            size="small"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRowClick(record);
+                            }}
+                        />
+                    </Tooltip>
 
+                </div>
+            )
+        }
     ];
 
     const studentColumns = [
@@ -133,7 +137,7 @@ const VaccinationReports: React.FC = () => {
                 dataSource={vaccineEvents}
                 loading={loadingEvents}
                 rowKey={r => `${r.vaccineName}_${r.grade}_${r.eventdate}`}
-                onRow={record => ({ onClick: () => handleRowClick(record) })}
+                // onRow={record => ({ onClick: () => handleRowClick(record) })}
                 pagination={false}
                 rowClassName={r =>
                     selectedEvent &&

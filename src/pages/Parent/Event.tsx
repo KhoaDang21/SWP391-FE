@@ -20,6 +20,7 @@ interface EventType {
     callParent: string
     createdAt: string
     image?: string | null
+    video?: string | null
 }
 
 dayjs.extend(isSameOrAfter)
@@ -37,7 +38,7 @@ const Event = () => {
     function handleShowDetail(event: EventType) {
         setDetailModal({ open: true, event })
     }
-    
+
     useEffect(() => {
         const params = new URLSearchParams(location.search)
         const dateParam = params.get('date')
@@ -66,9 +67,10 @@ const Event = () => {
                     solution: item.Handle,
                     callParent: item.Is_calLOb ? 'Có' : 'Không',
                     createdAt: item.history?.[0]?.Date_create
-                        ? item.history[0].Date_create 
+                        ? item.history[0].Date_create
                         : '',
                     image: item.Image || null,
+                    video: item.Video || null
                 }))
                 setEvents(mapped)
             } catch (e) {
@@ -147,10 +149,10 @@ const Event = () => {
                     <Tag
                         color="warning"
                         icon={<MinusCircleOutlined />}
-                        style={{ 
-                            fontWeight: 500, 
-                            fontSize: 13, 
-                            padding: '6px 12px', 
+                        style={{
+                            fontWeight: 500,
+                            fontSize: 13,
+                            padding: '6px 12px',
                             borderRadius: 6,
                             border: 'none',
                             background: '#fff7e6',
@@ -229,9 +231,9 @@ const Event = () => {
             <Modal
                 open={detailModal.open}
                 title={
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 12,
                         background: '#4f46e5',
                         color: 'white',
@@ -239,9 +241,9 @@ const Event = () => {
                         padding: '20px 24px',
                         borderRadius: '8px 8px 0 0'
                     }}>
-                        <div style={{ 
-                            background: 'rgba(255,255,255,0.15)', 
-                            padding: 8, 
+                        <div style={{
+                            background: 'rgba(255,255,255,0.15)',
+                            padding: 8,
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
@@ -262,8 +264,8 @@ const Event = () => {
                 }}
             >
                 {detailModal.event && (
-                    <div style={{ 
-                        display: 'grid', 
+                    <div style={{
+                        display: 'grid',
                         gridTemplateColumns: detailModal.event.image ? '1fr 400px' : '1fr',
                         gap: 28,
                         minHeight: '400px'
@@ -275,10 +277,10 @@ const Event = () => {
                             boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
                             border: '1px solid #e2e8f0'
                         }}>
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 12, 
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 12,
                                 marginBottom: 24,
                                 paddingBottom: 16,
                                 borderBottom: '2px solid #f1f5f9'
@@ -320,10 +322,10 @@ const Event = () => {
                                     <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
                                         Lớp học
                                     </Text>
-                                    <Tag 
-                                        color="blue" 
-                                        style={{ 
-                                            fontSize: 14, 
+                                    <Tag
+                                        color="blue"
+                                        style={{
+                                            fontSize: 14,
                                             padding: '4px 12px',
                                             borderRadius: 6,
                                             border: 'none'
@@ -375,10 +377,10 @@ const Event = () => {
                                             <Tag
                                                 color="success"
                                                 icon={<CheckCircleOutlined />}
-                                                style={{ 
-                                                    fontWeight: 500, 
-                                                    fontSize: 13, 
-                                                    padding: '6px 12px', 
+                                                style={{
+                                                    fontWeight: 500,
+                                                    fontSize: 13,
+                                                    padding: '6px 12px',
                                                     borderRadius: 6,
                                                     border: 'none'
                                                 }}
@@ -389,10 +391,10 @@ const Event = () => {
                                             <Tag
                                                 color="warning"
                                                 icon={<MinusCircleOutlined />}
-                                                style={{ 
-                                                    fontWeight: 500, 
-                                                    fontSize: 13, 
-                                                    padding: '6px 12px', 
+                                                style={{
+                                                    fontWeight: 500,
+                                                    fontSize: 13,
+                                                    padding: '6px 12px',
                                                     borderRadius: 6,
                                                     border: 'none',
                                                     background: '#fff7e6',
@@ -413,9 +415,9 @@ const Event = () => {
                                         <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
                                             Thời gian
                                         </Text>
-                                        <Text style={{ 
-                                            fontSize: 13, 
-                                            fontWeight: 500, 
+                                        <Text style={{
+                                            fontSize: 13,
+                                            fontWeight: 500,
                                             color: '#6366f1',
                                             background: 'white',
                                             padding: '4px 8px',
@@ -434,7 +436,7 @@ const Event = () => {
                             </div>
                         </div>
 
-                        {detailModal.event.image && (
+                        {(detailModal.event.image || detailModal.event.video) && (
                             <div style={{
                                 background: 'white',
                                 borderRadius: 12,
@@ -442,13 +444,14 @@ const Event = () => {
                                 boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
                                 border: '1px solid #e2e8f0',
                                 display: 'flex',
-                                flexDirection: 'column'
+                                flexDirection: 'column',
+                                gap: 24
                             }}>
-                                <div style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: 12, 
-                                    marginBottom: 20,
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 12,
+                                    marginBottom: 8,
                                     paddingBottom: 16,
                                     borderBottom: '2px solid #f1f5f9'
                                 }}>
@@ -458,50 +461,78 @@ const Event = () => {
                                         borderRadius: 8,
                                         color: 'white'
                                     }}>
-                                        🖼️
+                                        📁
                                     </div>
                                     <Text strong style={{ fontSize: 18, color: '#1e293b' }}>
-                                        Hình ảnh minh họa
+                                        Tư liệu minh họa
                                     </Text>
                                 </div>
-                                
-                                <div style={{ 
-                                    flex: 1,
-                                    display: 'flex', 
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    background: '#f8fafc',
-                                    borderRadius: 8,
-                                    padding: 16,
-                                    border: '2px dashed #d1d5db'
-                                }}>
-                                    <Image 
-                                        src={detailModal.event.image} 
-                                        alt="event" 
-                                        style={{ 
-                                            maxWidth: '100%', 
-                                            maxHeight: '300px',
-                                            borderRadius: 6,
-                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                        }}
-                                        preview={{
-                                            mask: (
-                                                <div style={{ 
-                                                    background: 'rgba(0,0,0,0.6)', 
-                                                    color: 'white',
-                                                    padding: '8px 16px',
-                                                    borderRadius: 4,
-                                                    fontSize: 14,
-                                                    fontWeight: 500
-                                                }}>
-                                                    <EyeOutlined style={{ marginRight: 6 }} /> Xem phóng to
-                                                </div>
-                                            )
-                                        }}
-                                    />
-                                </div>
+
+                                {detailModal.event.image && (
+                                    <div style={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        background: '#f8fafc',
+                                        borderRadius: 8,
+                                        padding: 16,
+                                        border: '2px dashed #d1d5db'
+                                    }}>
+                                        <Image
+                                            src={detailModal.event.image}
+                                            alt="event"
+                                            style={{
+                                                maxWidth: '100%',
+                                                maxHeight: '250px',
+                                                borderRadius: 6,
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }}
+                                            preview={{
+                                                mask: (
+                                                    <div style={{
+                                                        background: 'rgba(0,0,0,0.6)',
+                                                        color: 'white',
+                                                        padding: '8px 16px',
+                                                        borderRadius: 4,
+                                                        fontSize: 14,
+                                                        fontWeight: 500
+                                                    }}>
+                                                        <EyeOutlined style={{ marginRight: 6 }} /> Xem phóng to
+                                                    </div>
+                                                )
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {detailModal.event.video && (
+                                    <div style={{
+                                        flex: 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        background: '#f8fafc',
+                                        borderRadius: 8,
+                                        padding: 16,
+                                        border: '2px dashed #d1d5db'
+                                    }}>
+                                        <video
+                                            src={detailModal.event.video}
+                                            controls
+                                            style={{
+                                                maxWidth: '100%',
+                                                maxHeight: '250px',
+                                                borderRadius: 6,
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         )}
+
+
                     </div>
                 )}
             </Modal>

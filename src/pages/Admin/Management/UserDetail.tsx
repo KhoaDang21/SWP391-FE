@@ -171,16 +171,19 @@ const UserDetail: React.FC = () => {
                             Chi tiết người dùng
                         </h1>
                     </div>
-                    <div className="flex items-center gap-2 h-full">
-                        <Button
-                            type="primary"
-                            icon={<EditOutlined />}
-                            className="bg-blue-500 h-full flex items-center"
-                            onClick={handleEdit}
-                        >
-                            Chỉnh sửa
-                        </Button>
-                    </div>
+                    {user?.roleId === 2 && (
+                        <div className="flex items-center gap-2 h-full">
+                            <Button
+                                type="primary"
+                                icon={<EditOutlined />}
+                                className="bg-blue-500 h-full flex items-center"
+                                onClick={handleEdit}
+                            >
+                                Chỉnh sửa
+                            </Button>
+                        </div>
+                    )}
+
                 </div>
 
                 <div className="bg-white rounded-lg p-6 border border-gray-200">

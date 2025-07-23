@@ -13,6 +13,7 @@ interface FormData {
   Decription: string;
   Handle: string;
   Image: File | null;
+  Video: File | null;
   Is_calLOb: boolean;
 }
 
@@ -41,6 +42,7 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
     Decription: '',
     Handle: '',
     Image: null,
+    Video: null,
     Is_calLOb: false
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -53,7 +55,7 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFormData(prev => ({ ...prev, Image: file }));
-      
+
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     }
@@ -72,6 +74,7 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
     Decription: '',
     Handle: '',
     Image: null,
+    Video: null,
     Is_calLOb: false
   };
 
@@ -136,7 +139,7 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
       setErrorMessage(null);
     }
   }, [isOpen]);
-  
+
   if (!isOpen) return null;
 
   return (
@@ -159,7 +162,7 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
               <label className="block text-lg font-semibold text-gray-800 mb-4">
                 Thông tin học sinh & phụ huynh <span className="text-red-500">*</span>
               </label>
-              
+
               {selectedInfo ? (
                 <div className="border rounded-xl p-5 bg-gradient-to-br from-blue-50 to-white shadow-sm relative flex-1 overflow-y-auto max-h-[calc(90vh-200px)]">
                   <button
@@ -170,7 +173,7 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
                   >
                     <X size={16} />
                   </button>
-                  
+
                   <div className="space-y-4 pr-8">
                     <div>
                       <h4 className="font-semibold text-blue-800 mb-3 text-base border-b border-blue-200 pb-2">
@@ -344,6 +347,56 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
                   )}
                 </div>
               </div>
+
+              <div className="space-y-4">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Video minh họa (nếu có)
+                </label>
+                <div className="flex flex-col items-center justify-center w-full">
+                  {formData.Video ? (
+                    <div className="relative w-full max-w-full">
+                      <video
+                        controls
+                        src={URL.createObjectURL(formData.Video)}
+                        className="w-full max-h-[300px] rounded-xl shadow-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, Video: null }));
+                        }}
+                        className="absolute -top-2 -right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg className="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" />
+                        </svg>
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Nhấn để tải video lên</span>
+                        </p>
+                        <p className="text-xs text-gray-500">MP4, MOV, AVI (Tối đa ~50MB)</p>
+                      </div>
+                      <input
+                        type="file"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            const file = e.target.files[0];
+                            setFormData(prev => ({ ...prev, Video: file }));
+                          }
+                        }}
+                        accept="video/*"
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
 
               <div className="flex items-center p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <input

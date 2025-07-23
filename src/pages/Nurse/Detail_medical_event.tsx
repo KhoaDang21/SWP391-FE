@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Image, Button, Card, Row, Col, Descriptions, Tag, Spin, Alert, Divider } from 'antd';
-import { ArrowLeft, Pencil, User, Stethoscope, Phone, Calendar, Image as ImageIcon, FileText, ShieldAlert, HeartPulse, PhoneCall } from 'lucide-react';
+import { ArrowLeft, Pencil, User, Stethoscope, Phone, Calendar, Image as ImageIcon, FileText, ShieldAlert, HeartPulse, PhoneCall, VideoIcon } from 'lucide-react';
 import Modal_edit_medical_Event from './Modal/Modal_edit_medical_Event';
 import { notificationService } from '../../services/NotificationService';
 import { medicalEventService } from '../../services/MedicalEventService';
@@ -11,6 +11,7 @@ interface MedicalEventDetail {
   Decription: string;
   Handle: string;
   Image: string | null;
+  Video?: string | null;
   Is_calLOb: boolean;
   history: {
     ID: number;
@@ -185,10 +186,7 @@ const Detail_medical_event: React.FC = () => {
               <Descriptions.Item label="Dị ứng">{eventDetail.Medical_record.allergies || 'Không có'}</Descriptions.Item>
               <Descriptions.Item label="Bệnh đã mắc">{eventDetail.Medical_record.pastIllnesses || 'Không có'}</Descriptions.Item>
             </Descriptions>
-          </Card>
-
-          <Card bordered={false} className="shadow-lg rounded-xl mt-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3 mt-8">
               <Stethoscope className="text-green-600" />
               Chi tiết sự kiện
             </h2>
@@ -209,10 +207,12 @@ const Detail_medical_event: React.FC = () => {
               </Descriptions.Item>
             </Descriptions>
           </Card>
+
+
         </Col>
 
         <Col xs={24} lg={10}>
-          <Card bordered={false} className="shadow-lg rounded-xl h-full">
+          <Card bordered={false} className="shadow-lg rounded-xl ">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
               <ImageIcon className="text-purple-600" />
               Hình ảnh minh họa
@@ -231,10 +231,29 @@ const Detail_medical_event: React.FC = () => {
                 </div>
               )}
             </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3 mt-8">
+              <VideoIcon className="text-red-500" />
+              Video minh họa
+            </h2>
+            <div className="flex items-center justify-center w-full bg-gray-50 rounded-lg p-4 min-h-[300px]">
+              {eventDetail.Video ? (
+                <video
+                  src={eventDetail.Video}
+                  controls
+                  className="w-full max-h-[400px] rounded-lg"
+                />
+              ) : (
+                <div className="text-gray-400 text-center">
+                  <FileText size={48} className="text-gray-300 mx-auto mb-4" />
+                  <p className="font-medium">Không có video</p>
+                </div>
+              )}
+            </div>
           </Card>
+
         </Col>
       </Row>
-      
+
       <Modal_edit_medical_Event
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
