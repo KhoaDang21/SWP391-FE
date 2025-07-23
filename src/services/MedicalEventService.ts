@@ -38,6 +38,7 @@ interface CreateMedicalEventData {
   Decription: string;
   Handle: string;
   Image: File | null;
+  Video: File | null;
   Is_calLOb: boolean;
 }
 
@@ -70,14 +71,17 @@ export const medicalEventService = {
   createMedicalEvent: async (formData: CreateMedicalEventData): Promise<any> => {
     const token = localStorage.getItem('accessToken');
     const submitData = new FormData();
-    
+
     submitData.append('ID', formData.ID);
     submitData.append('Decription', formData.Decription.trim());
     submitData.append('Handle', formData.Handle.trim());
     submitData.append('Is_calLOb', formData.Is_calLOb ? 'true' : 'false');
-    
+
     if (formData.Image instanceof File) {
       submitData.append('Image', formData.Image);
+    }
+    if (formData.Video instanceof File) {
+      submitData.append('Video', formData.Video);
     }
 
     console.log('Submitting medical event data:', {

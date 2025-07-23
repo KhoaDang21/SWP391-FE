@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Modal, Descriptions, Tag, Button, Card, message } from 'antd';
+import { Table, Modal, Descriptions, Tag, Button, Card, message, Tooltip, Image } from 'antd';
 import {
     healthCheckService,
     HealthCheckEvent,
@@ -9,6 +9,7 @@ import {
 } from '../../../services/Healthcheck';
 import { exportExcel } from '../../../services/ExportService';
 import { saveAs } from 'file-saver';
+import { EyeOutlined } from '@ant-design/icons';
 
 const HealthEvents: React.FC = () => {
     const [healthEvents, setHealthEvents] = useState<HealthCheckEvent[]>([]);
@@ -89,21 +90,40 @@ const HealthEvents: React.FC = () => {
                 r.Event?.dateEvent ? new Date(r.Event.dateEvent).toLocaleDateString() : ''
         },
         { title: 'Loại', render: (r: HealthCheckEvent) => r.Event?.type },
-        { title: 'Mô tả', dataIndex: 'description' },
-        // {
-        //     title: 'Hành động',
-        //     render: (_: unknown, record: HealthCheckEvent) => (
-        //         <Button
-        //             size="small"
-        //             onClick={(e) => {
-        //                 e.stopPropagation(); // ✅ Ngăn mở modal
-        //                 handleExport(record.HC_ID, 'health');
-        //             }}
-        //         >
-        //             Xuất danh sách học sinh
-        //         </Button>
-        //     )
-        // }
+        {
+            title: 'Mô tả',
+            dataIndex: 'description',
+            render: (text: string) => (
+                <Tooltip title={text}>
+                    <div style={{
+                        maxWidth: 80,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                    }}>
+                        {text}
+                    </div>
+                </Tooltip>
+            ),
+        },
+        {
+            title: 'Hành động',
+            render: (_: unknown, record: HealthCheckEvent) => (
+                <div className="flex gap-2">
+                    <Tooltip title="Xem chi tiết">
+                        <Button
+                            icon={<EyeOutlined />}
+                            size="small"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRowClick(record);
+                            }}
+                        />
+                    </Tooltip>
+
+                </div>
+            )
+        }
 
 
 
@@ -172,7 +192,7 @@ const HealthEvents: React.FC = () => {
                 dataSource={healthEvents}
                 loading={loadingEvents}
                 rowKey="HC_ID"
-                onRow={record => ({ onClick: () => handleRowClick(record) })}
+                // onRow={record => ({ onClick: () => handleRowClick(record) })}
                 pagination={false}
                 rowClassName={r => (selectedEvent && r.HC_ID === selectedEvent.HC_ID ? 'bg-blue-50' : '')}
             />
@@ -245,7 +265,7 @@ const HealthEvents: React.FC = () => {
                             <Descriptions.Item label="Cần gặp">{studentResult.Is_need_meet ? 'Có' : 'Không'}</Descriptions.Item>
                             {studentResult.image && (
                                 <Descriptions.Item label="Ảnh khám">
-                                    <img src={studentResult.image} alt="Ảnh khám" style={{ maxWidth: 200 }} />
+                                    <Image src={studentResult.image} alt="Ảnh khám" style={{ maxWidth: 200 }} />
                                 </Descriptions.Item>
                             )}
                         </Descriptions>

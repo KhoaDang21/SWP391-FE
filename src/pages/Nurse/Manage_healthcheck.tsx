@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Select, Space, Modal, Form, Input } from 'antd';
+import { Button, Select, Space, Modal, Form, Input, List, Tooltip } from 'antd';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate } from 'react-router-dom';
 import { healthCheckService, HealthCheckEvent, CreateHealthCheckRequest } from '../../services/Healthcheck';
 import { notificationService } from '../../services/NotificationService';
 import { Send, Check, Edit, Trash2 } from 'lucide-react';
+import { EyeOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -308,7 +309,7 @@ const ManageHealthcheck: React.FC = () => {
                   <tr
                     key={event.HC_ID}
                     className="hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
-                    onClick={() => handleRowClick(event)}
+                  // onClick={() => handleRowClick(event)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{index + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -352,9 +353,26 @@ const ManageHealthcheck: React.FC = () => {
                         );
                       })()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.description}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 max-w-28">
+                      <Tooltip title={event.description}>
+                        <div className="truncate w-full">{event.description}</div>
+                      </Tooltip>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       <div className="flex items-center space-x-3">
+                        {/* Nút luôn hiển thị để gọi handleRowClick */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(event);
+                          }}
+                          className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                          title="Xem danh sách học sinh"
+                        >
+                          <EyeOutlined />
+                        </button>
+
+                        {/* Các nút chỉ hiển thị khi không phải đang diễn ra hoặc đã kiểm tra */}
                         {!(event.status === 'in progress' || event.status === 'checked') && (
                           <>
                             <button
@@ -379,6 +397,8 @@ const ManageHealthcheck: React.FC = () => {
                             </button>
                           </>
                         )}
+
+                        {/* Gửi xác nhận hoặc đã gửi */}
                         {isSent ? (
                           <div className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-800 text-sm rounded-lg border border-green-200">
                             <Check className="h-4 w-4 mr-1" />
@@ -400,6 +420,7 @@ const ManageHealthcheck: React.FC = () => {
                         )}
                       </div>
                     </td>
+
                   </tr>
                 );
               })
@@ -450,7 +471,7 @@ const ManageHealthcheck: React.FC = () => {
 
           <Form.Item
             name="dateEvent"
-            label={<span><span style={{color: 'red'}}>*</span> Ngày khám</span>}
+            label={<span><span style={{ color: 'red' }}>*</span> Ngày khám</span>}
             rules={[
               {
                 validator: (_, value) => {
@@ -489,7 +510,7 @@ const ManageHealthcheck: React.FC = () => {
 
           <Form.Item
             name="schoolYear"
-            label={<span><span style={{color: 'red'}}>*</span> Năm học</span>}
+            label={<span><span style={{ color: 'red' }}>*</span> Năm học</span>}
             rules={[
               {
                 validator: (_, value) => {

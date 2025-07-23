@@ -176,10 +176,10 @@ const ManageHealthRecords: React.FC = () => {
         open={isViewModalOpen}
         onCancel={() => setIsViewModalOpen(false)}
         footer={[
-          <Button 
-            key="close" 
+          <Button
+            key="close"
             onClick={() => setIsViewModalOpen(false)}
-            className="bg-gray-600 hover:bg-gray-700 border-gray-600 text-white"
+          // className="bg-gray-600 hover:bg-gray-700 border-gray-600 text-white"
           >
             Đóng
           </Button>
@@ -204,11 +204,10 @@ const ManageHealthRecords: React.FC = () => {
                   </div>
                   <div className="flex items-center">
                     <span className="font-medium text-gray-700 w-24">Giới tính:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      viewingRecord.gender === 'Nam' 
-                        ? 'bg-blue-100 text-blue-800' 
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${viewingRecord.gender === 'Nam'
+                        ? 'bg-blue-100 text-blue-800'
                         : 'bg-pink-100 text-pink-800'
-                    }`}>
+                      }`}>
                       {viewingRecord.gender}
                     </span>
                   </div>
@@ -329,13 +328,12 @@ const ManageHealthRecords: React.FC = () => {
                             <td className="px-4 py-3 text-sm text-gray-900">{vaccine.name}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{vaccine.date}</td>
                             <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                vaccine.status === 'completed' 
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${vaccine.status === 'completed'
                                   ? 'bg-green-100 text-green-800'
                                   : vaccine.status === 'pending'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
                                 {vaccine.status}
                               </span>
                             </td>

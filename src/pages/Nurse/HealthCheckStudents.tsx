@@ -347,7 +347,7 @@ const HealthCheckStudents: React.FC = () => {
           {record.Is_need_meet ? (
             <>
               <AlertCircle className="w-3 h-3" />
-              Từ chối
+              Cần gặp
             </>
           ) : (
             <>

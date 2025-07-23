@@ -291,7 +291,7 @@ const MedicineManagement: React.FC = () => {
           <Space>
             <Tooltip title="Xem chi tiết"><Button type="text" icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} /></Tooltip>
             <Tooltip title="Sửa"><Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} disabled={isGiven} /></Tooltip>
-            <Popconfirm
+            {/* <Popconfirm
               title="Xác nhận xóa"
               description="Bạn chắc chắn muốn xóa đơn thuốc này?"
               onConfirm={() => handleDelete(record.id)}
@@ -301,7 +301,7 @@ const MedicineManagement: React.FC = () => {
               disabled={isGiven}
             >
               <Tooltip title="Xóa"><Button type="text" danger icon={<DeleteOutlined />} disabled={isGiven} /></Tooltip>
-            </Popconfirm>
+            </Popconfirm> */}
           </Space>
         );
       }
