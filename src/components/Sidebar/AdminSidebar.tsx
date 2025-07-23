@@ -7,8 +7,7 @@ import {
     LogoutOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
-    DownOutlined,
-    FileExcelOutlined
+    DownOutlined
 } from '@ant-design/icons';
 import logo from '../../assets/images/medical-book.png';
 import { logout } from '../../services/AuthServices';
@@ -21,12 +20,6 @@ const menuConfig = [
         icon: <HomeOutlined className="w-5 h-5" />,
         label: 'Tình hình y tế học đường',
         path: '/admin/health-overview'
-    },
-    {
-        key: 'export-excel',
-        icon: <FileExcelOutlined className="text-lg" />,
-        label: 'Xuất file Excel',
-        path: '/admin/export-excel'
     },
     {
         key: 'reports',

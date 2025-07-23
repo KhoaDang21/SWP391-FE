@@ -97,12 +97,12 @@ const about= () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="group">
-                <div className="bg-white rounded-xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
-                  <div className="text-blue-600 mb-6 group-hover:text-cyan-600 transition-colors duration-300">
+                <div className="bg-white/70 rounded-3xl p-8 shadow-xl border border-cyan-200 hover:scale-105 hover:shadow-2xl transition-transform transition-shadow duration-200 will-change-transform will-change-shadow backdrop-blur-md flex flex-col items-center text-center" style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.10)' }}>
+                  <div className="w-20 h-20 bg-gradient-to-br from-cyan-400 to-blue-400 rounded-2xl flex items-center justify-center mb-5 text-white text-3xl shadow-lg group-hover:from-blue-500 group-hover:to-cyan-500 transition-colors">
                     {feature.icon}
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                  <h3 className="text-xl font-bold text-blue-700 mb-3 drop-shadow-sm">{feature.title}</h3>
+                  <p className="text-gray-700 leading-relaxed font-medium opacity-90">{feature.description}</p>
                 </div>
               </div>
             ))}
