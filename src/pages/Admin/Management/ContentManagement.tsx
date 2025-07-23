@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Typography, Table, Button, Modal, Form, Input, message, Popconfirm, Space, Card, Row, Col, Tabs, Select } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { getAllBlogs, createBlog, updateBlog, deleteBlog, Blog } from '../../../services/BlogService';
 import { getAllCategories, createCategory, updateCategory, deleteCategory, Category } from '../../../services/CategoryService';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
@@ -184,9 +184,10 @@ const ContentManagement: React.FC = () => {
                             color: '#874d00',
                             borderColor: '#ffd666'
                         }}
-                    >
-                        Sửa
-                    </Button>
+                        icon={<EditOutlined />}
+                        shape="circle"
+                        title="Sửa"
+                    />
                     <Popconfirm
                         title="Bạn chắc chắn muốn xóa blog này?"
                         onConfirm={() => handleDelete(record.id!)}
@@ -194,7 +195,7 @@ const ContentManagement: React.FC = () => {
                         cancelText="Hủy"
                         placement="topRight"
                     >
-                        <Button type="primary" danger>Xóa</Button>
+                        <Button type="primary" danger icon={<DeleteOutlined />} shape="circle" title="Xóa" />
                     </Popconfirm>
                 </Space>
             ),
@@ -300,9 +301,10 @@ const ContentManagement: React.FC = () => {
                             color: '#874d00',
                             borderColor: '#ffd666'
                         }}
-                    >
-                        Sửa
-                    </Button>
+                        icon={<EditOutlined />}
+                        shape="circle"
+                        title="Sửa"
+                    />
                     <Popconfirm
                         title="Bạn chắc chắn muốn xóa category này?"
                         onConfirm={() => handleCatDelete(record.Category_id!)}
@@ -310,7 +312,7 @@ const ContentManagement: React.FC = () => {
                         cancelText="Hủy"
                         placement="topRight"
                     >
-                        <Button type="primary" danger>Xóa</Button>
+                        <Button type="primary" danger icon={<DeleteOutlined />} shape="circle" title="Xóa" />
                     </Popconfirm>
                 </Space>
             ),

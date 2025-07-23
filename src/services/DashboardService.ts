@@ -87,3 +87,10 @@ export async function getDashboardCounts(): Promise<AdminCounts> {
     if (!res.ok) throw new Error('Lỗi khi lấy thống kê sự kiện khám sức khỏe');
     return res.json();
 }
+
+export async function getTotalMedicalRecord(): Promise<{ count: number }> {
+    const res = await fetch(`${API_URL}/event/medical-record/count`);
+    if (!res.ok) throw new Error('Lỗi lấy tổng số hồ sơ y tế');
+    const data = await res.json();
+    return data;
+}

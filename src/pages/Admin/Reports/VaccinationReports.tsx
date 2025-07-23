@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Modal, Descriptions, Tag, Button, Card } from 'antd';
+import { Table, Modal, Descriptions, Tag, Button, Card, message, Tooltip } from 'antd';
 import { vaccineService, VaccineEvent, VaccinePayload } from '../../../services/Vaccineservice';
+import { exportExcel } from '../../../services/ExportService';
+import { saveAs } from 'file-saver';
+import { EyeOutlined } from '@ant-design/icons';
 
 const VaccinationReports: React.FC = () => {
     const [vaccineEvents, setVaccineEvents] = useState<VaccineEvent[]>([]);
@@ -28,6 +31,17 @@ const VaccinationReports: React.FC = () => {
         };
         fetchEvents();
     }, []);
+
+    const handleExport = async (eventId: number, type: 'vaccine' | 'health') => {
+        try {
+            const blob = await exportExcel(eventId, type);
+            const fileName = `Danh-sach-${type}-${eventId}.xlsx`;
+            saveAs(blob, fileName);
+        } catch (error) {
+            console.error('Lỗi xuất Excel:', error);
+            message.error('Xuất danh sách thất bại');
+        }
+    };
 
     // Khi chọn 1 đợt tiêm, lấy danh sách học sinh và mở Modal
     const handleRowClick = async (event: VaccineEvent) => {
@@ -62,6 +76,24 @@ const VaccinationReports: React.FC = () => {
             title: 'Ngày tiêm',
             render: (r: VaccineEvent) =>
                 r.eventdate ? new Date(r.eventdate).toLocaleDateString() : ''
+        },
+        {
+            title: 'Hành động',
+            render: (_: unknown, record: VaccineEvent) => (
+                <div className="flex gap-2">
+                    <Tooltip title="Xem chi tiết">
+                        <Button
+                            icon={<EyeOutlined />}
+                            size="small"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRowClick(record);
+                            }}
+                        />
+                    </Tooltip>
+
+                </div>
+            )
         }
     ];
 
@@ -105,7 +137,7 @@ const VaccinationReports: React.FC = () => {
                 dataSource={vaccineEvents}
                 loading={loadingEvents}
                 rowKey={r => `${r.vaccineName}_${r.grade}_${r.eventdate}`}
-                onRow={record => ({ onClick: () => handleRowClick(record) })}
+                // onRow={record => ({ onClick: () => handleRowClick(record) })}
                 pagination={false}
                 rowClassName={r =>
                     selectedEvent &&
@@ -126,9 +158,27 @@ const VaccinationReports: React.FC = () => {
                     setStudents([]);
                 }}
                 title={
-                    selectedEvent
-                        ? `Danh sách học sinh - ${selectedEvent.vaccineName} - Khối ${selectedEvent.grade} - ${new Date(selectedEvent.eventdate).toLocaleDateString()}`
-                        : 'Danh sách học sinh'
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>
+                            {selectedEvent
+                                ? `Danh sách học sinh - ${selectedEvent.vaccineName} - Khối ${selectedEvent.grade} - ${new Date(selectedEvent.eventdate).toLocaleDateString()}`
+                                : 'Danh sách học sinh'}
+                        </span>
+                        {selectedEvent && (
+                            <Button
+                                className='mr-10'
+
+                                onClick={() => {
+                                    const eventId = students[0]?.Event_ID;
+                                    if (eventId) {
+                                        handleExport(eventId, 'vaccine');
+                                    }
+                                }}
+                            >
+                                Xuất danh sách học sinh
+                            </Button>
+                        )}
+                    </div>
                 }
                 footer={null}
                 centered
@@ -142,6 +192,7 @@ const VaccinationReports: React.FC = () => {
                     pagination={false}
                 />
             </Modal>
+
 
             {/* Modal chi tiết học sinh */}
             <Modal

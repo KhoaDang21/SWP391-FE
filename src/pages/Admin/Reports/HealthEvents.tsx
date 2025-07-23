@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Modal, Descriptions, Tag, Button, Card } from 'antd';
+import { Table, Modal, Descriptions, Tag, Button, Card, message, Tooltip, Image } from 'antd';
 import {
     healthCheckService,
     HealthCheckEvent,
@@ -7,6 +7,9 @@ import {
     HealthCheckResult,
     Guardian
 } from '../../../services/Healthcheck';
+import { exportExcel } from '../../../services/ExportService';
+import { saveAs } from 'file-saver';
+import { EyeOutlined } from '@ant-design/icons';
 
 const HealthEvents: React.FC = () => {
     const [healthEvents, setHealthEvents] = useState<HealthCheckEvent[]>([]);
@@ -36,6 +39,18 @@ const HealthEvents: React.FC = () => {
         };
         fetchEvents();
     }, []);
+
+    const handleExport = async (eventId: number, type: 'vaccine' | 'health') => {
+        try {
+            const blob = await exportExcel(eventId, type);
+            const fileName = `Danh-sach-${type}-${eventId}.xlsx`;
+            saveAs(blob, fileName);
+        } catch (error) {
+            console.error('Lỗi xuất Excel:', error);
+            message.error('Xuất danh sách thất bại');
+        }
+    };
+
 
     const handleRowClick = async (event: HealthCheckEvent) => {
         setSelectedEvent(event);
@@ -75,7 +90,43 @@ const HealthEvents: React.FC = () => {
                 r.Event?.dateEvent ? new Date(r.Event.dateEvent).toLocaleDateString() : ''
         },
         { title: 'Loại', render: (r: HealthCheckEvent) => r.Event?.type },
-        { title: 'Mô tả', dataIndex: 'description' }
+        {
+            title: 'Mô tả',
+            dataIndex: 'description',
+            render: (text: string) => (
+                <Tooltip title={text}>
+                    <div style={{
+                        maxWidth: 80,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                    }}>
+                        {text}
+                    </div>
+                </Tooltip>
+            ),
+        },
+        {
+            title: 'Hành động',
+            render: (_: unknown, record: HealthCheckEvent) => (
+                <div className="flex gap-2">
+                    <Tooltip title="Xem chi tiết">
+                        <Button
+                            icon={<EyeOutlined />}
+                            size="small"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRowClick(record);
+                            }}
+                        />
+                    </Tooltip>
+
+                </div>
+            )
+        }
+
+
+
     ];
 
     const studentColumns = [
@@ -141,7 +192,7 @@ const HealthEvents: React.FC = () => {
                 dataSource={healthEvents}
                 loading={loadingEvents}
                 rowKey="HC_ID"
-                onRow={record => ({ onClick: () => handleRowClick(record) })}
+                // onRow={record => ({ onClick: () => handleRowClick(record) })}
                 pagination={false}
                 rowClassName={r => (selectedEvent && r.HC_ID === selectedEvent.HC_ID ? 'bg-blue-50' : '')}
             />
@@ -154,7 +205,21 @@ const HealthEvents: React.FC = () => {
                     setSelectedEvent(null);
                     setStudents([]);
                 }}
-                title={selectedEvent ? `Danh sách học sinh - ${selectedEvent.title}` : 'Danh sách học sinh'}
+                title={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>
+                            {selectedEvent ? `Danh sách học sinh - ${selectedEvent.title}` : 'Danh sách học sinh'}
+                        </span>
+                        {selectedEvent && (
+                            <Button
+                                className='mr-10'
+                                onClick={() => handleExport(selectedEvent.HC_ID, 'health')}
+                            >
+                                Xuất danh sách học sinh
+                            </Button>
+                        )}
+                    </div>
+                }
                 footer={null}
                 centered
                 width={1000}
@@ -167,6 +232,7 @@ const HealthEvents: React.FC = () => {
                     pagination={false}
                 />
             </Modal>
+
 
             {/* Modal hiển thị kết quả khám */}
             <Modal
@@ -199,7 +265,7 @@ const HealthEvents: React.FC = () => {
                             <Descriptions.Item label="Cần gặp">{studentResult.Is_need_meet ? 'Có' : 'Không'}</Descriptions.Item>
                             {studentResult.image && (
                                 <Descriptions.Item label="Ảnh khám">
-                                    <img src={studentResult.image} alt="Ảnh khám" style={{ maxWidth: 200 }} />
+                                    <Image src={studentResult.image} alt="Ảnh khám" style={{ maxWidth: 200 }} />
                                 </Descriptions.Item>
                             )}
                         </Descriptions>

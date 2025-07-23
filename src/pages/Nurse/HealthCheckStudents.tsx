@@ -347,7 +347,7 @@ const HealthCheckStudents: React.FC = () => {
           {record.Is_need_meet ? (
             <>
               <AlertCircle className="w-3 h-3" />
-              Từ chối
+              Cần gặp
             </>
           ) : (
             <>
@@ -413,7 +413,8 @@ const HealthCheckStudents: React.FC = () => {
           (record.status === 'approved' || record.status === 'checked') &&
           healthEventDetail &&
           typeof healthEventDetail === 'object' &&
-          ('status' in healthEventDetail ? (healthEventDetail as any).status !== 'checked' : true);
+          ('status' in healthEventDetail ? (healthEventDetail as any).status !== 'checked' : true) &&
+          healthEventDetail.status === 'in progress';
         const hasResult = record.Height || record.Weight || record.Blood_Pressure;
         const isChecked = record.status === 'checked';
 

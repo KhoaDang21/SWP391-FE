@@ -1,4 +1,4 @@
-import { DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import React, { useState, useEffect } from 'react';
 import { vaccineService, VaccineEvent, VaccinePayload } from '../../services/Vaccineservice';
 import VaccineCreateModal from './Modal/VaccineCreateModal';
@@ -262,7 +262,7 @@ const Manage_vaccine: React.FC = () => {
               <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lô</th>
               <th className="w-[10%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khối</th>
               <th className="w-[15%] px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tiêm</th>
-              <th className="w-[10%] px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Xóa</th>
+              <th className="w-[10%] px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -271,12 +271,12 @@ const Manage_vaccine: React.FC = () => {
                 <tr
                   key={event.vaccineName + event.grade + event.eventdate}
                   className="hover:bg-blue-50 transition-colors duration-200 cursor-pointer group"
-                  onClick={() =>
-                    navigate(
-                      `/nurse/vaccine-events/${encodeURIComponent(event.vaccineName)}/${event.grade}/${event.eventdate}`,
-                      { state: { vaccineName: event.vaccineName, grade: event.grade, eventDate: event.eventdate, batch_number: event.batch_number } }
-                    )
-                  }
+                  // onClick={() =>
+                  //   navigate(
+                  //     `/nurse/vaccine-events/${encodeURIComponent(event.vaccineName)}/${event.grade}/${event.eventdate}`,
+                  //     { state: { vaccineName: event.vaccineName, grade: event.grade, eventDate: event.eventdate, batch_number: event.batch_number } }
+                  //   )
+                  // }
                   title="Xem danh sách học sinh"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{(currentPage - 1) * pageSize + index + 1}</td>
@@ -285,19 +285,37 @@ const Manage_vaccine: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.batch_number}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Khối {event.grade}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{formatDate(event.eventdate)}</td>
-                  <td
-                    className="px-6 py-4 whitespace-nowrap text-center"
-                    onClick={e => {
-                      e.stopPropagation();
-                      if (!undeletableEvents.has(`${event.vaccineName}_${event.grade}_${event.eventdate}`)) {
-                        openDeleteModal(event);
+                  <td className="px-6 py-4 whitespace-nowrap text-center flex gap-5 items-center justify-center">
+                    {/* Nút xem danh sách học sinh */}
+                    <button
+                      onClick={() =>
+                        navigate(
+                          `/nurse/vaccine-events/${encodeURIComponent(event.vaccineName)}/${event.grade}/${event.eventdate}`,
+                          {
+                            state: {
+                              vaccineName: event.vaccineName,
+                              grade: event.grade,
+                              eventDate: event.eventdate,
+                              batch_number: event.batch_number
+                            }
+                          }
+                        )
                       }
-                    }}
-                  >
+                      title="Xem danh sách học sinh"
+                    // className="text-blue-500 hover:text-blue-700 transition"
+                    >
+                      <EyeOutlined />
+                    </button>
+
+                    {/* Nút xóa đợt tiêm */}
                     {!undeletableEvents.has(`${event.vaccineName}_${event.grade}_${event.eventdate}`) ? (
                       <button
                         className="text-red-500 hover:text-red-700 transition disabled:opacity-50"
                         disabled={deleteLoading === `${event.vaccineName}_${event.grade}_${event.eventdate}`}
+                        onClick={e => {
+                          e.stopPropagation();
+                          openDeleteModal(event);
+                        }}
                         title="Xóa đợt tiêm"
                       >
                         <DeleteOutlined spin={deleteLoading === `${event.vaccineName}_${event.grade}_${event.eventdate}`} />
@@ -308,6 +326,7 @@ const Manage_vaccine: React.FC = () => {
                       </span>
                     )}
                   </td>
+
                 </tr>
               ))
             ) : (

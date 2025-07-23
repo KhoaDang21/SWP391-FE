@@ -35,6 +35,7 @@ interface FormData {
   Decription: string;
   Handle: string;
   Image: File | null;
+  Video: File | null;
   Is_calLOb: boolean;
 }
 
