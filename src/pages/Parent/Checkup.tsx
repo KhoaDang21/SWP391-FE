@@ -226,7 +226,11 @@ const Checkup: React.FC = () => {
                             ) : (
                                 <List
                                     itemLayout="vertical"
-                                    dataSource={[...studentForms].sort((a, b) => new Date(b.dateEvent).getTime() - new Date(a.dateEvent).getTime())}
+                                    // Lọc các form có title (tức là chưa bị xoá)
+                                    dataSource={[...studentForms]
+                                        .filter(form => form.title) // Ẩn form đã xoá (không có title)
+                                        .sort((a, b) => new Date(b.dateEvent).getTime() - new Date(a.dateEvent).getTime())
+                                    }
                                     renderItem={(form: any) => {
                                         let tagColor = 'default';
                                         let displayStatus = form.status;
