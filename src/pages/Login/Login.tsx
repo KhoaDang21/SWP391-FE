@@ -12,7 +12,7 @@ import { notificationService } from "../../services/NotificationService";
 const getRedirectPath = (role: string) => {
     switch (role) {
         case "Admin":
-            return "/admin";
+            return "/admin/health-overview";
         case "Nurse":
             return "/nurse/dashboard";
         case "Guardian":

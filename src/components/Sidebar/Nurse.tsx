@@ -103,7 +103,8 @@ function Nurse() {
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
       hoverColor: 'hover:bg-purple-100'
-    }
+    },
+
   ];
 
   const bottomItems = [
@@ -285,7 +286,7 @@ function Nurse() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {menuItems.find(item => isActive(item.path))?.title || 'Dashboard'}
+                {menuItems.find(item => isActive(item.path))?.title || 'Profile'}
               </h1>
               <p className="text-sm text-gray-600 mt-1">
                 Chào mừng bạn đến với hệ thống quản lý y tế
