@@ -52,12 +52,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onCollapse }) =>
     const [openGroups, setOpenGroups] = useState<string[]>([]);
 
     useEffect(() => {
-        // Default to 'Tình hình y tế học đường' if no path is active or if it's the root admin path
-        if (location.pathname === '/admin' || location.pathname === '/admin/') {
-            navigate('/admin/health-overview');
-        }
-
-        // Open parent groups for active child paths
         const foundParent = menuConfig.find(group =>
             group.children?.some(item => location.pathname.startsWith(item.path))
         );
