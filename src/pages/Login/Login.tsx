@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import animationData from "../../assets/files/BgLogin.json";
-import { login, forgotPassword } from "../../services/AuthServices";
+import { login } from "../../services/AuthServices";
 import logo from "../../assets/images/medical-book.png";
 import { useDispatch } from 'react-redux';
 import { toggleLoading } from '../../app/redux/loading.slice';
@@ -12,7 +12,7 @@ import { notificationService } from "../../services/NotificationService";
 const getRedirectPath = (role: string) => {
     switch (role) {
         case "Admin":
-            return "/admin";
+            return "/admin/health-overview";
         case "Nurse":
             return "/nurse/dashboard";
         case "Guardian":

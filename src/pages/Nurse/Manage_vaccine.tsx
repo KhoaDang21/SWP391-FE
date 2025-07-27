@@ -17,7 +17,6 @@ const formatDate = (dateString: string) => {
 
 const Manage_vaccine: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [resetTrigger, setResetTrigger] = useState(0);
   const [vaccineEvents, setVaccineEvents] = useState<VaccineEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -90,7 +89,6 @@ const Manage_vaccine: React.FC = () => {
       const events = await vaccineService.getVaccineEvents();
       setVaccineEvents(events);
 
-      setResetTrigger(prev => prev + 1);
       setIsModalOpen(false);
       return true;
     } catch (error) {

@@ -111,6 +111,12 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
       setErrorMessage('Vui lòng tải lên hình ảnh.');
       return;
     }
+    if (formData.Video) {
+      if (formData.Video.size > 50 * 1024 * 1024) {
+        setErrorMessage('Video quá lớn. Vui lòng chọn file tối đa 50 MB.');
+        return;
+      }
+    }
 
     setIsLoading(true);
     try {
@@ -379,15 +385,26 @@ const Modal_create_medical_Event: React.FC<ModalProps> = ({ isOpen, onClose, onS
                         <p className="mb-2 text-sm text-gray-500">
                           <span className="font-semibold">Nhấn để tải video lên</span>
                         </p>
-                        <p className="text-xs text-gray-500">MP4, MOV, AVI (Tối đa ~50MB)</p>
+                        <p className="text-xs text-gray-500">
+                          MP4, MOV, AVI
+                        </p>
+                        <p className="text-xs text-red-500 font-semibold">
+                          🔴 Tối đa 50 MB
+                        </p>
                       </div>
                       <input
                         type="file"
                         onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            const file = e.target.files[0];
-                            setFormData(prev => ({ ...prev, Video: file }));
-                          }
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          // if (file.size > 50 * 1024 * 1024) {
+                          //   e.target.value = '';
+                          //   setFormData(prev => ({ ...prev, Video: null }));
+                          //   return;
+                          // }
+
+                          setFormData(prev => ({ ...prev, Video: file }));
                         }}
                         accept="video/*"
                         className="hidden"

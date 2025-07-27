@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trash2, Eye } from 'lucide-react';
 import { medicalEventService } from '../../services/MedicalEventService';
 import { notificationService } from '../../services/NotificationService';
+import { Tooltip } from 'antd';
 
 interface MedicalEventApi {
   OrtherM_ID: number;
@@ -191,8 +192,22 @@ const MedicalEventManagement: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Medical_record?.Class}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Decription}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Handle}</td>
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Decription}</td> */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <Tooltip title={event.Decription}>
+                      <span className="block max-w-52 truncate">
+                        {event.Decription}
+                      </span>
+                    </Tooltip>
+                  </td>
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{event.Handle}</td> */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <Tooltip title={event.Handle}>
+                      <span className="block max-w-52 truncate">
+                        {event.Handle}
+                      </span>
+                    </Tooltip>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${event.Is_calLOb
                       ? 'bg-green-100 text-green-800'

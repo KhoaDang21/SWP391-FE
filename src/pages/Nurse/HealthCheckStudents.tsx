@@ -154,6 +154,9 @@ const HealthCheckStudents: React.FC = () => {
     if (!selectedStudent || !hcId) return;
     console.log('Existing result found:', values.image);
 
+    const fileList = values.image as any[];
+    const file: File = fileList[0].originFileObj;
+
     setSubmittingResult(true);
     try {
       const payload: SubmitHealthCheckResultRequest = {
@@ -168,9 +171,10 @@ const HealthCheckStudents: React.FC = () => {
         skin_status: values.skin_status,
         general_conclusion: values.general_conclusion,
         is_need_meet: values.is_need_meet,
-        image: values?.image
+        image: file,
 
       };
+      console.log('Submitting health check result:', payload);
 
       if (isEditMode) {
         await healthCheckService.updateHealthCheckResult(parseInt(hcId), selectedStudent.Student_ID, payload);
@@ -209,6 +213,7 @@ const HealthCheckStudents: React.FC = () => {
       )
     );
     setStudentsNotCompleted(notCompleted);
+    console.log('Students not completed:', notCompleted);
     if (notCompleted.length > 0) {
       setSendAllModalVisible(true);
     } else {
@@ -738,16 +743,7 @@ const HealthCheckStudents: React.FC = () => {
             label="Hình ảnh đính kèm"
             valuePropName="fileList"
             getValueFromEvent={e => Array.isArray(e) ? e : e?.fileList}
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value || value.length === 0) {
-                    return Promise.reject('Vui lòng tải lên hình ảnh đính kèm');
-                  }
-                  return Promise.resolve();
-                }
-              }
-            ]}
+
           >
             <Dragger
               listType="picture-card"

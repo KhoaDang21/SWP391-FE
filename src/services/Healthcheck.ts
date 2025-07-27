@@ -130,7 +130,7 @@ export interface SubmitHealthCheckResultRequest {
   skin_status: string;
   general_conclusion: string;
   is_need_meet: boolean;
-  image?: string;
+  image?: File;
 }
 
 export interface HealthCheckResult {
@@ -344,24 +344,46 @@ export const healthCheckService = {
     return response.json();
   },
 
-  // Submit health check result for a student
-  submitHealthCheckResult: async (hcId: number, data: SubmitHealthCheckResultRequest): Promise<{ success: boolean; message: string }> => {
+  submitHealthCheckResult: async (
+    hcId: number,
+    data: SubmitHealthCheckResultRequest
+  ): Promise<{ success: boolean; message: string }> => {
     const token = localStorage.getItem('accessToken');
     if (!token) throw new Error('Access token is missing');
+
+    const formData = new FormData();
+    formData.append('student_id', String(data.student_id));
+    formData.append('height', String(data.height));
+    formData.append('weight', String(data.weight));
+    formData.append('blood_pressure', data.blood_pressure);
+    formData.append('vision_left', String(data.vision_left));
+    formData.append('vision_right', String(data.vision_right));
+    formData.append('dental_status', data.dental_status);
+    formData.append('ent_status', data.ent_status);
+    formData.append('skin_status', data.skin_status);
+    formData.append('general_conclusion', data.general_conclusion);
+    formData.append('is_need_meet', String(data.is_need_meet));
+
+    // ⚠️ Nếu có ảnh thì phải là File (ví dụ: data.image = values.image[0].originFileObj)
+    if (data.image) {
+      formData.append('image', data.image as any); // hoặc ép kiểu File nếu chắc chắn
+    }
+
     const response = await fetch(`${API_URL}/health-check/${hcId}/submit-result`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': '*/*',
+        Authorization: `Bearer ${token}`,
+        // Không set Content-Type khi dùng FormData, trình duyệt sẽ tự set
       },
-      body: JSON.stringify(data),
+      body: formData,
     });
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return response.json();
   },
+
 
   // Send health check result to guardians
   sendHealthCheckResult: async (hcId: number): Promise<{ success: boolean; message: string }> => {
@@ -417,10 +439,9 @@ export const healthCheckService = {
     formData.append('skin_status', data.skin_status);
     formData.append('general_conclusion', data.general_conclusion);
     formData.append('is_need_meet', String(data.is_need_meet));
-
     // Nếu có ảnh thì thêm vào formData
-    if (Array.isArray(data.image) && data.image[0]?.originFileObj) {
-      formData.append('image', data.image[0].originFileObj);
+    if (data.image) {
+      formData.append('image', data.image as any); // hoặc ép kiểu File nếu chắc chắn
     }
 
     const response = await fetch(`${API_URL}/health-check/${hcId}/form-result?student_id=${studentId}`, {

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Card, Table, Tag, Button, Tooltip, Typography, Space, DatePicker, Modal, Descriptions, Image } from 'antd'
+import  { useEffect, useState } from 'react'
+import { Card, Table, Tag, Button, Tooltip, Typography, Space, DatePicker, Modal, Image } from 'antd'
 import { EyeOutlined, CheckCircleOutlined, MinusCircleOutlined, MedicineBoxOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { medicalEventService } from '../../services/MedicalEventService'
@@ -7,7 +7,6 @@ import dayjs, { Dayjs } from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { RangePickerProps } from 'antd/es/date-picker';
 
 const { Title, Text } = Typography
 

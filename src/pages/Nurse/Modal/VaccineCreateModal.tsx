@@ -6,15 +6,14 @@ interface VaccineCreateModalProps {
   onSubmit: (data: { Vaccine_name: string, Vaccince_type: string, Date_injection: string, batch_number: string, Grade: string }) => boolean | Promise<boolean>;
   vaccineTypes: string[];
   selectedVaccine: string;
-  resetTrigger?: number; 
+  resetTrigger?: number;
 }
 
 const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  vaccineTypes,
-  selectedVaccine,
+
   resetTrigger = 0
 }) => {
   const [date, setDate] = useState('');
@@ -36,13 +35,7 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
     }
   }, [resetTrigger, isOpen]);
 
-  const resetForm = () => {
-    setVaccineName('');
-    setVaccineType('');
-    setDate('');
-    setGrade('');
-    setBatchNumber('');
-  };
+
 
   const handleClose = () => {
     setShowWarning(false);
@@ -61,7 +54,7 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
     } else if (/^\d+$/.test(vaccineName)) {
       newErrors.vaccineName = 'Tên vaccine không được chỉ chứa chữ số.';
     }
-    
+
     if (!vaccineType) {
       newErrors.vaccineType = 'Loại vaccine không được để trống.';
     } else if (vaccineType.length < 5) {
@@ -111,7 +104,7 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
         batch_number: batchNumber,
         Grade: grade
       });
-     
+
       if (success) {
         setShowWarning(false);
       } else {
@@ -277,8 +270,8 @@ const VaccineCreateModal: React.FC<VaccineCreateModalProps> = ({
                 <div style={{ whiteSpace: 'nowrap' }}>
                   Bạn có chắc chắn muốn <span className="font-semibold text-red-600">tạo mới đợt tiêm chủng</span> này không?
                 </div>
-                <div style={{marginTop: "10px"}}>Hành động này sẽ gửi thông báo đến các học sinh thuộc khối lớp đã chọn.</div>
-                <div className="text-sm text-gray-500" style={{marginTop: "10px"}}>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận.</div>
+                <div style={{ marginTop: "10px" }}>Hành động này sẽ gửi thông báo đến các học sinh thuộc khối lớp đã chọn.</div>
+                <div className="text-sm text-gray-500" style={{ marginTop: "10px" }}>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận.</div>
               </div>
               <div className="flex gap-4 w-full justify-center mt-2">
                 <button
