@@ -8,11 +8,10 @@ import {
   MedicalSent,
   MedicalSentStatus,
   createMedicalSent,
-  deleteMedicalSent
 } from '../../services/MedicalSentService';
-import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message, Image, Form, Input, Upload, Select, Space, Tooltip, Popconfirm, Row, Col } from 'antd';
+import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message, Image, Form, Input, Upload, Select, Space, Tooltip, Row, Col } from 'antd';
 import dayjs from 'dayjs';
-import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined, PlusOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
 import { getAllMedicalRecords, MedicalRecord } from '../../services/MedicalRecordService';
 import { getAllGuardians, Guardian } from '../../services/AccountService';
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -152,19 +151,19 @@ const MedicineManagement: React.FC = () => {
     return [];
   };
 
-  const handleDelete = async (id: number) => {
-    setLoading(true);
-    try {
-      await deleteMedicalSent(id, token);
-      message.success('Xóa đơn thuốc thành công!');
-      const medicalSents = await getAllMedicalSents(token);
-      setMedicineRecords(medicalSents.sort((a, b) => dayjs(b.createdAt).unix() - dayjs(a.createdAt).unix()));
-    } catch (err) {
-      message.error('Lỗi khi xóa đơn thuốc.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleDelete = async (id: number) => {
+  //   setLoading(true);
+  //   try {
+  //     await deleteMedicalSent(id, token);
+  //     message.success('Xóa đơn thuốc thành công!');
+  //     const medicalSents = await getAllMedicalSents(token);
+  //     setMedicineRecords(medicalSents.sort((a, b) => dayjs(b.createdAt).unix() - dayjs(a.createdAt).unix()));
+  //   } catch (err) {
+  //     message.error('Lỗi khi xóa đơn thuốc.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handlePreview = async (file: UploadFile<any>) => {
     if (!file.url && !file.preview && file.originFileObj) {
@@ -464,7 +463,7 @@ const MedicineManagement: React.FC = () => {
 
       <Modal
         open={createModal}
-        onCancel={() => { setCreateModal(false); }}
+        onCancel={() => { setCreateModal(false); setFileList([]); }}
         title="Tạo đơn gửi thuốc mới"
         footer={null}
         destroyOnClose
@@ -491,9 +490,11 @@ const MedicineManagement: React.FC = () => {
               formData.append('status', 'received');
               formData.append('notes', notes || '');
               formData.append('prescriptionImage', prescriptionImage[0].originFileObj);
+              formData.append('create_by', 'nurse');
               await createMedicalSent(formData, token);
               message.success('Tạo đơn gửi thuốc thành công!');
               setCreateModal(false);
+              setFileList([]);
               nurseForm.resetFields();
               const medicalSents = await getAllMedicalSents(token);
               setMedicineRecords(medicalSents.sort((a, b) => dayjs(b.createdAt).unix() - dayjs(a.createdAt).unix()));
@@ -603,7 +604,7 @@ const MedicineManagement: React.FC = () => {
               <Modal open={previewVisible} footer={null} onCancel={() => setPreviewVisible(false)}>
                 <img alt="preview" style={{ width: '100%' }} src={previewImage} />
               </Modal>
-              <Form.Item name="notes" label="Ghi chú" style={{ marginBottom: 24 }} rules={[{ required: true, message: 'Vui lòng nhập ghi chú!' }]}>
+              <Form.Item name="notes" label="Ghi chú" style={{ marginBottom: 24 }} >
                 <Input.TextArea rows={4} placeholder="Nhập ghi chú (nếu có)" style={{ fontSize: 16 }} />
               </Form.Item>
             </Col>

@@ -1,8 +1,7 @@
 import React from 'react';
-import { Card, Table, Button, Typography } from 'antd';
+import { Card, Table, Button } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 
-const { Title } = Typography;
 
 const studentData = [
     {

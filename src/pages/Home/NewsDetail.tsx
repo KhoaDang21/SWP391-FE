@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CalendarOutlined, UserOutlined } from '@ant-design/icons';
+import { CalendarOutlined } from '@ant-design/icons';
 import { getBlogById, Blog } from '../../services/BlogService';
 import { Image, Spin, message } from 'antd';
 

@@ -184,6 +184,7 @@ const SendMedication: React.FC = () => {
                 } else {
                     formData.append('notes', '');
                 }
+                formData.append('create_by', 'guardian');
 
                 await createMedicalSent(formData, token);
                 message.success('Tạo đơn gửi thuốc thành công!');

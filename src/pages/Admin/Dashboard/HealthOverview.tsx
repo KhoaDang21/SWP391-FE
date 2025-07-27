@@ -1,11 +1,11 @@
-import { Card, Col, Row, Button, Statistic, Table } from 'antd';
+import { Card, Col, Row, Button, Statistic } from 'antd';
 import {
     UserOutlined,
     FileTextOutlined,
     ExperimentOutlined,
     HeartOutlined,
 } from '@ant-design/icons';
-import { PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useEffect, useState } from 'react';
 import { getTotalHealthCheckStatus, getTotalVaccineStatus, getDashboardCounts } from '../../../services/DashboardService';
 import { Link } from 'react-router-dom';
@@ -69,30 +69,9 @@ const HealthOverview = () => {
     //     { name: 'Đã từ chối', value: 2, color: '#f5222d' },
     // ];
 
-    const healthStatusData = [
-        { name: 'Chờ xử lý', value: 12, color: '#faad14' },
-        { name: 'Đã kiểm tra', value: 10, color: '#52c41a' },
-        { name: 'Đã từ chối', value: 3, color: '#f5222d' },
-    ];
 
-    const eventTypeData = [
-        { name: '01/2025', value: 1 },
-        { name: '02/2025', value: 2 },
-        { name: '03/2025', value: 0 },
-        { name: '04/2025', value: 4 },
-        { name: '05/2025', value: 3 },
-    ];
 
-    const columns = [
-        { title: 'Tên đợt', dataIndex: 'name' },
-        { title: 'Thời gian', dataIndex: 'date' },
-        { title: 'Loại', dataIndex: 'type' },
-    ];
 
-    const recentEvents = [
-        { key: 1, name: 'Đợt tiêm sởi', date: '15/07/2025', type: 'Tiêm chủng' },
-        { key: 2, name: 'Khám sức khỏe học kỳ 1', date: '10/07/2025', type: 'Khám sức khỏe' },
-    ];
 
     type StatusItem = {
         name: string;

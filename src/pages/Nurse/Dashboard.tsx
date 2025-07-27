@@ -2,13 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
     Card,
     Button,
-    Space,
     Row,
     Col,
     Statistic,
-    Tag,
-    Typography,
-    Select
 } from 'antd';
 import {
     MedicineBoxOutlined,
@@ -27,10 +23,6 @@ import {
     PieChart,
     Pie,
     Cell,
-    LineChart,
-    Line,
-    AreaChart,
-    Area,
     ResponsiveContainer
 } from 'recharts';
 

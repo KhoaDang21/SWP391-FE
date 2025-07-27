@@ -10,13 +10,11 @@ import {
     Statistic,
     Badge,
     List,
-    Progress,
     Tag,
     Space,
     Typography,
 
     Timeline,
-    Tabs,
     Table,
     Modal,
     Divider
@@ -25,11 +23,9 @@ import {
     UserOutlined,
     BellOutlined,
 
-    CalendarOutlined,
 
     MedicineBoxOutlined,
-    HeartOutlined,
-    EyeOutlined,
+
 } from '@ant-design/icons';
 import { notificationService } from '../../services/NotificationService';
 import { getStudentsByGuardianUserId, Student } from '../../services/AccountService';
@@ -40,14 +36,7 @@ const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
 
-interface HealthRecord {
-    id: number;
-    date: string;
-    type: string;
-    result: string;
-    status: 'normal' | 'abnormal' | 'follow-up';
-    doctor: string;
-}
+
 
 interface Notification {
     notiId: number;
@@ -122,7 +111,6 @@ const Parent: React.FC = () => {
 
     useEffect(() => {
         const fetchVaccines = async () => {
-            const token = localStorage.getItem('accessToken');
             const data = await vaccineService.getVaccinesByGuardian();
             console.log('Fetched vaccine histories:', data);
             setVaccineHistories(data);
@@ -131,23 +119,8 @@ const Parent: React.FC = () => {
     }, []);
 
 
-    const getHealthStatusColor = (status: string) => {
-        switch (status) {
-            case 'good': return '#52c41a';
-            case 'warning': return '#faad14';
-            case 'attention': return '#ff4d4f';
-            default: return '#d9d9d9';
-        }
-    };
 
-    const getHealthStatusText = (status: string) => {
-        switch (status) {
-            case 'good': return 'Tốt';
-            case 'warning': return 'Cần chú ý';
-            case 'attention': return 'Cần khám';
-            default: return 'Chưa rõ';
-        }
-    };
+
 
     const healthRecordColumns = [
         {

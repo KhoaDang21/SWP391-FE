@@ -24,30 +24,28 @@ function getUserIdFromToken(): number | null {
 }
 
 interface NotificationResponse {
-  notifications: Array<{
-    notiId: number;
-    title: string;
-    mess: string;
-    isRead: boolean;
-    createdAt: string;
-    updatedAt: string;
-    userId: number;
-  }>;
-  pagination: {
-    currentPage: number;
-    totalItems: number;
-    totalPages: number;
-  };
-  unreadCount: number;
+    notifications: Array<{
+        notiId: number;
+        title: string;
+        mess: string;
+        isRead: boolean;
+        createdAt: string;
+        updatedAt: string;
+        userId: number;
+    }>;
+    pagination: {
+        currentPage: number;
+        totalItems: number;
+        totalPages: number;
+    };
+    unreadCount: number;
 }
 
-interface MarkReadRequest {
-    notificationIds: number[];
-}
+
 
 class NotificationService {
     private refreshInterval: number | null = null;
-    
+
     success(message: string, options: ToastOptions = {}) {
         toast.success(message, { ...defaultOptions, ...options });
     }
@@ -67,7 +65,7 @@ class NotificationService {
     async getNotificationsForCurrentUser(page: number = 1, pageSize: number = 5): Promise<NotificationResponse> {
         const userId = getUserIdFromToken();
         if (!userId) throw new Error("No userId in token");
-        
+
         const response = await fetch(`${API_URL}/notify/user/${userId}?page=${page}&limit=${pageSize}`, {
             headers: {
                 "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
@@ -109,10 +107,10 @@ class NotificationService {
     }
 
     startAutoRefresh(callback: (data: NotificationResponse) => void, page: number = 1, pageSize: number = 5) {
-        
+
         this.getNotificationsForCurrentUser(page, pageSize).then(callback);
-        
-        
+
+
         this.refreshInterval = setInterval(async () => {
             try {
                 const data = await this.getNotificationsForCurrentUser(page, pageSize);
