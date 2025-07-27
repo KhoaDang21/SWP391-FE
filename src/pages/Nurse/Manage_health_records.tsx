@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Select, Space, Modal, Form, Input } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { Button, Select, Modal, Input } from 'antd';
 import { getAllMedicalRecords, MedicalRecord } from '../../services/MedicalRecordService';
 import { notificationService } from '../../services/NotificationService';
 import { Eye, Stethoscope, Heart, UserCircle, Activity } from 'lucide-react';
@@ -12,7 +11,6 @@ const ManageHealthRecords: React.FC = () => {
   const [classes, setClasses] = useState<string[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>('Tất cả');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const [searchName, setSearchName] = useState<string>('');
 
@@ -205,8 +203,8 @@ const ManageHealthRecords: React.FC = () => {
                   <div className="flex items-center">
                     <span className="font-medium text-gray-700 w-24">Giới tính:</span>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${viewingRecord.gender === 'Nam'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-pink-100 text-pink-800'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-pink-100 text-pink-800'
                       }`}>
                       {viewingRecord.gender}
                     </span>
@@ -329,10 +327,10 @@ const ManageHealthRecords: React.FC = () => {
                             <td className="px-4 py-3 text-sm text-gray-600">{vaccine.date}</td>
                             <td className="px-4 py-3">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${vaccine.status === 'completed'
-                                  ? 'bg-green-100 text-green-800'
-                                  : vaccine.status === 'pending'
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-gray-100 text-gray-800'
+                                ? 'bg-green-100 text-green-800'
+                                : vaccine.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-gray-100 text-gray-800'
                                 }`}>
                                 {vaccine.status}
                               </span>

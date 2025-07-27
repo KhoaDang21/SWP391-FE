@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Card,
     Form,
     Input,
     Select,
-    DatePicker,
     Button,
-    Table,
     Modal,
     Tabs,
     Tag,
@@ -17,8 +15,7 @@ import {
     Avatar,
     Typography,
     Alert,
-    Checkbox,
-    InputNumber,
+
     Tooltip,
     Upload,
     message
@@ -38,8 +35,7 @@ import { createStudentWithMedicalRecord, deleteMedicalRecord, getMedicalRecordsB
 import { vaccineService, VaccineHistoryByMedicalRecordResponse } from '../../services/Vaccineservice';
 import type { MedicalRecord } from '../../services/MedicalRecordService';
 const { Option } = Select;
-const { TextArea } = Input;
-const { TabPane } = Tabs;
+
 const { Title, Text } = Typography;
 
 const Children = () => {
@@ -111,7 +107,6 @@ const Children = () => {
                     name: student.fullname
                 }));
                 console.log('Processed children list:', studentList);
-                setChildrenList(studentList);
             } catch (error) {
                 console.error('Lỗi lấy danh sách học sinh:', error);
             }
@@ -125,13 +120,8 @@ const Children = () => {
 
 
 
-    const [childrenList, setChildrenList] = useState<{ id: number; name: string }[]>([]);
 
-    const vaccineOptions = [
-        'BCG', 'Viêm gan B', 'DPT', 'Bại liệt', 'Sởi', 'Rubella',
-        'Quai bị', 'Thủy đậu', 'Cúm', 'Phế cầu', 'Não mô cầu',
-        'Rotavirus', 'HPV', 'COVID-19'
-    ];
+
 
     const commonDiseases = [
         'Hen suyễn', 'Dị ứng da', 'Viêm mũi dị ứng', 'Tiểu đường type 1',
@@ -659,7 +649,7 @@ const Children = () => {
                             label="Ngày sinh"
                             rules={[
                                 { required: true, message: 'Vui lòng chọn ngày sinh!' },
-                                ({ getFieldValue }) => ({
+                                ({ }) => ({
                                     validator(_, value) {
                                         if (!value) return Promise.resolve();
 
@@ -692,11 +682,16 @@ const Children = () => {
                             name="height"
                             label="Chiều cao (cm)"
                             rules={[
-                                { required: true, message: 'Vui lòng nhập chiều cao!' },
                                 {
-                                    validator: (_, value) =>
-                                        value > 0 ? Promise.resolve() : Promise.reject('Chiều cao phải lớn hơn 0'),
-                                },
+                                    validator: (_, value) => {
+                                        if (value === undefined || value === null || value === '') return Promise.reject('Vui lòng nhập chiều cao');
+                                        if (typeof value === 'string' && !/^\d+$/.test(value)) return Promise.reject('Chỉ được nhập số nguyên dương');
+                                        const num = Number(value);
+                                        if (isNaN(num) || !Number.isInteger(num)) return Promise.reject('Chỉ được nhập số nguyên dương');
+                                        if (num < 70 || num > 160) return Promise.reject('Chiều cao hợp lý cho học sinh tiểu học là từ 70 đến 160cm');
+                                        return Promise.resolve();
+                                    }
+                                }
                             ]}
                         >
                             <Input type="number" min={1} placeholder="Nhập chiều cao" />
@@ -706,11 +701,15 @@ const Children = () => {
                             name="weight"
                             label="Cân nặng (kg)"
                             rules={[
-                                { required: true, message: 'Vui lòng nhập cân nặng!' },
                                 {
-                                    validator: (_, value) =>
-                                        value > 0 ? Promise.resolve() : Promise.reject('Cân nặng phải lớn hơn 0'),
-                                },
+                                    validator: (_, value) => {
+                                        if (value === undefined || value === null || value === '') return Promise.reject('Vui lòng nhập cân nặng');
+                                        if (typeof value === 'string' && !/^\d+(\.\d+)?$/.test(value)) return Promise.reject('Chỉ được nhập số dương, có thể có thập phân');
+                                        const num = Number(value);
+                                        if (isNaN(num) || num < 9 || num > 60) return Promise.reject('Cân nặng hợp lý cho học sinh tiểu học là từ 9 đến 60kg');
+                                        return Promise.resolve();
+                                    }
+                                }
                             ]}
                         >
                             <Input type="number" min={1} placeholder="Nhập cân nặng" />

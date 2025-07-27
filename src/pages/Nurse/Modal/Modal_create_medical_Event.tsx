@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, Search } from 'lucide-react';
 import SearchMedicalRecordModal from './SearchMedicalRecordModal';
-import { message } from 'antd';
 
 interface ModalProps {
   isOpen: boolean;

@@ -2,24 +2,19 @@ import React, { useState, useEffect } from 'react';
 import {
     Button,
     Modal,
-    Form,
     Space,
     Card,
     Tag,
     Row,
     Col,
     Typography,
-    Divider,
     message,
-    Select,
     List,
     Avatar,
     Badge,
-    Alert,
     Image
 } from 'antd';
 import {
-    EyeOutlined,
     UserOutlined,
     MedicineBoxOutlined,
     CheckCircleOutlined,
@@ -33,16 +28,8 @@ import { vaccineService } from '../../services/Vaccineservice';
 import { useSearchParams } from 'react-router-dom';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 
-interface VaccineInfo {
-    id: string;
-    name: string;
-    description: string;
-    recommendedAge: string;
-    isRequired: boolean;
-}
 
 
 interface VaccineRecord {
@@ -72,9 +59,9 @@ interface Student {
 const Vaccine: React.FC = () => {
     const [searchParams] = useSearchParams();
     const [detailModalVisible, setDetailModalVisible] = useState(false);
-    const [editMode, setEditMode] = useState<string | null>(null);
+
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-    const [form] = Form.useForm();
+
     const [loading, setLoading] = useState(false);
     const [students, setStudents] = useState<Student[]>([]);
     const [selectedVaccine, setSelectedVaccine] = useState<VaccineRecord | null>(null);
@@ -131,7 +118,7 @@ const Vaccine: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const shouldOpenModal = searchParams.get('openModal') === 'true';                
+                const shouldOpenModal = searchParams.get('openModal') === 'true';
                 const studentNameParam = searchParams.get('studentName');
 
                 const response = await vaccineService.getVaccinesByGuardian();
@@ -191,7 +178,7 @@ const Vaccine: React.FC = () => {
     const handleViewDetail = (student: Student) => {
         setSelectedStudent(student);
         setDetailModalVisible(true);
-        setEditMode(null);
+
     };
 
 
@@ -291,7 +278,6 @@ const Vaccine: React.FC = () => {
                 open={detailModalVisible}
                 onCancel={() => {
                     setDetailModalVisible(false);
-                    setEditMode(null);
                 }}
                 footer={null}
                 width={900}
@@ -480,7 +466,7 @@ const Vaccine: React.FC = () => {
                                     }}
                                     bodyStyle={{ padding: 0 }}
                                 >
-                                    <div style={{ 
+                                    <div style={{
                                         background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                                         padding: '20px 24px',
                                         color: 'white'
@@ -515,7 +501,7 @@ const Vaccine: React.FC = () => {
                                     </div>
                                 </Card>
                             </Col>
-                            
+
                             <Col span={24}>
                                 <Card
                                     style={{
@@ -545,9 +531,9 @@ const Vaccine: React.FC = () => {
                                                 <Text strong style={{ fontSize: 18, color: "#1e293b", display: 'block', marginBottom: 4 }}>
                                                     {selectedVaccine.vaccineName}
                                                 </Text>
-                                                <Tag 
-                                                    style={{ 
-                                                        fontSize: 12, 
+                                                <Tag
+                                                    style={{
+                                                        fontSize: 12,
                                                         padding: '4px 12px',
                                                         borderRadius: 16,
                                                         background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
@@ -598,9 +584,9 @@ const Vaccine: React.FC = () => {
                                                     <Text strong style={{ color: '#15803d', fontSize: 14 }}>Trạng thái</Text>
                                                 </div>
                                                 <Tag
-                                                    style={{ 
-                                                        fontSize: 13, 
-                                                        padding: "6px 14px", 
+                                                    style={{
+                                                        fontSize: 13,
+                                                        padding: "6px 14px",
                                                         borderRadius: 20,
                                                         border: 'none',
                                                         fontWeight: 500,
@@ -609,9 +595,9 @@ const Vaccine: React.FC = () => {
                                                     }}
                                                     color={
                                                         selectedVaccine.status === 'Đã tiêm' ? 'success' :
-                                                        selectedVaccine.status === 'Chờ xác nhận' ? 'orange' :
-                                                        selectedVaccine.status === 'Không tiêm' ? 'red' :
-                                                        selectedVaccine.status === 'Cho phép tiêm' ? 'blue' : 'default'
+                                                            selectedVaccine.status === 'Chờ xác nhận' ? 'orange' :
+                                                                selectedVaccine.status === 'Không tiêm' ? 'red' :
+                                                                    selectedVaccine.status === 'Cho phép tiêm' ? 'blue' : 'default'
                                                     }
                                                 >
                                                     {selectedVaccine.status}
@@ -637,7 +623,7 @@ const Vaccine: React.FC = () => {
                                                     background: 'rgba(245, 158, 11, 0.1)',
                                                     borderRadius: '50%'
                                                 }} />
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative' }}>                                           
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, position: 'relative' }}>
                                                     <Text strong style={{ color: '#d97706', fontSize: 14 }}>Ngày tiêm</Text>
                                                 </div>
                                                 <div style={{

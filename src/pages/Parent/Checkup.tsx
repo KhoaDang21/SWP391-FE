@@ -124,10 +124,10 @@ const Checkup: React.FC = () => {
         }
     };
 
-    const handleCheckupClick = (record: any) => {
-        setSelectedCheckup(record);
-        setCheckupModalVisible(true);
-    };
+    // const handleCheckupClick = (record: any) => {
+    //     setSelectedCheckup(record);
+    //     setCheckupModalVisible(true);
+    // };
 
     const userInfo = localStorage.getItem("user");
 

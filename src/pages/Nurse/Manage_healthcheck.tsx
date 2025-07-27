@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Select, Space, Modal, Form, Input, List, Tooltip } from 'antd';
+import { Button, Select, Space, Modal, Form, Input, Tooltip } from 'antd';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate } from 'react-router-dom';
@@ -502,7 +502,7 @@ const ManageHealthcheck: React.FC = () => {
               selected={createDate}
               onChange={date => setCreateDate(date)}
               dateFormat="yyyy-MM-dd"
-              minDate={(() => { const d = new Date(); d.setHours(0,0,0,0); return d; })()}
+              minDate={(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })()}
               className="w-full border border-gray-300 rounded px-3 py-2"
               placeholderText="Chọn ngày khám"
             />

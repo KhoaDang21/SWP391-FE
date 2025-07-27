@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Image, Button, Card, Row, Col, Descriptions, Tag, Spin, Alert, Divider } from 'antd';
-import { ArrowLeft, Pencil, User, Stethoscope, Phone, Calendar, Image as ImageIcon, FileText, ShieldAlert, HeartPulse, PhoneCall, VideoIcon } from 'lucide-react';
+import { ArrowLeft, Pencil, User, Stethoscope, Image as ImageIcon, FileText, PhoneCall, VideoIcon } from 'lucide-react';
 import Modal_edit_medical_Event from './Modal/Modal_edit_medical_Event';
 import { notificationService } from '../../services/NotificationService';
 import { medicalEventService } from '../../services/MedicalEventService';
