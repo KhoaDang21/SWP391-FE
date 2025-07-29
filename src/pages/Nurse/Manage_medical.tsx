@@ -11,7 +11,7 @@ import {
 } from '../../services/MedicalSentService';
 import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message, Image, Form, Input, Upload, Select, Space, Tooltip, Row, Col } from 'antd';
 import dayjs from 'dayjs';
-import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined, PlusOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
+import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined, PlusOutlined, EyeOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons';
 import { getAllMedicalRecords, MedicalRecord } from '../../services/MedicalRecordService';
 import { getAllGuardians, Guardian } from '../../services/AccountService';
 import type { UploadFile } from 'antd/es/upload/interface';
