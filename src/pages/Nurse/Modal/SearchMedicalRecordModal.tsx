@@ -57,7 +57,7 @@ const SearchMedicalRecordModal: React.FC<SearchModalProps> = ({ isOpen, onClose,
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[1100]">
       <div className="bg-white rounded-xl p-6 w-full max-w-2xl mx-4 shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-gray-900">Tìm kiếm hồ sơ y tế</h3>
