@@ -469,44 +469,6 @@ const ManageHealthcheck: React.FC = () => {
             <TextArea rows={3} maxLength={1000} />
           </Form.Item>
 
-          <Form.Item
-            name="dateEvent"
-            label={<span><span style={{ color: 'red' }}>*</span> Ngày khám</span>}
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.reject('Vui lòng chọn ngày khám');
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const selectedDate = new Date(value);
-                  if (selectedDate < today) {
-                    return Promise.reject('Chỉ được chọn ngày hôm nay hoặc lớn hơn');
-                  }
-                  // Lấy giá trị năm học
-                  const schoolYear = form.getFieldValue('schoolYear');
-                  if (!schoolYear || !/^\d{4}-\d{4}$/.test(schoolYear)) {
-                    return Promise.reject('Vui lòng nhập năm học hợp lệ trước');
-                  }
-                  const [startYear, endYear] = schoolYear.split('-').map(Number);
-                  const minDate = new Date(`${startYear}-01-01T00:00:00`);
-                  const maxDate = new Date(`${endYear}-12-31T23:59:59`);
-                  if (selectedDate < minDate || selectedDate > maxDate) {
-                    return Promise.reject(`Ngày khám phải nằm trong khoảng từ 01/01/${startYear} đến 31/12/${endYear}`);
-                  }
-                  return Promise.resolve();
-                }
-              }
-            ]}
-          >
-            <DatePicker
-              selected={createDate}
-              onChange={date => setCreateDate(date)}
-              dateFormat="yyyy-MM-dd"
-              minDate={(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })()}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-              placeholderText="Chọn ngày khám"
-            />
-          </Form.Item>
 
           <Form.Item
             name="schoolYear"
@@ -537,6 +499,50 @@ const ManageHealthcheck: React.FC = () => {
           >
             <Input placeholder="VD: 2025-2026" />
           </Form.Item>
+
+
+          <Form.Item
+            name="dateEvent"
+            label={<span><span style={{ color: 'red' }}>*</span> Ngày khám</span>}
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.reject('Vui lòng chọn ngày khám');
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const selectedDate = new Date(value);
+                  if (selectedDate < today) {
+                    return Promise.reject('Chỉ được chọn ngày hôm nay hoặc lớn hơn');
+                  }
+                  // Lấy giá trị năm học
+                  const schoolYear = form.getFieldValue('schoolYear');
+                  if (!schoolYear || !/^\d{4}-\d{4}$/.test(schoolYear)) {
+                    return Promise.reject('Vui lòng nhập năm học hợp lệ trước');
+                  }
+                  const [startYear, endYear] = schoolYear.split('-').map(Number);
+                  const minDate = new Date(`${startYear}-01-01T00:00:00`);
+                  const maxDate = new Date(`${endYear}-12-31T23:59:59`);
+                  if (selectedDate < minDate || selectedDate > maxDate) {
+                    return Promise.reject(`Ngày khám phải nằm trong khoảng từ 01/01/${startYear} đến 31/12/${endYear}`);
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
+          >
+
+
+            <DatePicker
+              selected={createDate}
+              onChange={date => setCreateDate(date)}
+              dateFormat="yyyy-MM-dd"
+              minDate={(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })()}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+              placeholderText="Chọn ngày khám"
+            />
+          </Form.Item>
+
+
 
           <Form.Item>
             <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>

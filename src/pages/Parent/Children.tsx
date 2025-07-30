@@ -157,14 +157,12 @@ const Children = () => {
 
     useEffect(() => {
         if (editingChild) {
-            // chronicDiseases có thể là string hoặc mảng đối tượng
             const chronicArr: string[] = [];
             if (typeof editingChild.chronicDiseases === 'string') {
                 chronicArr.push(
                     ...editingChild.chronicDiseases.split(',').map(s => s.trim()).filter(s => s)
                 );
             }
-            // allergies tương tự
             const allergyArr: string[] = [];
             if (typeof editingChild.allergies === 'string') {
                 allergyArr.push(
@@ -177,7 +175,6 @@ const Children = () => {
                 chronicDiseases: chronicArr,
                 allergies: allergyArr,
                 vaccines: editingChild.vaccines || [],
-                // Nếu bạn dùng field "Class" trong Form.Item, nhớ setFieldsValue({ Class: editingChild.class || ... })
                 Class: (editingChild as any).class || (editingChild as any).Class || undefined
             });
         }
@@ -203,11 +200,10 @@ const Children = () => {
         let age = now.getFullYear() - birthDate.getFullYear();
         const m = now.getMonth() - birthDate.getMonth();
         if (m < 0 || (m === 0 && now.getDate() < birthDate.getDate())) {
-            age--; // Chưa sinh nhật năm nay
+            age--;
         }
 
-        // Giả sử lớp 1 là 6 tuổi → lớp = age - 5
-        if (age < 5 || age > 13) return null; // ngoài phạm vi gợi ý
+        if (age < 5 || age > 13) return null;
 
         return `${age - 5}`;
     };
