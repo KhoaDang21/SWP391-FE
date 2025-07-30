@@ -38,6 +38,8 @@ const HealthCheckStudents: React.FC = () => {
   const [sendAllModalVisible, setSendAllModalVisible] = useState(false);
   const [studentsNotCompleted, setStudentsNotCompleted] = useState<HealthCheckForm[]>([]);
   const [sendingAll, setSendingAll] = useState(false);
+  const [viewOnly, setViewOnly] = useState(false);
+
 
   useEffect(() => {
     if (hcId) {
@@ -87,8 +89,9 @@ const HealthCheckStudents: React.FC = () => {
     }
   };
 
-  const handleInputResult = async (student: HealthCheckForm) => {
+  const handleInputResult = async (student: HealthCheckForm, viewOnly = false) => {
     setSelectedStudent(student);
+    setViewOnly(viewOnly);
     setIsEditMode(false);
 
     try {
@@ -453,6 +456,18 @@ const HealthCheckStudents: React.FC = () => {
               </Button>
             )}
 
+            {isChecked && hasResult && (
+              <Button
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleInputResult(record, true);
+                }}
+              >
+                Xem chi tiết
+              </Button>
+            )}
+
             {canInputResult && hasResult && (
               isChecked ? (
                 <Tag color="green" style={{ margin: 0 }}>
@@ -602,7 +617,7 @@ const HealthCheckStudents: React.FC = () => {
                   }
                 ]}
               >
-                <Input />
+                <Input disabled={viewOnly} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -621,7 +636,7 @@ const HealthCheckStudents: React.FC = () => {
                   }
                 ]}
               >
-                <Input />
+                <Input disabled={viewOnly} />
               </Form.Item>
             </Col>
           </Row>
@@ -644,7 +659,7 @@ const HealthCheckStudents: React.FC = () => {
                   }
                 ]}
               >
-                <Input />
+                <Input disabled={viewOnly} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -664,7 +679,7 @@ const HealthCheckStudents: React.FC = () => {
                   }
                 ]}
               >
-                <Input />
+                <Input disabled={viewOnly} />
               </Form.Item>
             </Col>
           </Row>
@@ -685,7 +700,7 @@ const HealthCheckStudents: React.FC = () => {
               }
             ]}
           >
-            <Input placeholder="VD: 110/70" />
+            <Input disabled={viewOnly} placeholder="VD: 110/70" />
           </Form.Item>
 
           <Row gutter={16}>
@@ -695,7 +710,7 @@ const HealthCheckStudents: React.FC = () => {
                 label="Tình trạng răng"
                 rules={[{ required: true, message: 'Vui lòng nhập tình trạng răng' }]}
               >
-                <Input />
+                <Input disabled={viewOnly} />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -704,7 +719,7 @@ const HealthCheckStudents: React.FC = () => {
                 label="Tai mũi họng"
                 rules={[{ required: true, message: 'Vui lòng nhập tình trạng tai mũi họng' }]}
               >
-                <Input />
+                <Input disabled={viewOnly} />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -713,7 +728,7 @@ const HealthCheckStudents: React.FC = () => {
                 label="Tình trạng da"
                 rules={[{ required: true, message: 'Vui lòng nhập tình trạng da' }]}
               >
-                <Input />
+                <Input disabled={viewOnly} />
               </Form.Item>
             </Col>
           </Row>
@@ -727,7 +742,7 @@ const HealthCheckStudents: React.FC = () => {
               { max: 1000, message: 'Kết luận không vượt quá 1000 ký tự' }
             ]}
           >
-            <TextArea rows={3} />
+            <TextArea disabled={viewOnly} rows={3} />
           </Form.Item>
 
           <Form.Item
@@ -735,7 +750,7 @@ const HealthCheckStudents: React.FC = () => {
             label="Cần gặp phụ huynh"
             valuePropName="checked"
           >
-            <Switch />
+            <Switch disabled={viewOnly} />
           </Form.Item>
 
           <Form.Item
@@ -750,6 +765,7 @@ const HealthCheckStudents: React.FC = () => {
               beforeUpload={() => false}
               accept="image/*"
               maxCount={1}
+              disabled={viewOnly}
               style={{ marginBottom: 16 }}
             >
               <div>
@@ -760,20 +776,23 @@ const HealthCheckStudents: React.FC = () => {
           </Form.Item>
 
 
-          <Form.Item>
-            <Space>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={submittingResult}
-              >
-                Lưu kết quả
-              </Button>
-              <Button onClick={() => setResultModalVisible(false)}>
-                Hủy
-              </Button>
-            </Space>
-          </Form.Item>
+          {!viewOnly && (
+            <Form.Item>
+              <Space>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={submittingResult}
+                >
+                  Lưu kết quả
+                </Button>
+                <Button onClick={() => setResultModalVisible(false)}>
+                  Hủy
+                </Button>
+              </Space>
+            </Form.Item>
+          )}
+
         </Form>
       </Modal>
 

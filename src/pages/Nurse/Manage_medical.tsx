@@ -59,7 +59,7 @@ const MedicineManagement: React.FC = () => {
 
   const medicalRecordMap = React.useMemo(() => {
     const map: Record<number, MedicalRecord> = {};
-    console.log('Medical records:', medicalRecords);
+    // console.log('Medical records:', medicalRecords);
     medicalRecords.forEach((rec) => {
       map[rec.userId] = rec;
     });
@@ -100,7 +100,7 @@ const MedicineManagement: React.FC = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const dateParam = urlParams.get('date');
-    
+
     if (dateParam) {
       const date = new Date(dateParam);
       if (!isNaN(date.getTime())) {
@@ -110,7 +110,7 @@ const MedicineManagement: React.FC = () => {
           setToDate(null);
           navigate('/nurse/medical', { replace: true });
         }, 10000);
-        
+
         return () => clearTimeout(timer);
       }
     }
@@ -131,7 +131,7 @@ const MedicineManagement: React.FC = () => {
     }
     return true;
   });
-  console.log('Filtered records:', filteredRecords);
+  // console.log('Filtered records:', filteredRecords);
   const handleViewDetail = async (record: MedicalSent) => {
     setLoading(true);
     try {
@@ -146,6 +146,7 @@ const MedicineManagement: React.FC = () => {
   };
 
   const handleStatusChange = async (record: MedicalSent, newStatus: MedicalSentStatus) => {
+    console.log('Changing status for record:', record);
     try {
       const formData = new FormData();
       formData.append('Status', newStatus);
@@ -153,9 +154,12 @@ const MedicineManagement: React.FC = () => {
       formData.append('Class', record.Class);
       formData.append('Medications', record.Medications);
       formData.append('Delivery_time', record.Delivery_time);
+      formData.append('Image_prescription', record.Image_prescription);
       if (record.Notes) {
         formData.append('Notes', record.Notes);
       }
+
+      console.log('Updating record with formData:', formData);
 
       await updateMedicalSent(record.id, formData, token);
 
@@ -272,7 +276,7 @@ const MedicineManagement: React.FC = () => {
       key: 'Class',
       render: (_: any, record: MedicalSent) => {
         const className = medicalRecordMap[record.User_ID]?.Class || '';
-        console.log('User_ID:', record.User_ID, '→ Class:', className);
+        // console.log('User_ID:', record.User_ID, '→ Class:', className);
         return className;
       }
     },
@@ -662,7 +666,7 @@ const MedicineManagement: React.FC = () => {
               formData.append('Delivery_time', `${dayjs().format('YYYY-MM-DD')} - ${deliveryTimeNote}`);
               formData.append('Notes', notes || '');
               if (prescriptionImage[0]?.originFileObj) {
-                formData.append('Image_prescription', prescriptionImage[0].originFileObj);
+                formData.append('prescriptionImage', prescriptionImage[0].originFileObj);
               }
               await updateMedicalSent(editingRecord.id, formData, token);
               message.success('Cập nhật đơn thuốc thành công!');
