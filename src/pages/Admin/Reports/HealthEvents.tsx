@@ -147,17 +147,23 @@ const HealthEvents: React.FC = () => {
         {
             title: 'Trạng thái xác nhận',
             render: (r: HealthCheckForm) => {
-                let color = 'orange',
-                    text = 'Chờ xác nhận';
-                if (r.status === 'approved' || r.status === 'checked') {
+                let color = 'orange';
+                let text = 'Chờ xác nhận';
+
+                if (r.status === 'approved') {
                     color = 'green';
                     text = 'Đã xác nhận';
+                } else if (r.status === 'checked') {
+                    color = 'blue';
+                    text = 'Đã khám';
                 } else if (r.status === 'rejected') {
                     color = 'red';
                     text = 'Từ chối';
                 }
+
                 return <Tag color={color}>{text}</Tag>;
             }
+
         },
         {
             title: 'Cần gặp',

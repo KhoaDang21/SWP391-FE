@@ -85,9 +85,7 @@ const Profile: React.FC = () => {
           <Form.Item name="phoneNumber" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="address" label="Địa chỉ">
-            <Input />
-          </Form.Item>
+
         </Form>
         <div className="flex justify-end gap-2 mt-4">
           {editMode ? (

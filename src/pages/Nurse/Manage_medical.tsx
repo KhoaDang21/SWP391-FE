@@ -11,10 +11,12 @@ import {
 } from '../../services/MedicalSentService';
 import { Modal, Button, Spin, Table, Tag, Dropdown, Menu, message, Image, Form, Input, Upload, Select, Space, Tooltip, Row, Col } from 'antd';
 import dayjs from 'dayjs';
-import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined, PlusOutlined, EyeOutlined, EditOutlined } from '@ant-design/icons';
+import { DownOutlined, FileTextOutlined, MedicineBoxOutlined, PictureOutlined, UserOutlined, PlusOutlined, EyeOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons';
 import { getAllMedicalRecords, MedicalRecord } from '../../services/MedicalRecordService';
 import { getAllGuardians, Guardian } from '../../services/AccountService';
 import type { UploadFile } from 'antd/es/upload/interface';
+import SearchMedicalRecordModal from './Modal/SearchMedicalRecordModal';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const statusColor: Record<string, string> = {
   pending: 'orange',
@@ -31,6 +33,8 @@ const statusText: Record<string, string> = {
 };
 
 const MedicineManagement: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [medicineRecords, setMedicineRecords] = useState<MedicalSent[]>([]);
@@ -50,10 +54,12 @@ const MedicineManagement: React.FC = () => {
   const [detailPreviewImage, setDetailPreviewImage] = useState('');
   const [editModal, setEditModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MedicalSent | null>(null);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [selectedStudentName, setSelectedStudentName] = useState('');
 
   const medicalRecordMap = React.useMemo(() => {
     const map: Record<number, MedicalRecord> = {};
-    console.log('Medical records:', medicalRecords);
+    // console.log('Medical records:', medicalRecords);
     medicalRecords.forEach((rec) => {
       map[rec.userId] = rec;
     });
@@ -91,6 +97,25 @@ const MedicineManagement: React.FC = () => {
     fetchAll();
   }, [token]);
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const dateParam = urlParams.get('date');
+
+    if (dateParam) {
+      const date = new Date(dateParam);
+      if (!isNaN(date.getTime())) {
+        setFromDate(date);
+        const timer = setTimeout(() => {
+          setFromDate(null);
+          setToDate(null);
+          navigate('/nurse/medical', { replace: true });
+        }, 10000);
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [location.search, navigate]);
+
   const filteredRecords = medicineRecords.filter(record => {
     const recordDate = dayjs(record.createdAt).startOf('day');
     const from = fromDate ? dayjs(fromDate).startOf('day') : null;
@@ -106,7 +131,7 @@ const MedicineManagement: React.FC = () => {
     }
     return true;
   });
-  console.log('Filtered records:', filteredRecords);
+  // console.log('Filtered records:', filteredRecords);
   const handleViewDetail = async (record: MedicalSent) => {
     setLoading(true);
     try {
@@ -121,6 +146,7 @@ const MedicineManagement: React.FC = () => {
   };
 
   const handleStatusChange = async (record: MedicalSent, newStatus: MedicalSentStatus) => {
+    console.log('Changing status for record:', record);
     try {
       const formData = new FormData();
       formData.append('Status', newStatus);
@@ -128,9 +154,12 @@ const MedicineManagement: React.FC = () => {
       formData.append('Class', record.Class);
       formData.append('Medications', record.Medications);
       formData.append('Delivery_time', record.Delivery_time);
+      formData.append('Image_prescription', record.Image_prescription);
       if (record.Notes) {
         formData.append('Notes', record.Notes);
       }
+
+      console.log('Updating record with formData:', formData);
 
       await updateMedicalSent(record.id, formData, token);
 
@@ -212,6 +241,16 @@ const MedicineManagement: React.FC = () => {
     setEditModal(true);
   };
 
+  const handleStudentSelect = (student: MedicalRecord) => {
+    nurseForm.setFieldsValue({
+      selectedStudentId: student.userId,
+      className: student.Class,
+      guardianPhone: student.guardian?.phoneNumber,
+    });
+    setSelectedStudentName(student.fullname);
+    setIsSearchModalOpen(false);
+  };
+
   const columns = [
     {
       title: 'STT',
@@ -237,7 +276,7 @@ const MedicineManagement: React.FC = () => {
       key: 'Class',
       render: (_: any, record: MedicalSent) => {
         const className = medicalRecordMap[record.User_ID]?.Class || '';
-        console.log('User_ID:', record.User_ID, '→ Class:', className);
+        // console.log('User_ID:', record.User_ID, '→ Class:', className);
         return className;
       }
     },
@@ -311,7 +350,7 @@ const MedicineManagement: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Quản lý đơn thuốc</h1>
-        <Button type="primary" onClick={() => { nurseForm.resetFields(); setCreateModal(true); }}>
+        <Button type="primary" onClick={() => { nurseForm.resetFields(); setCreateModal(true); setSelectedStudentName(''); }}>
           + Tạo đơn
         </Button>
       </div>
@@ -507,43 +546,23 @@ const MedicineManagement: React.FC = () => {
         >
           <Row gutter={32}>
             <Col xs={24} md={12}>
-              <Form.Item name="selectedStudentId" label="Chọn học sinh" rules={[{ required: true, message: 'Vui lòng chọn học sinh!' }]} style={{ marginBottom: 24 }}>
-                <Select
-                  showSearch
-                  placeholder="Nhấn để chọn hồ sơ y tế học sinh"
-                  optionFilterProp="children"
-                  onChange={id => {
-                    const student = medicalRecords.find(s => s.userId === id);
-                    nurseForm.setFieldsValue({
-                      className: student?.Class,
-                      guardianPhone: student?.guardian?.phoneNumber
-                    });
-                  }}
-                  filterOption={(input, option) => {
-                    const children = option?.children as unknown;
-                    if (typeof children === 'string') {
-                      return children.toLowerCase().includes(input.toLowerCase());
-                    }
-                    if (typeof children === 'number') {
-                      return children.toString().toLowerCase().includes(input.toLowerCase());
-                    }
-                    if (Array.isArray(children)) {
-                      const label = children.map(child =>
-                        typeof child === 'string' ? child :
-                          typeof child === 'number' ? child.toString() : ''
-                      ).join('');
-                      return label.toLowerCase().includes(input.toLowerCase());
-                    }
-                    return false;
-                  }}
-                  style={{ width: '100%', fontSize: 16 }}
+              <Form.Item label="Chọn học sinh" required style={{ marginBottom: 24 }}>
+                <Form.Item
+                  name="selectedStudentId"
+                  noStyle
+                  rules={[{ required: true, message: 'Vui lòng chọn học sinh!' }]}
                 >
-                  {medicalRecords.map(s => (
-                    <Select.Option key={s.userId} value={s.userId}>
-                      {s.fullname}
-                    </Select.Option>
-                  ))}
-                </Select>
+                  <Input style={{ display: 'none' }} />
+                </Form.Item>
+                <Input.Group compact>
+                  <Input
+                    style={{ width: 'calc(100% - 40px)', fontSize: 16 }}
+                    placeholder="Nhấn nút tìm kiếm để chọn học sinh"
+                    value={selectedStudentName}
+                    readOnly
+                  />
+                  <Button icon={<SearchOutlined />} onClick={() => setIsSearchModalOpen(true)} />
+                </Input.Group>
               </Form.Item>
               <Form.Item label="Lớp" name="className" style={{ marginBottom: 24 }}>
                 <Input readOnly disabled style={{ fontSize: 16 }} />
@@ -616,6 +635,12 @@ const MedicineManagement: React.FC = () => {
         </Form>
       </Modal>
 
+      <SearchMedicalRecordModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        onSelect={handleStudentSelect}
+      />
+
       <Modal
         open={editModal}
         onCancel={() => { setEditModal(false); setEditingRecord(null); nurseForm.resetFields(); setFileList([]); }}
@@ -641,7 +666,7 @@ const MedicineManagement: React.FC = () => {
               formData.append('Delivery_time', `${dayjs().format('YYYY-MM-DD')} - ${deliveryTimeNote}`);
               formData.append('Notes', notes || '');
               if (prescriptionImage[0]?.originFileObj) {
-                formData.append('Image_prescription', prescriptionImage[0].originFileObj);
+                formData.append('prescriptionImage', prescriptionImage[0].originFileObj);
               }
               await updateMedicalSent(editingRecord.id, formData, token);
               message.success('Cập nhật đơn thuốc thành công!');

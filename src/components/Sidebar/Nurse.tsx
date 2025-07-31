@@ -138,9 +138,7 @@ function Nurse() {
       <Menu.Item key="profile">
         <button className="w-full text-left" onClick={() => navigate('/nurse/profile')}>Hồ sơ cá nhân</button>
       </Menu.Item>
-      <Menu.Item key="change-password">
-        <button onClick={() => setIsModalVisible(true)} className="w-full text-left">Đổi mật khẩu</button>
-      </Menu.Item>
+
       <Menu.Item key="logout">
         <button onClick={handleLogout} className="w-full text-left">Đăng xuất</button>
       </Menu.Item>

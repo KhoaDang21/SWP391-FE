@@ -77,7 +77,6 @@ const Noti: React.FC = () => {
       setUnreadCount(prev => Math.max(0, prev - 1));
 
       if (notification.title.toLowerCase().includes('tiêm chủng')) {
-
         const nameMatch = notification.mess.match(/cháu ([^\n\r]+)/i);
         if (nameMatch && nameMatch[1]) {
           const studentName = encodeURIComponent(nameMatch[1].trim());
@@ -86,6 +85,18 @@ const Noti: React.FC = () => {
         setOpen(false);
         return;
       }
+
+      if (notification.title === 'Có đơn thuốc mới từ phụ huynh') {
+        const notificationDate = new Date(notification.createdAt);
+        const day = notificationDate.getDate().toString().padStart(2, '0');
+        const month = (notificationDate.getMonth() + 1).toString().padStart(2, '0');
+        const year = notificationDate.getFullYear();
+        const dateParam = `${year}-${month}-${day}`;
+        navigate(`/nurse/medical?date=${dateParam}`);
+        setOpen(false);
+        return;
+      }
+
       const match = notification.title.match(/ vấn đề về sức khỏe vào ngày (\d{1,2})\/(\d{1,2})\/(\d{4})/i);
       if (match) { 
         const day = match[1].padStart(2, '0');

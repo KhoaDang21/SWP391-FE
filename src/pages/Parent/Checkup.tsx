@@ -13,7 +13,8 @@ import {
     Divider,
     Empty,
     Skeleton,
-    Spin
+    Spin,
+    Image
 } from 'antd';
 import {
     UserOutlined,
@@ -53,7 +54,7 @@ const Checkup: React.FC = () => {
     const [resultLoading, setResultLoading] = useState(false);
     const [studentInfo, setStudentInfo] = useState<User | null>(null);
     const [nurseInfo, setNurseInfo] = useState<User | null>(null);
-    console.log("Student Info:", nurseInfo);
+    console.log("Student Info:", selectedResult);
 
     useEffect(() => {
         const fetchStudents = async () => {
@@ -542,25 +543,16 @@ const Checkup: React.FC = () => {
                                     <span className="font-medium">{nurseInfo?.fullname || 'Chưa cập nhật'}</span>
                                 </div>
                                 <div>
-                                    <span className="text-sm text-gray-600 block">Email y tá</span>
-                                    <span className="font-medium">{nurseInfo?.email || 'Chưa cập nhật'}</span>
-                                </div>
-                                <div>
-                                    <span className="text-sm text-gray-600 block">Địa chỉ y tá</span>
-                                    <span className="font-medium">{nurseInfo?.address || 'Chưa cập nhật'}</span>
-                                </div>
-                                <div>
                                     <span className="text-sm text-gray-600 block">Số điện thoại y tá</span>
                                     <span className="font-medium">{nurseInfo?.phoneNumber || 'Chưa cập nhật'}</span>
                                 </div>
                                 <div>
-                                    <span className="text-sm text-gray-600 block">Ngày sinh y tá</span>
-                                    <span className="font-medium">{nurseInfo?.dateOfBirth || 'Chưa cập nhật'}</span>
+                                    <span className="text-sm text-gray-600 block">Email y tá</span>
+                                    <span className="font-medium">{nurseInfo?.email || 'Chưa cập nhật'}</span>
                                 </div>
-                                <div>
-                                    <span className="text-sm text-gray-600 block">Giới tính y tá</span>
-                                    <span className="font-medium">{nurseInfo?.gender || 'Chưa cập nhật'}</span>
-                                </div>
+
+
+
 
                             </div>
                         </div>
@@ -615,6 +607,24 @@ const Checkup: React.FC = () => {
                                     <span className="text-sm text-gray-600 block">Tình trạng da</span>
                                     <span className="font-medium">{selectedResult.Skin_Status}</span>
                                 </div>
+                                <div className="bg-white rounded-lg p-3 border">
+                                    <span className="text-sm text-gray-600 block mb-2">Hình ảnh kết quả khám</span>
+
+                                    {selectedResult.image ? (
+                                        <div className="flex justify-center">
+                                            <Image
+                                                src={selectedResult.image}
+                                                alt="Kết quả khám"
+                                                className="rounded-lg border object-cover"
+                                                style={{ maxHeight: '240px', objectFit: 'cover' }}
+                                                width={240}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <span className="text-sm text-red-500">Không có hình ảnh</span>
+                                    )}
+                                </div>
+
                             </div>
                         </div>
 
